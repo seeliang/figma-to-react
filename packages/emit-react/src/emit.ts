@@ -271,13 +271,14 @@ function renderBox(
 function renderSemantic(
   node: IRNode,
   semantic: Semantic,
-  className: string,
+  classNameIn: string,
   state: EmitState,
   ctx: RenderCtx,
   pad: string,
 ): string {
   const leaf = textLeaves(node)[0]!
   const attrs = [...semantic.attrs]
+  const className = [classNameIn, ...(semantic.classes ?? [])].filter(Boolean).join(' ')
 
   if (semantic.void) {
     // Take only what the dropped text leaf contributes that the container does

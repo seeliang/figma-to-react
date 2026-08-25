@@ -119,6 +119,16 @@ describe('emit: semantic elements', () => {
     expect(button).not.toContain('<p ')
   })
 
+  it('gives a button a pointer cursor, which Tailwind v4 Preflight removes', async () => {
+    const { files } = await generate('card', '1:2')
+    expect(files.get('button-primary.tsx')).toContain('cursor-pointer')
+  })
+
+  it('does not put a pointer cursor on an input, which wants a text caret', async () => {
+    const { files } = await generate('card', '1:2')
+    expect(files.get('card.tsx')).not.toContain('cursor-pointer')
+  })
+
   it('falls back to plain divs when semantics are off', async () => {
     const { files } = await generate('card', '1:2', { semantics: false })
     const button = files.get('button-primary.tsx')!

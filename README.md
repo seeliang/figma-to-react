@@ -94,6 +94,7 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 | Instances                                 | a tag importing that component, with text passed as props            |
 | Text inside a component                   | an optional prop, defaulting to the design's own copy                |
 | Layer named `Button` / `Input` / `Link`   | a real `<button>`, `<input>` or `<a>` (`--no-semantics` to disable)  |
+| Interactive elements                      | `cursor-pointer`, which Tailwind v4 Preflight otherwise removes      |
 | Ellipses                                  | `rounded-full` — Figma encodes roundness as node type, not a radius  |
 | Font family                               | a `--font-*` theme entry with a fallback stack                       |
 | Vectors and icon groups                   | inline SVG, converted to valid JSX                                   |
@@ -115,6 +116,7 @@ Short waits are still retried with backoff. Requests time out after 30s.
 
 ### Known trade-offs
 
+- **Hover and pressed states are not invented.** Figma only carries what the designer drew. If a component set has a variant named `Hover` or `Pressed`, nothing currently maps it to a `hover:` / `active:` class — and if it doesn't, there is no honest source for one. The cursor is different: it follows from the element being a control, not from the design.
 - **Element inference is name-based.** A layer called `Button` becomes a `<button>`; one called `CTA Container` does not. The rule only fires when the node's whole subtree is a single text leaf, so a wrapper like `Form Field` is left alone. It can misfire — `--no-semantics` turns it off.
 - **Variable names need Enterprise.** On other plans the variables endpoint is unavailable, so a bound Variable contributes a grouping key but no name. Colour **Styles** carry names on every plan — prefer them if you want `--color-primary` over `--color-blue-600`.
 - **Stacked paints** collapse to the topmost visible one; CSS has no clean equivalent. `inspect` shows the full node when a design depends on them.

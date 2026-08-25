@@ -17,6 +17,13 @@ export interface Semantic {
   tag: string
   /** Attributes to add, already rendered as JSX source. */
   attrs: string[]
+  /**
+   * Classes the element needs to behave like the control it is, independent of
+   * anything the design says. Tailwind v4's Preflight sets `cursor: default` on
+   * buttons, so a generated button shows an arrow rather than a hand unless
+   * this puts it back.
+   */
+  classes?: string[]
   /** `children` puts the text inside the tag; `placeholder` moves it to an attribute. */
   text: 'children' | 'placeholder'
   /** True for tags that may only contain phrasing content, so `<p>` is invalid inside. */
@@ -40,6 +47,7 @@ const RULES: Rule[] = [
     semantic: {
       tag: 'button',
       attrs: ['type="button"'],
+      classes: ['cursor-pointer'],
       text: 'children',
       phrasingOnly: true,
       void: false,
@@ -47,7 +55,14 @@ const RULES: Rule[] = [
   },
   {
     match: /\b(link|anchor)\b/i,
-    semantic: { tag: 'a', attrs: ['href="#"'], text: 'children', phrasingOnly: true, void: false },
+    semantic: {
+      tag: 'a',
+      attrs: ['href="#"'],
+      classes: ['cursor-pointer'],
+      text: 'children',
+      phrasingOnly: true,
+      void: false,
+    },
   },
   {
     match: /\btextarea\b/i,

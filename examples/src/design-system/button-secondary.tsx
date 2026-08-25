@@ -6,7 +6,7 @@ export function ButtonSecondary({ buttonLabel = 'Button Label' }: ButtonSecondar
   return (
     <button
       type="button"
-      className="flex justify-center items-center w-90 h-[46px] py-[14px] px-6 bg-white border border-blue-200 rounded-lg"
+      className="flex justify-center items-center w-90 h-[46px] py-[14px] px-6 bg-white border border-blue-200 rounded-lg cursor-pointer"
     >
       <span className="font-inter text-[14px] font-semibold text-slate-950">{buttonLabel}</span>
     </button>
