@@ -33,6 +33,7 @@ withCommonOptions(
     .option('--no-assets', 'skip downloading vectors and images')
     .option('--repeat-threshold <n>', 'identical siblings before collapsing into .map()', '3')
     .option('--no-semantics', 'emit plain divs instead of inferring <button>, <input> and <a>')
+    .option('--no-design-notes', 'skip the report of gaps in the Figma file itself')
     .option('--dry-run', 'print what would be written without touching the filesystem'),
 ).action(async (target: string, opts) => {
   await withErrorHandling(async () => {
@@ -82,6 +83,8 @@ withCommonOptions(
           'If the output directory is gitignored, also add an @source line pointing at it.',
       )
     }
+
+    if (opts.designNotes !== false) reportDesign(result.design)
   })
 })
 
@@ -166,6 +169,27 @@ function requireToken(flag?: string): string {
     )
   }
   return token
+}
+
+const SEVERITY_LABEL = { high: '!!', medium: ' !', low: '  ' } as const
+
+/**
+ * Reported separately from warnings, and worded as a design issue on purpose:
+ * these are things no amount of code can fix, because the information was never
+ * put in the file. Each one names the Figma action that resolves it.
+ */
+function reportDesign(findings: readonly import('@figma-to-react/core').DesignFinding[]): void {
+  if (findings.length === 0) {
+    console.log('\nDesign file: nothing to flag.')
+    return
+  }
+  console.log(`\nDesign file — ${findings.length} thing(s) to fix in Figma, not in code:\n`)
+  for (const f of findings) {
+    console.log(`  ${SEVERITY_LABEL[f.severity]} ${f.title}`)
+    console.log(`     fix: ${f.fix}`)
+    if (f.examples.length) console.log(`     e.g. ${f.examples.join(', ')}`)
+    console.log()
+  }
 }
 
 /** Progress goes to stderr so `inspect` and `tokens` stay pipeable. */

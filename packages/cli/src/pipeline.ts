@@ -1,12 +1,13 @@
 import {
   FigmaClient,
+  auditDesign,
   collectTokens,
   emitThemeCss,
   normalize,
   parseFigmaTarget,
   resolveAssets,
 } from '@figma-to-react/core'
-import type { IRDocument, TokenTable } from '@figma-to-react/core'
+import type { DesignFinding, IRDocument, TokenTable } from '@figma-to-react/core'
 import { emit, formatAll } from '@figma-to-react/emit-react'
 
 export interface RunOptions {
@@ -35,6 +36,8 @@ export interface RunResult {
   assets: Map<string, Uint8Array>
   themeCss?: string
   warnings: string[]
+  /** Gaps in the design file, as distinct from problems with this tool. */
+  design: DesignFinding[]
 }
 
 /**
@@ -67,15 +70,12 @@ export async function run(options: RunOptions): Promise<RunResult> {
     styles: entry.styles,
   })
 
+  const design = auditDesign({ document: entry.document, styles: entry.styles })
+
   let table: TokenTable | undefined
   if (options.tokens) {
     table = collectTokens(doc, { minUses: options.minUses ?? 3 })
     options.onProgress?.(`Collected ${table.tokens.length} design tokens`)
-    if (table.tokens.length === 0) {
-      warnings.push(
-        'No design tokens found. Bind colours and spacing to Figma Variables or Styles to get a themed output instead of literal values.',
-      )
-    }
   }
 
   const assetResult = await resolveAssets(doc, client, {
@@ -106,5 +106,6 @@ export async function run(options: RunOptions): Promise<RunResult> {
     assets: assetResult.files,
     themeCss: table ? emitThemeCss(table) : undefined,
     warnings,
+    design,
   }
 }

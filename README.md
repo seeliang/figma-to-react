@@ -60,6 +60,7 @@ Accepts a full Figma URL, a bare file key, or `<fileKey>:<nodeId>`. Node ids are
 | `--min-uses <n>`         | Uses before an unnamed colour earns a theme entry (default 3)     |
 | `--repeat-threshold <n>` | Identical siblings before collapsing into `.map()` (default 3)    |
 | `--no-semantics`         | Emit plain divs instead of inferring `<button>`, `<input>`, `<a>` |
+| `--no-design-notes`      | Skip the report of gaps in the Figma file itself                  |
 | `--dry-run`              | Print what would be written                                       |
 
 `inspect` is the debugging workhorse: it shows exactly what the normalizer made of a frame without spending API calls on a full generate. `--raw` dumps the untouched API response instead.
@@ -103,6 +104,31 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 | ≥3 identical siblings with differing text | collapsed into a `.map()`                                            |
 
 Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `layoutAlign` and `counterAxisSizingMode`.
+
+### Design notes
+
+After generating, the CLI reports what is missing **from the Figma file** — kept
+separate from its own warnings, and worded as a design issue on purpose. These
+are gaps no amount of code can close, because the information was never put in
+the file:
+
+```
+Design file — 6 thing(s) to fix in Figma, not in code:
+
+  !! 75 colours bound to no Style or Variable, so token names are synthesised
+     (--color-blue-600 rather than --color-primary)
+     fix: select the swatch and create a Colour Style, or bind a Variable.
+
+   ! 1 interactive component with no hover, pressed or disabled variant, so the
+     generated element has no state styling
+     fix: add a Hover / Pressed / Disabled variant. Nothing else can supply it —
+     a hover colour the designer never chose would be invented, not generated.
+```
+
+It checks for unbound colours, unbound font sizes, containers without Auto
+Layout, variant sets whose members drift in width, interactive components with
+no state variants, and text layers still auto-named after their own content.
+`--no-design-notes` silences it.
 
 ### Rate limits
 
