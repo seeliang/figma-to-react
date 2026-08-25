@@ -172,8 +172,22 @@ export interface IRNode {
   /** Text content for `kind: 'text'`. */
   content?: string
   asset?: IRAsset
-  /** For `kind: 'instance'` and `kind: 'component'`: the component's id and name. */
-  component?: { id: string; name: string }
+  /**
+   * For `kind: 'instance'` and `kind: 'component'`.
+   *
+   * `set` and `variant` are kept apart from `name` because consumers need them
+   * separately: a Storybook title is the set, the story export is the variant.
+   * `name` stays the flattened form, which is what the file is named after.
+   */
+  component?: {
+    id: string
+    /** `Input Field Default` — set and variant joined. */
+    name: string
+    /** `Input Field`, when the component belongs to a variant set. */
+    set?: string
+    /** `Default`, when the component belongs to a variant set. */
+    variant?: string
+  }
   children: IRNode[]
 }
 

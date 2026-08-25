@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "test-storybook": "vitest run --project=storybook"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -18,6 +21,15 @@
     "@vitejs/plugin-react": "^4.3.4",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "@storybook/addon-designs": "^11.1.4",
+    "@storybook/addon-vitest": "^10.5.10",
+    "@storybook/react-vite": "^10.5.10",
+    "@vitest/browser": "^4.0.0",
+    "playwright": "^1.49.0",
+    "storybook": "^10.5.10",
+    "vitest": "^4.0.0",
+    "@storybook/react": "^10.5.10",
+    "@vitest/browser-playwright": "^4.0.0"
   }
 }

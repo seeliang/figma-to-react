@@ -2,9 +2,5 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "outDir": "./dist", "rootDir": "./src" },
   "include": ["src/**/*"],
-  "references": [
-    { "path": "../core" },
-    { "path": "../emit-react" },
-    { "path": "../emit-storybook" }
-  ]
+  "references": [{ "path": "../core" }, { "path": "../emit-react" }]
 }

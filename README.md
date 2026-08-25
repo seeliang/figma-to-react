@@ -105,6 +105,53 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 
 Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `layoutAlign` and `counterAxisSizingMode`.
 
+## Storybook
+
+```bash
+figma2react gen '<url>' --out src/design-system --stories --trace-ids
+pnpm --filter figma-to-react-example storybook
+```
+
+`--stories` writes one CSF 3 story file per **variant set** — `Button/Primary`,
+`Secondary` and `Ghost` become three stories under one `Design System/Button`
+title — with `args` taken from the design's own copy, so the controls panel is
+populated from the file rather than by hand.
+
+Each story carries `parameters.design`, so
+[`@storybook/addon-designs`](https://github.com/storybookjs/addon-designs) shows
+the exact Figma node beside the component. The node id is already known, so the
+pairing is free.
+
+Stories are **build output**. They are overwritten on every run; hand-written
+stories belong in a sibling `*.custom.stories.tsx`, which the generator never
+touches.
+
+One honest limitation: variants are still separate components, so only the
+first can be a story's `meta.component`. The rest render explicitly, and where
+a variant's props diverge from the meta component's — three input states whose
+text layers are named `Placeholder text`, `Input value` and `Invalid input` —
+its values are passed literally instead of through `args`, because `Story` is
+typed from `meta.component` and would not otherwise compile.
+
+### Fidelity as a test
+
+`--stories` also emits `figma-geometry.json`, and each story gets a play
+function:
+
+```tsx
+play: async ({ canvasElement }) => {
+  await expectLayoutWithin(canvasElement, 4)
+}
+```
+
+`pnpm --filter figma-to-react-example test-storybook` runs every story in a real
+browser through `@storybook/addon-vitest` and fails when any node drifts past
+the threshold. Layout drift stops being something to notice and becomes
+something that breaks the build.
+
+It needs `--trace-ids`; without it there is no `data-figma-id` to match on, the
+CLI says so, and the assertion refuses rather than passing vacuously.
+
 ### Measuring layout fidelity
 
 Comparing generated output against the Figma frame by eye catches bugs, but only

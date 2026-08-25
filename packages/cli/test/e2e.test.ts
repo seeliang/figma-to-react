@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process'
 import { createServer, type Server } from 'node:http'
-import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -148,10 +148,48 @@ describe('figma2react gen', () => {
  * The gate that matters most: an emitter that produces TSX which does not
  * compile is worthless, and no amount of snapshot review reliably catches it.
  */
+describe('figma2react gen --stories', () => {
+  it('writes one story file per variant set, plus the geometry they measure against', async () => {
+    const out = await mkdtemp(join(tmpdir(), 'f2r-sb-'))
+    const { stdout } = await cli(['gen', 'TESTKEY:1-2', '--out', out, '--stories', '--trace-ids'])
+
+    const files = await readdir(out)
+    expect(files).toContain('button.stories.tsx')
+    expect(files).toContain('figma-geometry.json')
+    expect(stdout).toContain('stories: 1 file(s)')
+  })
+
+  it('points each story at its own Figma node', async () => {
+    const out = await mkdtemp(join(tmpdir(), 'f2r-sb-'))
+    await cli(['gen', 'TESTKEY:1-2', '--out', out, '--stories', '--trace-ids'])
+
+    const story = await readFile(join(out, 'button.stories.tsx'), 'utf8')
+    expect(story).toContain("type: 'figma'")
+    expect(story).toContain('node-id=10-1')
+  })
+
+  it('warns that fidelity cannot be measured without --trace-ids', async () => {
+    const out = await mkdtemp(join(tmpdir(), 'f2r-sb-'))
+    const { stderr } = await cli(['gen', 'TESTKEY:1-2', '--out', out, '--stories'])
+    expect(stderr).toContain('without --trace-ids')
+  })
+
+  it('writes no stories unless asked', async () => {
+    const out = await mkdtemp(join(tmpdir(), 'f2r-'))
+    await cli(['gen', 'TESTKEY:1-2', '--out', out])
+    expect((await readdir(out)).some((f) => f.endsWith('.stories.tsx'))).toBe(false)
+  })
+})
+
 describe('generated code compiles', () => {
   it('passes tsc --noEmit under strict mode with no unused locals', async () => {
     const out = await mkdtemp(join(tmpdir(), 'f2r-tsc-'))
-    await cli(['gen', 'TESTKEY:1-2', '--out', out, '--min-uses', '2'])
+    // Stories are included: `satisfies Meta<typeof X>` is real type surface,
+    // and it has already caught args that a variant's component cannot accept.
+    await cli(['gen', 'TESTKEY:1-2', '--out', out, '--min-uses', '2', '--stories', '--trace-ids'])
+
+    await mkdir(join(out, '..', 'fidelity'), { recursive: true })
+    await writeFile(join(out, '..', 'fidelity', 'assert.d.ts'), FIDELITY_STUB)
 
     await writeFile(
       join(out, 'tsconfig.json'),
@@ -170,7 +208,11 @@ describe('generated code compiles', () => {
           types: [],
           typeRoots: [],
           baseUrl: '.',
-          paths: { react: [reactTypes], 'react/jsx-runtime': [jsxRuntimeTypes] },
+          paths: {
+            react: [reactTypes],
+            'react/jsx-runtime': [jsxRuntimeTypes],
+            '@storybook/react': [storybookTypes],
+          },
         },
         include: ['*.tsx'],
       }),
@@ -190,6 +232,19 @@ const reactTypes = fileURLToPath(
 const jsxRuntimeTypes = fileURLToPath(
   new URL('../../../examples/node_modules/@types/react/jsx-runtime.d.ts', import.meta.url),
 )
+const storybookTypes = fileURLToPath(
+  new URL('../../../examples/node_modules/@storybook/react/dist/index.d.ts', import.meta.url),
+)
+/**
+ * Stories import the fidelity helper from the consuming app, one level above
+ * the generated directory. `paths` cannot redirect a relative specifier, so the
+ * gate writes a declaration where the import actually points.
+ */
+const FIDELITY_STUB = `export declare function expectLayoutWithin(
+  container: HTMLElement,
+  thresholdPx: number,
+): Promise<void>
+`
 
 describe('figma2react tokens', () => {
   it('prints a Tailwind v4 theme block to stdout', async () => {

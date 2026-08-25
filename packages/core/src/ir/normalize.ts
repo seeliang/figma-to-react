@@ -34,7 +34,11 @@ export function normalize(input: NormalizeInput): IRDocument {
   // Resolve every component's display name up front: an INSTANCE may appear
   // before the COMPONENT it points at, and the name depends on the component's
   // parent variant set, which is only visible from above.
-  const names = collectComponentNames(input.document, componentNames)
+  const names = collectComponentNames(
+    input.document,
+    input.components ?? {},
+    input.componentSets ?? {},
+  )
 
   const root = visit(input.document, undefined, ctx, names, components)
   if (!root) {
@@ -52,42 +56,65 @@ export function normalize(input: NormalizeInput): IRDocument {
  */
 function collectComponentNames(
   root: FigmaNode,
-  meta: Record<string, ComponentMeta>,
-): Map<string, string> {
-  const names = new Map<string, string>()
+  components: Record<string, ComponentMeta>,
+  componentSets: Record<string, ComponentMeta>,
+): Map<string, ComponentIdentity> {
+  const names = new Map<string, ComponentIdentity>()
 
   const visitNames = (node: FigmaNode, parent?: FigmaNode) => {
     if (node.type === 'COMPONENT') {
-      names.set(node.id, componentDisplayName(node, parent))
+      names.set(node.id, componentIdentity(node, parent))
     }
     for (const child of node.children ?? []) visitNames(child, node)
   }
   visitNames(root)
 
-  // Components defined in another file are only known through the response's
-  // component map, which carries the published name.
-  for (const [id, m] of Object.entries(meta)) {
-    if (!names.has(id)) names.set(id, m.name)
+  // A component defined in another file never appears in this tree, so its
+  // variant set has to be recovered from the response instead: the component
+  // map carries `componentSetId`, and the set map carries that set's name.
+  // Published variants are named `Button/Primary` rather than `Type=Primary`.
+  for (const [id, m] of Object.entries(components)) {
+    if (names.has(id)) continue
+    const setName = m.componentSetId ? componentSets[m.componentSetId]?.name : undefined
+    if (!setName) {
+      names.set(id, { name: m.name })
+      continue
+    }
+    const variant = m.name.startsWith(`${setName}/`) ? m.name.slice(setName.length + 1) : m.name
+    names.set(id, { name: m.name, set: setName, variant })
+  }
+
+  // Sets themselves are addressable but are only a canvas grouping.
+  for (const [id, m] of Object.entries(componentSets)) {
+    if (!names.has(id)) names.set(id, { name: m.name })
   }
   return names
 }
 
-function componentDisplayName(node: FigmaNode, parent?: FigmaNode): string {
-  if (parent?.type !== 'COMPONENT_SET') return node.name
+export interface ComponentIdentity {
+  name: string
+  set?: string
+  variant?: string
+}
+
+function componentIdentity(node: FigmaNode, parent?: FigmaNode): ComponentIdentity {
+  if (parent?.type !== 'COMPONENT_SET') return { name: node.name }
   // `Type=Primary, Size=Large` -> `Primary Large`
   const variant = node.name
     .split(',')
     .map((part) => part.split('=').slice(1).join('=').trim())
     .filter(Boolean)
     .join(' ')
-  return variant ? `${parent.name} ${variant}` : parent.name
+  return variant
+    ? { name: `${parent.name} ${variant}`, set: parent.name, variant }
+    : { name: parent.name, set: parent.name }
 }
 
 function visit(
   node: FigmaNode,
   parent: FigmaNode | undefined,
   ctx: StyleContext,
-  componentNames: Map<string, string>,
+  componentNames: Map<string, ComponentIdentity>,
   components: Map<string, IRNode>,
 ): IRNode | undefined {
   // Invisible layers and masks produce no markup. Masks in particular would
@@ -127,14 +154,14 @@ function visit(
   if (kind === 'instance' && node.componentId) {
     ir.component = {
       id: node.componentId,
-      name: componentNames.get(node.componentId) ?? node.name,
+      ...(componentNames.get(node.componentId) ?? { name: node.name }),
     }
   }
 
   // A COMPONENT node is the definition itself, keyed by its own id — the same
   // id an INSTANCE points at through `componentId`.
   if (kind === 'component') {
-    ir.component = { id: node.id, name: componentNames.get(node.id) ?? node.name }
+    ir.component = { id: node.id, ...(componentNames.get(node.id) ?? { name: node.name }) }
   }
 
   // Vector subtrees are flattened into one exported SVG, so their children are

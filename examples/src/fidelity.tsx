@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { DesignSystem } from './design-system/design-system.js'
+import { measure, worstDelta } from './fidelity/assert.js'
+import type { Delta } from './fidelity/assert.js'
 import './styles.css'
 
 /**
@@ -17,59 +19,8 @@ import './styles.css'
  * the same file.
  */
 
-interface Box {
-  name: string
-  type: string
-  x: number
-  y: number
-  w: number
-  h: number
-}
-
-interface Row {
-  id: string
-  name: string
-  type: string
-  dx: number
-  dy: number
-  dw: number
-  dh: number
-}
-
-const worst = (r: Row) => Math.max(Math.abs(r.dx), Math.abs(r.dy), Math.abs(r.dw), Math.abs(r.dh))
-
-function measure(figma: Record<string, Box>): Row[] {
-  const root = document.querySelector<HTMLElement>('[data-figma-id]')
-  if (!root) return []
-  const anchor = figma[root.dataset.figmaId!]
-  if (!anchor) return []
-  const origin = root.getBoundingClientRect()
-
-  const rows: Row[] = []
-  const seen = new Set<string>()
-  for (const el of document.querySelectorAll<HTMLElement>('[data-figma-id]')) {
-    const id = el.dataset.figmaId!
-    const f = figma[id]
-    // A component renders at every use site; compare the first, since the rest
-    // are the same markup in a different place.
-    if (!f || seen.has(id)) continue
-    seen.add(id)
-    const r = el.getBoundingClientRect()
-    rows.push({
-      id,
-      name: f.name,
-      type: f.type,
-      dx: +(r.left - origin.left + anchor.x - f.x).toFixed(1),
-      dy: +(r.top - origin.top + anchor.y - f.y).toFixed(1),
-      dw: +(r.width - f.w).toFixed(1),
-      dh: +(r.height - f.h).toFixed(1),
-    })
-  }
-  return rows.sort((a, b) => worst(b) - worst(a))
-}
-
-function Report({ rows }: { rows: Row[] }) {
-  const within = (t: number) => rows.filter((r) => worst(r) <= t).length
+function Report({ rows }: { rows: Delta[] }) {
+  const within = (t: number) => rows.filter((r) => worstDelta(r) <= t).length
   const pct = (n: number) => Math.round((n / rows.length) * 100)
 
   return (
@@ -102,7 +53,7 @@ function Report({ rows }: { rows: Row[] }) {
         </thead>
         <tbody>
           {rows.slice(0, 25).map((r) => (
-            <tr key={r.id} className={worst(r) > 4 ? 'text-red-700' : 'text-neutral-700'}>
+            <tr key={r.id} className={worstDelta(r) > 4 ? 'text-red-700' : 'text-neutral-700'}>
               <td className="max-w-[180px] truncate pr-2" title={`${r.name} (${r.type})`}>
                 {r.name}
               </td>
@@ -119,15 +70,14 @@ function Report({ rows }: { rows: Row[] }) {
 }
 
 function Fidelity() {
-  const [rows, setRows] = useState<Row[] | null>(null)
+  const [rows, setRows] = useState<Delta[] | null>(null)
 
   useEffect(() => {
     let cancelled = false
     // Wait for webfonts: measuring before they land reports the fallback's
     // metrics, not the design's.
-    void document.fonts.ready.then(async () => {
-      const figma: Record<string, Box> = await fetch('/figma-geometry.json').then((r) => r.json())
-      if (!cancelled) setRows(measure(figma))
+    void document.fonts.ready.then(() => {
+      if (!cancelled) setRows(measure())
     })
     return () => {
       cancelled = true

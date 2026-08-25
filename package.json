@@ -9,9 +9,9 @@
   "scripts": {
     "build": "pnpm -r --filter './packages/*' run build",
     "test": "vitest run",
-    "typecheck": "tsc -b packages/core packages/emit-react packages/cli",
+    "typecheck": "tsc -b packages/core packages/emit-react packages/emit-storybook packages/cli",
     "format": "prettier --write .",
-    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs"
+    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

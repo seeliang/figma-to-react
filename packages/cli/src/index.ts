@@ -36,6 +36,12 @@ withCommonOptions(
     .option('--no-design-notes', 'skip the report of gaps in the Figma file itself')
     .option('--trace-ids', 'emit data-figma-id on every element, for measuring layout fidelity')
     .option('--no-font-import', 'skip the Google Fonts @import for the typefaces in use')
+    .option('--stories', 'generate Storybook stories and the geometry their fidelity check needs')
+    .option(
+      '--fidelity-threshold <px>',
+      'max px a node may differ from Figma before a story fails',
+      '4',
+    )
     .option('--dry-run', 'print what would be written without touching the filesystem'),
 ).action(async (target: string, opts) => {
   await withErrorHandling(async () => {
@@ -50,6 +56,8 @@ withCommonOptions(
       semantics: opts.semantics !== false,
       traceIds: opts.traceIds === true,
       fontImport: opts.fontImport !== false,
+      stories: opts.stories === true,
+      fidelityThreshold: Number(opts.fidelityThreshold),
       onProgress: progress,
     })
 
@@ -60,6 +68,9 @@ withCommonOptions(
         ([name, bytes]) => [join('assets', name), bytes] as [string, Uint8Array],
       ),
     ]
+    if (result.geometry) {
+      planned.push(['figma-geometry.json', `${JSON.stringify(result.geometry, null, 2)}\n`])
+    }
     if (result.fontCss) planned.push(['fonts.css', result.fontCss])
     if (result.themeCss) planned.push(['tokens.css', result.themeCss])
 
@@ -80,6 +91,9 @@ withCommonOptions(
 
     for (const warning of result.warnings) console.warn(`  warning: ${warning}`)
     console.log(`  root component: <${result.rootComponent} />`)
+    if (result.stories.size > 0) {
+      console.log(`  stories: ${result.stories.size} file(s)`)
+    }
     if (result.themeCss) {
       console.log(
         '\nAdd to your stylesheet, in this order:\n' +

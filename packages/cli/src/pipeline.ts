@@ -10,6 +10,8 @@ import {
 } from '@figma-to-react/core'
 import type { DesignFinding, IRDocument, TokenTable } from '@figma-to-react/core'
 import { emit, formatAll } from '@figma-to-react/emit-react'
+import { emitStories, exportGeometry } from '@figma-to-react/emit-storybook'
+import type { Geometry } from '@figma-to-react/emit-storybook'
 
 export interface RunOptions {
   target: string
@@ -28,6 +30,10 @@ export interface RunOptions {
   traceIds?: boolean
   /** Emit a Google Fonts `@import` for the typefaces in use. */
   fontImport?: boolean
+  /** Generate Storybook stories, plus the geometry their fidelity check needs. */
+  stories?: boolean
+  /** Max px a node may differ from Figma before a story's play function fails. */
+  fidelityThreshold?: number
   onProgress?: (message: string) => void
 }
 
@@ -45,6 +51,10 @@ export interface RunResult {
   warnings: string[]
   /** Gaps in the design file, as distinct from problems with this tool. */
   design: DesignFinding[]
+  /** Story sources, keyed by file name relative to the output dir. */
+  stories: Map<string, string>
+  /** Figma geometry the stories measure against; only when stories are on. */
+  geometry?: Geometry
 }
 
 /**
@@ -102,7 +112,28 @@ export async function run(options: RunOptions): Promise<RunResult> {
     traceIds: options.traceIds ?? false,
   })
 
-  const files = await formatAll(emitted.files, (file, err) => {
+  const stories = new Map<string, string>()
+  let geometry: Geometry | undefined
+
+  if (options.stories) {
+    geometry = exportGeometry(entry.document)
+    // Without `data-figma-id` there is nothing for a play function to match on,
+    // so the assertion would pass by measuring nothing at all.
+    if (!options.traceIds) {
+      warnings.push(
+        'Stories were generated without --trace-ids, so their fidelity check can only assert the story root, not each node.',
+      )
+    }
+    for (const s of emitStories(emitted.components, {
+      fileKey,
+      fidelity: { threshold: options.fidelityThreshold ?? 4, helperPath: '../fidelity/assert.js' },
+    })) {
+      stories.set(s.file, s.source)
+    }
+    options.onProgress?.(`Generated ${stories.size} story file(s)`)
+  }
+
+  const files = await formatAll(new Map([...emitted.files, ...stories]), (file, err) => {
     warnings.push(`Could not format ${file} (emitted unformatted): ${(err as Error).message}`)
   })
 
@@ -119,5 +150,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
         : undefined,
     warnings,
     design,
+    stories,
+    geometry,
   }
 }

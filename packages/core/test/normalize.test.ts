@@ -134,8 +134,26 @@ describe('normalize: node classification', () => {
   it('records instances once, keyed by component id, with the component name', () => {
     const button = byId(card.root, '1:7')
     expect(button.kind).toBe('instance')
-    expect(button.component).toEqual({ id: '10:1', name: 'Button/Primary' })
+    expect(button.component).toMatchObject({ id: '10:1', name: 'Button/Primary' })
     expect([...card.components.keys()]).toEqual(['10:1'])
+  })
+
+  it('keeps the variant set apart from the variant, not just the joined name', () => {
+    // A Storybook title is the set and the story export is the variant, so the
+    // flattened `Input Field Default` alone cannot be taken apart again:
+    // neither the set nor the variant name is guaranteed free of spaces.
+    const doc = irFor('variants', '5:1')
+    const variants = [...doc.components.values()].map((n) => n.component)
+    expect(variants).toEqual([
+      { id: '5:2', name: 'Input Field Default', set: 'Input Field', variant: 'Default' },
+      { id: '5:3', name: 'Input Field Error', set: 'Input Field', variant: 'Error' },
+    ])
+  })
+
+  it('leaves set and variant unset for a component outside any set', () => {
+    const doc = irFor('variants', '5:10')
+    const [only] = [...doc.components.values()]
+    expect(only!.component).toEqual({ id: '5:11', name: 'Form Field' })
   })
 
   it('classifies image-filled leaves as images', () => {

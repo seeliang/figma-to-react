@@ -13,7 +13,10 @@ import { join } from 'node:path'
 // Every directory figma2react writes into. A missing one is skipped, not fatal:
 // the design-system output needs a Figma token that CI may not have.
 const GENERATED = ['examples/src/generated', 'examples/src/design-system']
-const DIST = 'examples/dist/assets'
+// Storybook produces its own bundle from the same sources, and a Tailwind
+// plugin missing from *its* config fails exactly as silently.
+const distFlag = process.argv.indexOf('--dist')
+const DIST = distFlag === -1 ? 'examples/dist/assets' : process.argv[distFlag + 1]
 
 const used = new Set()
 let scanned = 0
@@ -40,12 +43,14 @@ if (scanned === 0) {
   process.exit(1)
 }
 
-const cssFile = (await readdir(DIST)).find((f) => f.endsWith('.css'))
+const stylesheets = (await readdir(DIST)).filter((f) => f.endsWith('.css'))
+// Storybook splits its bundle; a class may land in any of the sheets.
+const cssFile = stylesheets[0]
 if (!cssFile) {
   console.error(`No stylesheet in ${DIST} — run the example build first.`)
   process.exit(1)
 }
-const css = await readFile(join(DIST, cssFile), 'utf8')
+const css = (await Promise.all(stylesheets.map((f) => readFile(join(DIST, f), 'utf8')))).join('\n')
 
 // Tailwind escapes the punctuation in arbitrary values, so compare on the part
 // before the first bracket — enough to prove a rule was generated at all.
@@ -58,4 +63,6 @@ if (missing.length > 0) {
   process.exit(1)
 }
 
-console.log(`All ${used.size} generated classes from ${scanned} component(s) resolve to CSS rules.`)
+console.log(
+  `All ${used.size} generated classes from ${scanned} component(s) resolve to CSS rules in ${DIST}.`,
+)

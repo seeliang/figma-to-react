@@ -40,6 +40,30 @@ export interface EmitResult {
   files: Map<string, string>
   /** The exported name of the root component. */
   rootComponent: string
+  /**
+   * What was emitted, in the order it was emitted.
+   *
+   * Everything a downstream emitter needs about a component — its export name,
+   * its props and their design defaults, the Figma node behind it — is worked
+   * out here while rendering. Returning it beats making the next consumer walk
+   * the IR again and re-derive names that must match exactly.
+   */
+  components: ComponentEntry[]
+}
+
+export interface ComponentEntry {
+  /** The Figma node id of the component definition. */
+  figmaId: string
+  /** `ButtonPrimary` — the exported symbol. */
+  exportName: string
+  /** `button-primary.tsx`, relative to the output directory. */
+  file: string
+  /** `Button`, when the component belongs to a variant set. */
+  set?: string
+  /** `Primary`, when the component belongs to a variant set. */
+  variant?: string
+  /** Text props, with the copy the design supplies as each default. */
+  props: { name: string; defaultValue: string }[]
 }
 
 interface EmitState {
@@ -53,6 +77,8 @@ interface EmitState {
   emitted: Map<string, { name: string; file: string }>
   /** Files produced so far. */
   files: Map<string, string>
+  /** Manifest entries, in emission order. */
+  manifest: ComponentEntry[]
   /** Imports needed by the file currently being written. */
   imports: Set<string>
   /** Component id whose definition file is currently being rendered, if any. */
@@ -70,6 +96,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
     registry: new NameRegistry(),
     emitted: new Map(),
     files: new Map(),
+    manifest: [],
     imports: new Set(),
     splitComponents: options.splitComponents ?? true,
   }
@@ -84,7 +111,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
   const rootFile = toFileName(rootName)
   state.files.set(rootFile, renderFile(rootName, doc.root, state, { isComponentRoot: true }))
 
-  return { files: state.files, rootComponent: rootName }
+  return { files: state.files, rootComponent: rootName, components: state.manifest }
 }
 
 function emitComponent(id: string, node: IRNode, state: EmitState): void {
@@ -100,6 +127,22 @@ function emitComponent(id: string, node: IRNode, state: EmitState): void {
   state.currentComponentId = id
   state.files.set(file, renderFile(name, node, state, { isComponentRoot: true }))
   state.currentComponentId = previous
+
+  // `renderFile` has just decided which text leaves became props and what they
+  // default to; recompute the same list rather than threading it out, since it
+  // is pure and the tree is small.
+  const slots = textSlots(node)
+  state.manifest.push({
+    figmaId: id,
+    exportName: name,
+    file,
+    ...(node.component?.set ? { set: node.component.set } : {}),
+    ...(node.component?.variant ? { variant: node.component.variant } : {}),
+    props:
+      slots.length > state.maxTextSlots
+        ? []
+        : slots.map((s) => ({ name: s.prop, defaultValue: s.defaultValue })),
+  })
 }
 
 // ---------------------------------------------------------------------------
