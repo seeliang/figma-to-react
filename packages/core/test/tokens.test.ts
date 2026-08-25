@@ -126,6 +126,29 @@ describe('collectTokens', () => {
   })
 })
 
+describe('typefaces', () => {
+  const table = collectTokens(docFor('card', '1:2'), { minUses: 2 })
+
+  it('emits a font token with a fallback stack, not a bare family', () => {
+    const font = table.tokens.find((t) => t.kind === 'fontFamily')
+    expect(font).toMatchObject({ name: 'inter' })
+    expect(font!.value).toBe('Inter, ui-sans-serif, system-ui, sans-serif')
+  })
+
+  it('never drops a typeface for being infrequent', () => {
+    // A family used once still has to be declared somewhere.
+    expect(collectTokens(docFor('card', '1:2'), { minUses: 99 }).tokens).toContainEqual(
+      expect.objectContaining({ kind: 'fontFamily' }),
+    )
+  })
+
+  it('puts typefaces in their own @theme group', () => {
+    expect(emitThemeCss(table)).toContain(
+      '--font-inter: Inter, ui-sans-serif, system-ui, sans-serif;',
+    )
+  })
+})
+
 describe('emitThemeCss', () => {
   it('emits a Tailwind v4 @theme block with rem lengths', () => {
     const table = collectTokens(docFor('card', '1:2'), { minUses: 2 })

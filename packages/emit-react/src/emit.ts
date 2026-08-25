@@ -3,7 +3,7 @@ import { noTokens } from '@figma-to-react/core'
 import { NameRegistry, toCamelCase, toFileName, toPascalCase } from './naming.js'
 import { semanticFor, textLeaves, textTagFor } from './semantics.js'
 import type { Semantic } from './semantics.js'
-import { classesFor } from './tailwind.js'
+import { classesFor, placementClasses } from './tailwind.js'
 
 export interface EmitOptions {
   resolver?: TokenResolver
@@ -209,7 +209,19 @@ function renderNode(
       state.imports.add(
         `import { ${target.name} } from './${target.file.replace(/\.tsx$/, '.js')}'`,
       )
-      return `${pad}<${target.name}${instanceProps(node, ctx)} />`
+      const tag = `<${target.name}${instanceProps(node, ctx)} />`
+
+      // The tag itself takes no className, so anything that places it inside
+      // the parent has to go on a wrapper. Without this a component dropped
+      // into an absolutely positioned parent lands at the flow position and
+      // silently overlaps whatever is already there.
+      const placement = placementClasses(node, {
+        resolver: state.resolver,
+        parent: parent?.layout,
+      })
+      return placement
+        ? `${pad}<div className=${quote(placement)}>\n${pad}  ${tag}\n${pad}</div>`
+        : `${pad}${tag}`
     }
   }
 
@@ -275,7 +287,9 @@ function renderSemantic(
     const leafClasses = classesFor(leaf, { resolver: state.resolver, parent: node.layout })
       .split(' ')
       .filter(isTypographyClass)
-    const merged = [className, ...leafClasses].filter(Boolean).join(' ')
+    const merged = [className, ...leafClasses, ...replacedSize(node, state)]
+      .filter(Boolean)
+      .join(' ')
     attrs.push(`${semantic.text}={${textExpr(leaf, ctx)}}`)
     if (merged) attrs.push(`className=${quote(merged)}`)
     return `${pad}<${semantic.tag} ${attrs.join(' ')} />`
@@ -288,6 +302,19 @@ function renderSemantic(
     phrasingOnly: semantic.phrasingOnly,
   })
   return `${pad}<${semantic.tag} ${attrs.join(' ')}>\n${children}\n${pad}</${semantic.tag}>`
+}
+
+/**
+ * A replaced element sizes itself: `<input>` defaults to roughly 20 characters
+ * wide regardless of its content, so a node that hugged in Figma comes out
+ * wider and pushes the layout around it. Where the design measured a hug, pin
+ * that measurement.
+ */
+function replacedSize(node: IRNode, state: EmitState): string[] {
+  const { width } = node.layout
+  if (width.kind !== 'hug' || width.px === undefined) return []
+  void state
+  return [`w-[${width.px}px]`]
 }
 
 const TYPOGRAPHY =

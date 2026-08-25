@@ -94,6 +94,8 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 | Instances                                 | a tag importing that component, with text passed as props            |
 | Text inside a component                   | an optional prop, defaulting to the design's own copy                |
 | Layer named `Button` / `Input` / `Link`   | a real `<button>`, `<input>` or `<a>` (`--no-semantics` to disable)  |
+| Ellipses                                  | `rounded-full` — Figma encodes roundness as node type, not a radius  |
+| Font family                               | a `--font-*` theme entry with a fallback stack                       |
 | Vectors and icon groups                   | inline SVG, converted to valid JSX                                   |
 | Image fills                               | downloaded to `assets/`, rendered as `<img>`                         |
 | Invisible layers, masks                   | dropped                                                              |

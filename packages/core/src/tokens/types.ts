@@ -1,6 +1,6 @@
 import type { TokenRef } from '../ir/types.js'
 
-export type TokenKind = 'color' | 'spacing' | 'radius' | 'fontSize' | 'shadow'
+export type TokenKind = 'color' | 'spacing' | 'radius' | 'fontSize' | 'shadow' | 'fontFamily'
 
 /**
  * Maps a concrete style value to a theme key, or returns undefined to mean

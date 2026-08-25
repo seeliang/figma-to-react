@@ -8,6 +8,7 @@ import type {
   TextStyle,
   TokenRef,
 } from '@figma-to-react/core'
+import { fontStack } from '@figma-to-react/core'
 import type { TokenResolver } from '@figma-to-react/core'
 
 /** Tailwind's default spacing step: `p-4` is `1rem` is `16px`. */
@@ -32,6 +33,37 @@ export function classesFor(node: IRNode, ctx: ClassContext): string {
   out.push(...boxClasses(node.box, ctx))
   if (node.text) out.push(...textClasses(node.text, ctx))
   out.push(...effectClasses(node.box))
+  return out.join(' ')
+}
+
+/**
+ * Only the classes that position a node *within its parent*: absolute offsets,
+ * cross-axis alignment, and outer size.
+ *
+ * Deliberately excludes the node's own container layout — `flex`, `flex-col`,
+ * `gap`, `justify-*`, `items-*` — which describes how it arranges its own
+ * children and belongs to the component, not to a wrapper around it. Copying
+ * those onto the wrapper both duplicates them and actively misplaces the
+ * content: a `justify-center` meant for the component's interior would instead
+ * centre the component inside its wrapper.
+ *
+ * Used when a component collapses to a bare `<FormField />` tag, which has
+ * nowhere to put a class of its own.
+ */
+export function placementClasses(node: IRNode, ctx: ClassContext): string {
+  const out: string[] = []
+  const layout = node.layout
+
+  if (ctx.parent?.mode === 'none' && layout.position) {
+    out.push(
+      'absolute',
+      arbitraryPx('left', layout.position.x),
+      arbitraryPx('top', layout.position.y),
+    )
+  }
+  if (layout.alignSelf) out.push(`self-${layout.alignSelf}`)
+  out.push(...sizingClasses(layout, ctx))
+
   return out.join(' ')
 }
 
@@ -182,6 +214,9 @@ const arbitraryPx = (prefix: string, px: number) => `${prefix}-[${trim(px)}px]`
 function boxClasses(box: BoxStyle, ctx: ClassContext): string[] {
   const out: string[] = []
 
+  // An ellipse has no corner radius to read; its shape is its node type.
+  if (box.shape === 'ellipse') out.push('rounded-full')
+
   if (box.fill?.kind === 'solid')
     out.push(color('bg', box.fill.color.css, box.fill.color.token, ctx))
   if (box.fill?.kind === 'gradient') out.push(`bg-[${box.fill.css.replace(/\s+/g, '_')}]`)
@@ -191,7 +226,7 @@ function boxClasses(box: BoxStyle, ctx: ClassContext): string[] {
     out.push(...borderClasses(box, ctx))
   }
 
-  if (box.corners) out.push(...cornerClasses(box, ctx))
+  if (box.corners && box.shape !== 'ellipse') out.push(...cornerClasses(box, ctx))
   if (box.clip) out.push('overflow-hidden')
   if (box.opacity !== undefined) out.push(`opacity-${Math.round(box.opacity * 100)}`)
 
@@ -267,6 +302,14 @@ const RADIUS_SCALE: Record<number, string> = {
 
 function textClasses(text: TextStyle, ctx: ClassContext): string[] {
   const out: string[] = []
+
+  if (text.fontFamily) {
+    const stack = fontStack(text.fontFamily.name)
+    const token = ctx.resolver.resolve('fontFamily', stack, text.fontFamily.token)
+    // Without a theme entry there is nowhere to put the fallback stack, so the
+    // arbitrary value carries the family alone.
+    out.push(token ? `font-${token}` : `font-[${text.fontFamily.name.replace(/\s+/g, '_')}]`)
+  }
 
   if (text.fontSize) {
     const token = ctx.resolver.resolve('fontSize', text.fontSize.px, text.fontSize.token)

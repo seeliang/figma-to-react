@@ -41,10 +41,16 @@ describe('normalize: auto layout', () => {
     expect(root.layout.align).toBe('start')
   })
 
+  it('carries the measurement alongside every sizing kind', () => {
+    // A replaced element such as <input> ignores content sizing, so a hugging
+    // node still needs its measured width available to the emitter.
+    expect(root.layout.height).toMatchObject({ kind: 'hug', px: expect.any(Number) })
+  })
+
   it('reads modern layoutSizing over the bounding box', () => {
     expect(root.layout.width).toEqual({ kind: 'fixed', px: 320 })
-    expect(root.layout.height).toEqual({ kind: 'hug' })
-    expect(byId(root, '1:3').layout.width).toEqual({ kind: 'fill' })
+    expect(root.layout.height).toMatchObject({ kind: 'hug' })
+    expect(byId(root, '1:3').layout.width).toMatchObject({ kind: 'fill' })
   })
 
   it('maps SPACE_BETWEEN and CENTER alignment', () => {
@@ -139,22 +145,30 @@ describe('normalize: node classification', () => {
   })
 })
 
+describe('normalize: shape', () => {
+  it('marks an ellipse, whose roundness is its node type and not a radius', () => {
+    const { root } = irFor('legacy', '4:1')
+    expect(byId(root, '4:2').box.shape).toBe('ellipse')
+    expect(byId(root, '4:2').box.corners).toBeUndefined()
+  })
+})
+
 describe('normalize: legacy files without layoutSizing', () => {
   const { root } = irFor('legacy', '2:1')
 
   it('infers FILL from layoutGrow on the main axis', () => {
-    expect(byId(root, '2:2').layout.width).toEqual({ kind: 'fill' })
+    expect(byId(root, '2:2').layout.width).toMatchObject({ kind: 'fill' })
     expect(byId(root, '2:2').layout.grow).toBe(true)
   })
 
   it('infers FILL from layoutAlign STRETCH on the cross axis', () => {
     const stretched = byId(root, '2:3')
-    expect(stretched.layout.height).toEqual({ kind: 'fill' })
+    expect(stretched.layout.height).toMatchObject({ kind: 'fill' })
     expect(stretched.layout.alignSelf).toBe('stretch')
   })
 
   it('infers HUG from counterAxisSizingMode AUTO', () => {
-    expect(root.layout.height).toEqual({ kind: 'hug' })
+    expect(root.layout.height).toMatchObject({ kind: 'hug' })
     expect(root.layout.width).toEqual({ kind: 'fixed', px: 400 })
   })
 })

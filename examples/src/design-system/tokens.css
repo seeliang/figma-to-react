@@ -5,6 +5,11 @@
  *   @import 'tailwindcss';
  *   @import './tokens.css';
  *
+ * Synthesised names deliberately follow Tailwind's own scale, so an entry here
+ * may shadow a built-in: --color-blue-600 replaces Tailwind's blue-600 app-wide.
+ * That is usually what you want. It also means forgetting the import above is
+ * silent - the classes still resolve, to Tailwind's colours instead of yours.
+ *
  * If the generated directory is gitignored, Tailwind will not scan it and none
  * of these classes reach your bundle - the build still succeeds, it just has no
  * styles. Add a source line next to those imports, and note it must be an
@@ -21,4 +26,7 @@
   --color-slate-600: #64748b;
   --color-slate-950: #0f172a;
   --color-white: #ffffff;
+
+  /* Typefaces */
+  --font-inter: Inter, ui-sans-serif, system-ui, sans-serif;
 }

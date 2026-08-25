@@ -8,7 +8,7 @@ export function ButtonGhost({ buttonLabel = 'Button Label' }: ButtonGhostProps =
       type="button"
       className="flex justify-center items-center w-90 h-[46px] py-[14px] px-6 rounded-lg"
     >
-      <span className="text-[14px] text-blue-600">{buttonLabel}</span>
+      <span className="font-inter text-[14px] text-blue-600">{buttonLabel}</span>
     </button>
   )
 }

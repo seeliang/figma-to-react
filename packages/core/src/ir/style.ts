@@ -71,6 +71,19 @@ export function tokenFor(
   return undefined
 }
 
+/**
+ * A variable reference for one field, ignoring Styles entirely.
+ *
+ * Font family must not fall back to the node's text style: a Figma text style
+ * bundles family, size, weight and line height under one name, so borrowing it
+ * for the family alone yields one typeface token per style — `--font-heading-small`
+ * and `--font-body` holding the same family.
+ */
+export function variableRef(node: FigmaNode, field: string): TokenRef | undefined {
+  const id = firstAlias(node.boundVariables, field)
+  return id ? { source: 'variable', key: id } : undefined
+}
+
 function firstAlias(bound: BoundVariables | undefined, field: string): string | undefined {
   const entry = bound?.[field]
   if (!entry) return undefined
@@ -224,6 +237,7 @@ export function toBoxStyle(node: FigmaNode, ctx: StyleContext): BoxStyle {
     shadows: toShadows(node),
     clip: node.clipsContent === true,
   }
+  if (node.type === 'ELLIPSE') box.shape = 'ellipse'
   const fill = toFill(node, ctx)
   if (fill) box.fill = fill
   const border = toBorder(node, ctx)
@@ -248,7 +262,10 @@ export function toTextStyle(node: FigmaNode, ctx: StyleContext): TextStyle | und
   if (!s && !fill) return undefined
 
   const out: TextStyle = {}
-  if (s?.fontFamily) out.fontFamily = s.fontFamily
+  if (s?.fontFamily) {
+    const token = variableRef(node, 'fontFamily')
+    out.fontFamily = token ? { name: s.fontFamily, token } : { name: s.fontFamily }
+  }
   if (s?.fontSize !== undefined) out.fontSize = length(s.fontSize, node, 'fontSize')
   if (s?.fontWeight !== undefined) out.fontWeight = s.fontWeight
   if (s?.italic) out.italic = true

@@ -5,6 +5,7 @@ import { FormField } from './design-system/form-field.js'
 import { InputFieldDefault } from './design-system/input-field-default.js'
 import { InputFieldError } from './design-system/input-field-error.js'
 import { InputFieldFocused } from './design-system/input-field-focused.js'
+import { DesignSystem } from './design-system/design-system.js'
 import { Card } from './generated/card.js'
 
 /**
@@ -29,6 +30,12 @@ export function App() {
       <Section title="Form field — composes InputFieldDefault, prop threaded through">
         <FormField />
         <FormField label="Email" placeholderText="you@example.com" />
+      </Section>
+
+      <Section title="Whole frame — colour swatches must be circles, not squares">
+        <div className="origin-top-left scale-[0.55]">
+          <DesignSystem />
+        </div>
       </Section>
 
       <Section title="Card — from the test fixture, no token needed">

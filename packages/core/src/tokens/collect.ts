@@ -94,12 +94,25 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     // so it earns a token however rarely it is used — even when the name is
     // unreadable and has to be synthesised. Only values bound to nothing at all
     // have to earn their place by frequency.
-    if (c.sources.length === 0 && (c.kind !== 'color' || c.uses < minUses)) continue
+    // A typeface is never incidental: one use still has to be spelled out
+    // somewhere, and a `--font-*` entry is the readable place for it.
+    const exempt = c.sources.length > 0 || c.kind === 'fontFamily'
+    if (!exempt && (c.kind !== 'color' || c.uses < minUses)) continue
     used.add(`${c.kind}:${name}`)
     tokens.push({ kind: c.kind, name, value: c.value, sources: c.sources, uses: c.uses })
   }
 
   return { tokens, resolver: makeResolver(tokens) }
+}
+
+/**
+ * Figma reports only the family Figma itself resolved. A generated stylesheet
+ * needs a fallback so the page stays legible before the webfont loads, or if it
+ * never does.
+ */
+export function fontStack(family: string): string {
+  const quoted = /\s/.test(family) ? `'${family}'` : family
+  return `${quoted}, ui-sans-serif, system-ui, sans-serif`
 }
 
 function collectFromNode(
@@ -111,6 +124,10 @@ function collectFromNode(
   if (box.fill?.kind === 'solid') add('color', box.fill.color.css, box.fill.color.token)
   if (box.border) add('color', box.border.color.css, box.border.color.token)
   if (text?.color) add('color', text.color.css, text.color.token)
+
+  if (text?.fontFamily) {
+    add('fontFamily', fontStack(text.fontFamily.name), text.fontFamily.token)
+  }
 
   if (text?.fontSize?.token)
     add('fontSize', `${text.fontSize.px}px`, text.fontSize.token, text.fontSize.px)
@@ -164,6 +181,8 @@ export function slugify(figmaName: string): string {
 
 function synthesize(c: Candidate): string | undefined {
   if (c.kind === 'color') return nameColor(c.value)
+  // `Inter, ui-sans-serif, …` -> `inter`
+  if (c.kind === 'fontFamily') return slugify(c.value.split(',')[0]!.replace(/'/g, ''))
   if (c.numeric === undefined) return undefined
   return `${c.numeric}`.replace('.', '-')
 }

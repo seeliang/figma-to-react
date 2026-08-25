@@ -37,6 +37,12 @@ export interface LengthValue {
   token?: TokenRef
 }
 
+export interface FontFamilyValue {
+  /** The family name as Figma reports it, e.g. `Inter`. */
+  name: string
+  token?: TokenRef
+}
+
 export type Fill =
   | { kind: 'solid'; color: ColorValue }
   | { kind: 'gradient'; css: string }
@@ -66,7 +72,14 @@ export interface Corners {
   bottomLeft: LengthValue
 }
 
-export type Sizing = { kind: 'fixed'; px: number } | { kind: 'hug' } | { kind: 'fill' }
+/**
+ * `px` is the size Figma measured, carried on every variant rather than only on
+ * `fixed`. A hugging node normally needs no width class, but a replaced element
+ * such as `<input>` sizes itself and ignores its content, so the measurement is
+ * the only way to keep the surrounding layout honest.
+ */
+export type Sizing =
+  { kind: 'fixed'; px: number } | { kind: 'hug'; px?: number } | { kind: 'fill'; px?: number }
 
 export interface Padding {
   top: LengthValue
@@ -100,6 +113,12 @@ export interface Layout {
 }
 
 export interface BoxStyle {
+  /**
+   * Figma expresses a circle through the node *type*, not a corner radius, so
+   * an ELLIPSE carries no `cornerRadius` at all and would otherwise render as
+   * a square.
+   */
+  shape?: 'ellipse'
   fill?: Fill
   border?: Border
   corners?: Corners
@@ -112,7 +131,7 @@ export interface BoxStyle {
 }
 
 export interface TextStyle {
-  fontFamily?: string
+  fontFamily?: FontFamilyValue
   fontSize?: LengthValue
   fontWeight?: number
   italic?: boolean

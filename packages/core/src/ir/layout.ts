@@ -121,12 +121,13 @@ function sizing(
   const explicit = axis === 'horizontal' ? node.layoutSizingHorizontal : node.layoutSizingVertical
   const resolved: LayoutSizing = explicit ?? inferSizing(node, parent, axis)
 
-  if (resolved === 'FILL') return { kind: 'fill' }
-  if (resolved === 'HUG') return { kind: 'hug' }
-
   const box = node.absoluteBoundingBox
-  const px = axis === 'horizontal' ? box?.width : box?.height
-  return px === undefined ? { kind: 'hug' } : { kind: 'fixed', px: round(px) }
+  const measured = axis === 'horizontal' ? box?.width : box?.height
+  const px = measured === undefined ? undefined : round(measured)
+
+  if (resolved === 'FILL') return px === undefined ? { kind: 'fill' } : { kind: 'fill', px }
+  if (resolved === 'HUG') return px === undefined ? { kind: 'hug' } : { kind: 'hug', px }
+  return px === undefined ? { kind: 'hug' } : { kind: 'fixed', px }
 }
 
 function inferSizing(

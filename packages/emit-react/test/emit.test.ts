@@ -134,6 +134,24 @@ describe('emit: semantic elements', () => {
   })
 })
 
+describe('emit: component placement', () => {
+  it('wraps a collapsed component tag so its position survives', async () => {
+    // A `<Card />` tag has nowhere to put a class. Dropping the placement made
+    // the component render at the flow position and overlap its neighbours.
+    const { files } = await generate('card', '1:2')
+    const card = files.get('card.tsx')!
+    const line = card.split('\n').find((l) => l.includes('<ButtonPrimary'))!
+    expect(line.trim().startsWith('<ButtonPrimary')).toBe(true)
+  })
+
+  it('carries placement onto a wrapper when the parent positions absolutely', async () => {
+    const { files } = await generate('legacy', '3:1')
+    const src = files.get('absolute-group.tsx')!
+    // Every absolutely positioned child keeps its offset, tag or div alike.
+    expect(src.match(/absolute left-\[/g)?.length).toBeGreaterThan(0)
+  })
+})
+
 describe('emit: absolute layout', () => {
   it('matches the absolute-positioning snapshot', async () => {
     const { files } = await generate('legacy', '3:1')
