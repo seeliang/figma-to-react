@@ -1,0 +1,75 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`emit: absolute layout > matches the absolute-positioning snapshot 1`] = `
+"export function AbsoluteGroup() {
+  return (
+    <div className="relative w-50 h-50 bg-[linear-gradient(180deg,_#ff0000_0%,_#0000ff_100%)] rounded-tl-lg rounded-tr-lg">
+      <div className="absolute left-[20px] top-[20px] w-10 h-10 bg-[rgba(0,0,0,0.5)] opacity-50" />
+      <img className="absolute left-[0px] top-[100px] w-50 h-25" src={undefined} alt="" />
+      <span
+        className="absolute left-[160px] top-[10px] w-6 h-6"
+        data-figma-vector="3:5"
+        aria-hidden="true"
+      />
+    </div>
+  )
+}
+"
+`;
+
+exports[`emit: card > matches the card snapshot 1`] = `
+"import { ButtonPrimary } from './button-primary.js'
+
+export type CardProps = {
+  title?: string
+  body?: string
+  label?: string
+}
+
+export function Card({
+  title = 'Monthly report',
+  body = 'Revenue grew 12% against last quarter.',
+  label = 'View more',
+}: CardProps = {}) {
+  return (
+    <div className="flex flex-col items-start gap-4 w-80 p-6 bg-[#ffffff] border border-[#e6e8eb] rounded-lg overflow-hidden shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)]">
+      <div className="flex justify-between items-center gap-2 w-full">
+        <h3 className="text-[18px] leading-[24px] font-semibold tracking-[-0.2px] text-[#0f1729]">
+          {title}
+        </h3>
+        <span className="w-4 h-4" data-figma-vector="1:5" aria-hidden="true" />
+      </div>
+      <p className="w-full text-[14px] leading-[20px] text-[#4a5463]">{body}</p>
+      <ButtonPrimary label={label} />
+    </div>
+  )
+}
+"
+`;
+
+exports[`emit: card > matches the extracted component snapshot 1`] = `
+"export type ButtonPrimaryProps = {
+  label?: string
+}
+
+export function ButtonPrimary({ label = 'View more' }: ButtonPrimaryProps = {}) {
+  return (
+    <div className="flex justify-center items-center py-2 px-4 bg-[#2663eb] rounded-md">
+      <p className="text-[14px] leading-[20px] font-medium text-center text-[#ffffff]">{label}</p>
+    </div>
+  )
+}
+"
+`;
+
+exports[`emit: legacy sizing > matches the legacy-row snapshot 1`] = `
+"export function LegacyRow() {
+  return (
+    <div className="flex items-center gap-3 w-[400px]">
+      <div className="flex-1 h-10" />
+      <div className="self-stretch w-22 h-full" />
+    </div>
+  )
+}
+"
+`;

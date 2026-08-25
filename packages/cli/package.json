@@ -1,0 +1,19 @@
+{
+  "name": "@figma-to-react/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "figma2react": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@figma-to-react/core": "workspace:*",
+    "@figma-to-react/emit-react": "workspace:*",
+    "commander": "^12.1.0"
+  }
+}

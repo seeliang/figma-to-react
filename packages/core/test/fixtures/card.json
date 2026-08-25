@@ -1,0 +1,165 @@
+{
+  "name": "Fixtures",
+  "lastModified": "2026-08-01T00:00:00Z",
+  "nodes": {
+    "1:2": {
+      "document": {
+        "id": "1:2",
+        "name": "Card",
+        "type": "FRAME",
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 320, "height": 180 },
+        "clipsContent": true,
+        "layoutMode": "VERTICAL",
+        "primaryAxisSizingMode": "AUTO",
+        "counterAxisSizingMode": "FIXED",
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "HUG",
+        "itemSpacing": 16,
+        "paddingTop": 24,
+        "paddingRight": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "counterAxisAlignItems": "MIN",
+        "cornerRadius": 8,
+        "fills": [{ "type": "SOLID", "color": { "r": 1, "g": 1, "b": 1, "a": 1 } }],
+        "strokes": [{ "type": "SOLID", "color": { "r": 0.9, "g": 0.91, "b": 0.92, "a": 1 } }],
+        "strokeWeight": 1,
+        "strokeAlign": "INSIDE",
+        "effects": [
+          {
+            "type": "DROP_SHADOW",
+            "visible": true,
+            "color": { "r": 0, "g": 0, "b": 0, "a": 0.08 },
+            "offset": { "x": 0, "y": 2 },
+            "radius": 8,
+            "spread": 0
+          }
+        ],
+        "styles": { "fill": "S:surface" },
+        "children": [
+          {
+            "id": "1:3",
+            "name": "Header",
+            "type": "FRAME",
+            "absoluteBoundingBox": { "x": 24, "y": 24, "width": 272, "height": 24 },
+            "layoutMode": "HORIZONTAL",
+            "layoutSizingHorizontal": "FILL",
+            "layoutSizingVertical": "HUG",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 8,
+            "fills": [],
+            "children": [
+              {
+                "id": "1:4",
+                "name": "Title",
+                "type": "TEXT",
+                "absoluteBoundingBox": { "x": 24, "y": 24, "width": 120, "height": 24 },
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "characters": "Monthly report",
+                "style": {
+                  "fontFamily": "Inter",
+                  "fontWeight": 600,
+                  "fontSize": 18,
+                  "lineHeightPx": 24,
+                  "lineHeightUnit": "PIXELS",
+                  "letterSpacing": -0.2,
+                  "textAlignHorizontal": "LEFT"
+                },
+                "fills": [
+                  { "type": "SOLID", "color": { "r": 0.06, "g": 0.09, "b": 0.16, "a": 1 } }
+                ],
+                "styles": { "text": "S:heading" }
+              },
+              {
+                "id": "1:5",
+                "name": "icon/chevron",
+                "type": "VECTOR",
+                "absoluteBoundingBox": { "x": 280, "y": 28, "width": 16, "height": 16 },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [{ "type": "SOLID", "color": { "r": 0.4, "g": 0.44, "b": 0.5, "a": 1 } }]
+              }
+            ]
+          },
+          {
+            "id": "1:6",
+            "name": "Body",
+            "type": "TEXT",
+            "absoluteBoundingBox": { "x": 24, "y": 64, "width": 272, "height": 40 },
+            "layoutSizingHorizontal": "FILL",
+            "layoutSizingVertical": "HUG",
+            "characters": "Revenue grew 12% against last quarter.",
+            "style": {
+              "fontFamily": "Inter",
+              "fontWeight": 400,
+              "fontSize": 14,
+              "lineHeightPercentFontSize": 142.857,
+              "lineHeightUnit": "FONT_SIZE_%",
+              "textAlignHorizontal": "LEFT"
+            },
+            "fills": [{ "type": "SOLID", "color": { "r": 0.29, "g": 0.33, "b": 0.39, "a": 1 } }]
+          },
+          {
+            "id": "1:7",
+            "name": "Button",
+            "type": "INSTANCE",
+            "componentId": "10:1",
+            "absoluteBoundingBox": { "x": 24, "y": 120, "width": 96, "height": 36 },
+            "layoutMode": "HORIZONTAL",
+            "layoutSizingHorizontal": "HUG",
+            "layoutSizingVertical": "HUG",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 8,
+            "paddingRight": 16,
+            "paddingBottom": 8,
+            "paddingLeft": 16,
+            "cornerRadius": 6,
+            "fills": [{ "type": "SOLID", "color": { "r": 0.15, "g": 0.39, "b": 0.92, "a": 1 } }],
+            "boundVariables": {
+              "fills": [{ "type": "VARIABLE_ALIAS", "id": "VariableID:2:9" }]
+            },
+            "children": [
+              {
+                "id": "1:8",
+                "name": "Label",
+                "type": "TEXT",
+                "absoluteBoundingBox": { "x": 40, "y": 128, "width": 64, "height": 20 },
+                "characters": "View more",
+                "style": {
+                  "fontFamily": "Inter",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "lineHeightPx": 20,
+                  "lineHeightUnit": "PIXELS",
+                  "textAlignHorizontal": "CENTER"
+                },
+                "fills": [{ "type": "SOLID", "color": { "r": 1, "g": 1, "b": 1, "a": 1 } }]
+              }
+            ]
+          },
+          {
+            "id": "1:9",
+            "name": "Hidden note",
+            "type": "TEXT",
+            "visible": false,
+            "characters": "should not be emitted",
+            "fills": []
+          }
+        ]
+      },
+      "components": {
+        "10:1": { "key": "abc", "name": "Button/Primary", "componentSetId": "10:0" }
+      },
+      "componentSets": {
+        "10:0": { "key": "def", "name": "Button" }
+      },
+      "styles": {
+        "S:surface": { "key": "surface", "name": "Surface/Raised", "styleType": "FILL" },
+        "S:heading": { "key": "heading", "name": "Heading/Small", "styleType": "TEXT" }
+      }
+    }
+  }
+}

@@ -1,0 +1,147 @@
+# figma-to-react
+
+Generate Tailwind-styled React components from a Figma frame, over the Figma REST API.
+
+```bash
+export FIGMA_TOKEN=figd_...
+pnpm figma2react gen 'https://www.figma.com/design/AbC123/My-File?node-id=1-2' --out src/components
+```
+
+```
+src/components/
+  card.tsx            <- the frame
+  button-primary.tsx  <- each component, generated once and imported
+  tokens.css          <- a Tailwind @theme block
+  assets/             <- raster fills
+```
+
+## Why this exists
+
+Walking Figma's node JSON and printing JSX is a solved problem — [`kazuyaseki/figma-to-react`](https://github.com/kazuyaseki/figma-to-react) and Figma's own [`figma-api-demo`](https://github.com/figma/figma-api-demo) both do it, as do Builder.io, Locofy and the official [Figma MCP server](https://developers.figma.com/docs/figma-mcp-server/).
+
+What none of them do well is **token resolution**. Every tool emits `bg-[#3b82f6]` and `p-[24px]`, which is why generated code gets thrown away. This one lifts values into a real theme:
+
+```tsx
+<div className="flex flex-col gap-4 w-80 p-6 bg-surface-raised rounded-lg">
+```
+
+```css
+@theme {
+  --color-surface-raised: #ffffff;
+  --color-heading-small: #0f1729;
+}
+```
+
+Naming, in priority order:
+
+1. **Figma Styles** — `Surface/Raised` becomes `--color-surface-raised`. Style names ship in the file-nodes response on every plan, so this is the common case for design-system files.
+2. **Figma Variables** — the [Variables REST API is Enterprise-only](https://developers.figma.com/docs/rest-api/variables-endpoints), so the name is usually unavailable. The variable _id_ is still a correct grouping key, so every node bound to one variable gets one shared, synthesised name.
+3. **Frequency** — an unnamed colour used `--min-uses` times or more earns a theme entry, named from its own HSL against Tailwind's ramp (`#2563eb` → `blue-600`), deterministically, so re-running produces the same names.
+
+Spacing, radii and type sizes are deliberately **not** named by frequency. Tailwind's scale already covers them, and inventing `--spacing-7` where `p-7` exists makes the output worse.
+
+## Commands
+
+```
+figma2react gen <figma-url> --out <dir>     generate components
+figma2react tokens <figma-url>              print the @theme block
+figma2react inspect <figma-url>             dump the IR as JSON
+```
+
+Accepts a full Figma URL, a bare file key, or `<fileKey>:<nodeId>`. Node ids are converted from the URL form (`1-2`) to the API form (`1:2`) automatically.
+
+| Flag                     |                                                                |
+| ------------------------ | -------------------------------------------------------------- |
+| `-t, --token`            | Figma PAT. Defaults to `$FIGMA_TOKEN`                          |
+| `--no-tokens`            | Emit literal values instead of a theme                         |
+| `--no-assets`            | Skip SVG export and image download                             |
+| `--min-uses <n>`         | Uses before an unnamed colour earns a theme entry (default 3)  |
+| `--repeat-threshold <n>` | Identical siblings before collapsing into `.map()` (default 3) |
+| `--dry-run`              | Print what would be written                                    |
+
+`inspect` is the debugging workhorse: it shows exactly what the normalizer made of a frame without spending API calls on a full generate. `--raw` dumps the untouched API response instead.
+
+`$FIGMA_API_BASE` overrides the API host, for Figma Government tenants and for tests.
+
+## Wiring up the theme
+
+`tokens.css` is a **fragment**, not an entry point. Import it from your own stylesheet:
+
+```css
+@import 'tailwindcss';
+@import './generated/tokens.css';
+```
+
+Order matters. And if the generated directory is gitignored — most are — Tailwind v4 will not scan it, so none of the generated classes reach your bundle. The build still succeeds; the page just renders unstyled. Add an explicit source glob:
+
+```css
+@source './generated/*.tsx';
+```
+
+A bare directory path (`@source './generated'`) does **not** override gitignore. It has to be a glob.
+
+## What it does with a design
+
+| Figma                                     | Output                                                         |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| Auto Layout                               | flexbox — direction, `gap`, padding, `justify-*`, `items-*`    |
+| `layoutSizing` FIXED / HUG / FILL         | fixed width, nothing, or `flex-1` / `w-full` depending on axis |
+| No Auto Layout                            | absolute positioning against the parent's bounding box         |
+| Components / instances                    | one file per component, imported at each use                   |
+| Text inside a component                   | an optional prop, defaulting to the design's own copy          |
+| Vectors and icon groups                   | inline SVG, converted to valid JSX                             |
+| Image fills                               | downloaded to `assets/`, rendered as `<img>`                   |
+| Invisible layers, masks                   | dropped                                                        |
+| ≥3 identical siblings with differing text | collapsed into a `.map()`                                      |
+
+Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `layoutAlign` and `counterAxisSizingMode`.
+
+### Known trade-offs
+
+- **Stacked paints** collapse to the topmost visible one; CSS has no clean equivalent. `inspect` shows the full node when a design depends on them.
+- **Heading levels** come from font size alone (`≥32px` → `h1`, `≥24` → `h2`, `≥18` → `h3`), because Figma carries no semantic signal. Expect to fix some by hand.
+- **Text styles become colour tokens.** A `Heading/Small` text style yields `--color-heading-small`, since the colour is the only part of it the REST API exposes per-node.
+- Gradients other than linear degrade to their nearest CSS equivalent.
+
+## Development
+
+```bash
+pnpm install
+pnpm verify        # build, typecheck, test, example build, style check
+```
+
+Four stages, each a pure function, each independently testable:
+
+```
+Figma URL
+  → fetch      packages/core/src/figma      → node JSON
+  → normalize  packages/core/src/ir         → IR
+  → tokens     packages/core/src/tokens     → @theme + a resolver
+  → emit       packages/emit-react          → TSX
+```
+
+The **IR** (`packages/core/src/ir/types.ts`) mentions no framework, no CSS and no Tailwind. An emitter for Vue or React Native is a new package consuming those types, not a rewrite.
+
+Tests never touch the network. `packages/core/test/fixtures/` holds API-shaped responses; the CLI suite runs the real binary against a local fixture server.
+
+Three gates beyond the unit tests, each of which has already caught a real bug:
+
+- `tsc --noEmit` on the **generated** output, strict, `noUnusedLocals`. Caught a declared-but-unused prop on a nested component.
+- `scripts/verify-styles.mjs` checks every generated class resolves to a CSS rule in the built bundle. Caught Tailwind silently scanning nothing while the build reported success.
+- Snapshots on the emitter, to keep class ordering and naming stable.
+
+### An LLM pass
+
+There isn't one, and `gen` is fully deterministic. `emit()` takes an optional `refine?: (ir: IRNode) => Promise<IRNode>` hook that runs between normalize and emit, which is where semantic renaming or prop extraction would go.
+
+### Fixtures
+
+`packages/core/test/fixtures/*.json` are hand-authored to the documented API shapes rather than recorded, since the repo has no token. Re-record them against a real file with:
+
+```bash
+figma2react inspect '<url>' --raw > packages/core/test/fixtures/card.json
+```
+
+## Not in v1
+
+Figma plugin frontend · [Code Connect](https://developers.figma.com/docs/code-connect) generation · non-React emitters · the Enterprise Variables endpoint · component variants as prop unions · responsive breakpoints from Figma constraints.

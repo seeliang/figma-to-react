@@ -1,0 +1,112 @@
+{
+  "name": "Fixtures",
+  "lastModified": "2026-08-01T00:00:00Z",
+  "nodes": {
+    "2:1": {
+      "document": {
+        "id": "2:1",
+        "name": "Legacy Row",
+        "type": "FRAME",
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 400, "height": 64 },
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisSizingMode": "FIXED",
+        "counterAxisSizingMode": "AUTO",
+        "itemSpacing": 12,
+        "counterAxisAlignItems": "CENTER",
+        "fills": [],
+        "children": [
+          {
+            "id": "2:2",
+            "name": "Grows",
+            "type": "FRAME",
+            "absoluteBoundingBox": { "x": 0, "y": 0, "width": 300, "height": 40 },
+            "layoutGrow": 1,
+            "fills": [],
+            "children": []
+          },
+          {
+            "id": "2:3",
+            "name": "Stretches",
+            "type": "FRAME",
+            "absoluteBoundingBox": { "x": 312, "y": 0, "width": 88, "height": 64 },
+            "layoutAlign": "STRETCH",
+            "fills": [],
+            "children": []
+          }
+        ]
+      },
+      "components": {},
+      "componentSets": {},
+      "styles": {}
+    },
+    "3:1": {
+      "document": {
+        "id": "3:1",
+        "name": "Absolute Group",
+        "type": "FRAME",
+        "absoluteBoundingBox": { "x": 100, "y": 50, "width": 200, "height": 200 },
+        "layoutMode": "NONE",
+        "fills": [
+          {
+            "type": "GRADIENT_LINEAR",
+            "gradientHandlePositions": [
+              { "x": 0, "y": 0 },
+              { "x": 0, "y": 1 },
+              { "x": 1, "y": 0 }
+            ],
+            "gradientStops": [
+              { "position": 0, "color": { "r": 1, "g": 0, "b": 0, "a": 1 } },
+              { "position": 1, "color": { "r": 0, "g": 0, "b": 1, "a": 1 } }
+            ]
+          }
+        ],
+        "rectangleCornerRadii": [8, 8, 0, 0],
+        "children": [
+          {
+            "id": "3:2",
+            "name": "Floating",
+            "type": "RECTANGLE",
+            "absoluteBoundingBox": { "x": 120, "y": 70, "width": 40, "height": 40 },
+            "opacity": 0.5,
+            "fills": [
+              { "type": "SOLID", "opacity": 0.5, "color": { "r": 0, "g": 0, "b": 0, "a": 1 } }
+            ]
+          },
+          {
+            "id": "3:3",
+            "name": "Mask",
+            "type": "RECTANGLE",
+            "isMask": true,
+            "absoluteBoundingBox": { "x": 100, "y": 50, "width": 200, "height": 200 },
+            "fills": [{ "type": "SOLID", "color": { "r": 0, "g": 0, "b": 0, "a": 1 } }]
+          },
+          {
+            "id": "3:4",
+            "name": "Photo",
+            "type": "RECTANGLE",
+            "absoluteBoundingBox": { "x": 100, "y": 150, "width": 200, "height": 100 },
+            "fills": [{ "type": "IMAGE", "scaleMode": "FILL", "imageRef": "ref-abc" }]
+          },
+          {
+            "id": "3:5",
+            "name": "icon/star",
+            "type": "GROUP",
+            "absoluteBoundingBox": { "x": 260, "y": 60, "width": 24, "height": 24 },
+            "children": [
+              {
+                "id": "3:6",
+                "name": "path",
+                "type": "VECTOR",
+                "absoluteBoundingBox": { "x": 260, "y": 60, "width": 24, "height": 24 },
+                "fills": [{ "type": "SOLID", "color": { "r": 1, "g": 0.8, "b": 0, "a": 1 } }]
+              }
+            ]
+          }
+        ]
+      },
+      "components": {},
+      "componentSets": {},
+      "styles": {}
+    }
+  }
+}
