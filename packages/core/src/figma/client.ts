@@ -15,6 +15,38 @@ export class FigmaApiError extends Error {
   }
 }
 
+/**
+ * Figma meters REST access by plan, and the quota is not a burst window: a
+ * Starter account that runs out is told to come back in days, not seconds.
+ * Retrying that is pointless, so it is raised as its own error with the plan
+ * and wait time attached rather than slept through.
+ */
+export class FigmaRateLimitError extends FigmaApiError {
+  constructor(
+    readonly retryAfterSeconds: number,
+    readonly planTier: string | undefined,
+    readonly limitType: string | undefined,
+    url: string,
+  ) {
+    super(
+      `Figma rate limit exceeded${planTier ? ` on the ${planTier} plan` : ''}. ` +
+        `Quota resets in ${humanDuration(retryAfterSeconds)}.` +
+        (planTier && planTier !== 'enterprise'
+          ? '\nREST API quota is set by plan tier: https://www.figma.com/files?api_paywall=true'
+          : ''),
+      429,
+      url,
+    )
+  }
+}
+
+export function humanDuration(seconds: number): string {
+  if (seconds < 60) return `${Math.ceil(seconds)}s`
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`
+  if (seconds < 86400) return `${(seconds / 3600).toFixed(1)} hours`
+  return `${(seconds / 86400).toFixed(1)} days`
+}
+
 export interface FigmaClientOptions {
   token: string
   baseUrl?: string
@@ -24,6 +56,16 @@ export interface FigmaClientOptions {
   fetch?: typeof globalThis.fetch
   /** Injected in tests so backoff does not actually sleep. */
   sleep?: (ms: number) => Promise<void>
+  /** Abort a single request after this long. Default 30s. */
+  timeoutMs?: number
+  /**
+   * Longest backoff worth waiting through. A `Retry-After` beyond this is a
+   * quota reset rather than congestion, and is raised instead of slept.
+   * Default 120s.
+   */
+  maxBackoffMs?: number
+  /** Called before each backoff sleep, so a CLI can say why it is waiting. */
+  onRetry?: (info: { attempt: number; waitMs: number; status: number }) => void
 }
 
 const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
@@ -34,6 +76,9 @@ export class FigmaClient {
   private readonly maxAttempts: number
   private readonly doFetch: typeof globalThis.fetch
   private readonly sleep: (ms: number) => Promise<void>
+  private readonly timeoutMs: number
+  private readonly maxBackoffMs: number
+  private readonly onRetry: FigmaClientOptions['onRetry']
 
   constructor(opts: FigmaClientOptions) {
     if (!opts.token) {
@@ -44,6 +89,9 @@ export class FigmaClient {
     this.maxAttempts = opts.maxAttempts ?? 4
     this.doFetch = opts.fetch ?? globalThis.fetch
     this.sleep = opts.sleep ?? defaultSleep
+    this.timeoutMs = opts.timeoutMs ?? 30_000
+    this.maxBackoffMs = opts.maxBackoffMs ?? 120_000
+    this.onRetry = opts.onRetry
   }
 
   /**
@@ -109,9 +157,26 @@ export class FigmaClient {
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
       const res = await this.doFetch(url, {
         headers: { 'X-Figma-Token': this.token },
+        signal: AbortSignal.timeout(this.timeoutMs),
       })
 
       if (res.ok) return (await res.json()) as T
+
+      const retryAfter = res.headers.get('retry-after')
+
+      if (res.status === 429) {
+        const seconds = Number(retryAfter)
+        // A wait measured in hours is a quota reset. Sleeping through it would
+        // look like a hang; say so instead.
+        if (Number.isFinite(seconds) && seconds * 1000 > this.maxBackoffMs) {
+          throw new FigmaRateLimitError(
+            seconds,
+            res.headers.get('x-figma-plan-tier') ?? undefined,
+            res.headers.get('x-figma-rate-limit-type') ?? undefined,
+            url,
+          )
+        }
+      }
 
       const body = await res.text().catch(() => '')
       lastError = new FigmaApiError(
@@ -125,7 +190,9 @@ export class FigmaClient {
       if (res.status !== 429 && res.status < 500) throw lastError
       if (attempt === this.maxAttempts) break
 
-      await this.sleep(backoffMs(attempt, res.headers.get('retry-after')))
+      const waitMs = Math.min(backoffMs(attempt, retryAfter), this.maxBackoffMs)
+      this.onRetry?.({ attempt, waitMs, status: res.status })
+      await this.sleep(waitMs)
     }
 
     throw lastError!

@@ -1,6 +1,8 @@
 import type { IRDocument, IRNode, TokenResolver } from '@figma-to-react/core'
 import { noTokens } from '@figma-to-react/core'
 import { NameRegistry, toCamelCase, toFileName, toPascalCase } from './naming.js'
+import { semanticFor, textLeaves, textTagFor } from './semantics.js'
+import type { Semantic } from './semantics.js'
 import { classesFor } from './tailwind.js'
 
 export interface EmitOptions {
@@ -19,6 +21,12 @@ export interface EmitOptions {
    * otherwise produce dozens of props named things like `n2563Eb`.
    */
   maxTextSlots?: number
+  /**
+   * Infer `<button>`, `<input>` and `<a>` from layer names. On by default:
+   * a `<div>` styled as a button has no keyboard activation and is not
+   * announced as a button, which is a correctness problem, not a cosmetic one.
+   */
+  semantics?: boolean
 }
 
 export interface EmitResult {
@@ -32,6 +40,7 @@ interface EmitState {
   resolver: TokenResolver
   repeatThreshold: number
   maxTextSlots: number
+  semantics: boolean
   registry: NameRegistry
   /** Component id to the name and file it was emitted as. */
   emitted: Map<string, { name: string; file: string }>
@@ -49,6 +58,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
     resolver: options.resolver ?? noTokens,
     repeatThreshold: options.repeatThreshold ?? 3,
     maxTextSlots: options.maxTextSlots ?? 12,
+    semantics: options.semantics ?? true,
     registry: new NameRegistry(),
     emitted: new Map(),
     files: new Map(),
@@ -170,6 +180,11 @@ ${body}
 interface RenderCtx {
   slotByNode: Map<string, TextSlot>
   indent: number
+  /**
+   * Set inside `<button>` and `<a>`, which accept phrasing content only. A `<p>`
+   * there is invalid HTML, so text becomes a `<span>`.
+   */
+  phrasingOnly?: boolean
 }
 
 function renderNode(
@@ -182,7 +197,11 @@ function renderNode(
 
   // Both a definition and a use collapse to a single tag; the definition's own
   // markup lives in its file, which is rendered separately.
-  if ((node.kind === 'instance' || node.kind === 'component') && node.component && state.splitComponents) {
+  if (
+    (node.kind === 'instance' || node.kind === 'component') &&
+    node.component &&
+    state.splitComponents
+  ) {
     // Skip inside the component's own definition file: that instance *is*
     // the definition, so it must render its markup rather than import itself.
     const target = state.emitted.get(node.component.id)
@@ -205,21 +224,82 @@ function renderNode(
     case 'vector':
       return renderVector(node, attrs, pad)
     default:
-      return renderBox(node, attrs, state, ctx, pad)
+      return renderBox(node, className, state, ctx, pad)
   }
 }
 
 function renderBox(
   node: IRNode,
-  attrs: string,
+  className: string,
   state: EmitState,
   ctx: RenderCtx,
   pad: string,
 ): string {
+  const semantic = state.semantics
+    ? semanticFor(node, node.component?.name ?? node.name)
+    : undefined
+
+  if (semantic) return renderSemantic(node, semantic, className, state, ctx, pad)
+
+  const attrs = className ? ` className=${quote(className)}` : ''
   if (node.children.length === 0) return `${pad}<div${attrs} />`
 
   const children = renderChildren(node, state, { ...ctx, indent: ctx.indent + 2 })
   return `${pad}<div${attrs}>\n${children}\n${pad}</div>`
+}
+
+/**
+ * Renders a node the name rules identified as a real element.
+ *
+ * A void element (`<input>`) cannot hold its text, so the text leaf is dropped
+ * and its content moves to `placeholder`. Its styling would be lost with it, so
+ * the leaf's classes are merged onto the element — that is where the font size
+ * and text colour live.
+ */
+function renderSemantic(
+  node: IRNode,
+  semantic: Semantic,
+  className: string,
+  state: EmitState,
+  ctx: RenderCtx,
+  pad: string,
+): string {
+  const leaf = textLeaves(node)[0]!
+  const attrs = [...semantic.attrs]
+
+  if (semantic.void) {
+    // Take only what the dropped text leaf contributes that the container does
+    // not: how the text looks. Its box classes would fight the container's —
+    // the leaf's `h-full` against the container's `h-11` is two heights on one
+    // element, decided by stylesheet order rather than by intent.
+    const leafClasses = classesFor(leaf, { resolver: state.resolver, parent: node.layout })
+      .split(' ')
+      .filter(isTypographyClass)
+    const merged = [className, ...leafClasses].filter(Boolean).join(' ')
+    attrs.push(`${semantic.text}={${textExpr(leaf, ctx)}}`)
+    if (merged) attrs.push(`className=${quote(merged)}`)
+    return `${pad}<${semantic.tag} ${attrs.join(' ')} />`
+  }
+
+  if (className) attrs.push(`className=${quote(className)}`)
+  const children = renderChildren(node, state, {
+    ...ctx,
+    indent: ctx.indent + 2,
+    phrasingOnly: semantic.phrasingOnly,
+  })
+  return `${pad}<${semantic.tag} ${attrs.join(' ')}>\n${children}\n${pad}</${semantic.tag}>`
+}
+
+const TYPOGRAPHY =
+  /^(text-|font-|leading-|tracking-|italic$|uppercase$|lowercase$|capitalize$|underline$|line-through$)/
+
+/** Distinguishes `text-slate-400` and `font-medium` from `flex-1` and `h-full`. */
+const isTypographyClass = (cls: string): boolean => TYPOGRAPHY.test(cls)
+
+/** The text as a JSX expression: a prop reference where one exists, else a literal. */
+function textExpr(leaf: IRNode, ctx: RenderCtx): string {
+  const slot = ctx.slotByNode.get(leaf.id)
+  return slot ? slot.prop : quote(leaf.content ?? '')
 }
 
 /**
@@ -336,18 +416,9 @@ function structuralKey(node: IRNode, state: EmitState, parent: IRNode): string {
 
 function renderText(node: IRNode, attrs: string, ctx: RenderCtx, pad: string): string {
   const slot = ctx.slotByNode.get(node.id)
-  const tag = textTag(node)
+  const tag = textTagFor(node, ctx.phrasingOnly === true)
   const content = slot ? `{${slot.prop}}` : jsxText(node.content ?? '')
   return `${pad}<${tag}${attrs}>${content}</${tag}>`
-}
-
-/** Font size is the only structural signal Figma gives us about heading level. */
-function textTag(node: IRNode): string {
-  const size = node.text?.fontSize?.px ?? 16
-  if (size >= 32) return 'h1'
-  if (size >= 24) return 'h2'
-  if (size >= 18) return 'h3'
-  return 'p'
 }
 
 function renderVector(node: IRNode, attrs: string, pad: string): string {

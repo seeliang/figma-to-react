@@ -52,14 +52,15 @@ figma2react inspect <figma-url>             dump the IR as JSON
 
 Accepts a full Figma URL, a bare file key, or `<fileKey>:<nodeId>`. Node ids are converted from the URL form (`1-2`) to the API form (`1:2`) automatically.
 
-| Flag                     |                                                                |
-| ------------------------ | -------------------------------------------------------------- |
-| `-t, --token`            | Figma PAT. Defaults to `$FIGMA_TOKEN`                          |
-| `--no-tokens`            | Emit literal values instead of a theme                         |
-| `--no-assets`            | Skip SVG export and image download                             |
-| `--min-uses <n>`         | Uses before an unnamed colour earns a theme entry (default 3)  |
-| `--repeat-threshold <n>` | Identical siblings before collapsing into `.map()` (default 3) |
-| `--dry-run`              | Print what would be written                                    |
+| Flag                     |                                                                   |
+| ------------------------ | ----------------------------------------------------------------- |
+| `-t, --token`            | Figma PAT. Defaults to `$FIGMA_TOKEN`                             |
+| `--no-tokens`            | Emit literal values instead of a theme                            |
+| `--no-assets`            | Skip SVG export and image download                                |
+| `--min-uses <n>`         | Uses before an unnamed colour earns a theme entry (default 3)     |
+| `--repeat-threshold <n>` | Identical siblings before collapsing into `.map()` (default 3)    |
+| `--no-semantics`         | Emit plain divs instead of inferring `<button>`, `<input>`, `<a>` |
+| `--dry-run`              | Print what would be written                                       |
 
 `inspect` is the debugging workhorse: it shows exactly what the normalizer made of a frame without spending API calls on a full generate. `--raw` dumps the untouched API response instead.
 
@@ -92,6 +93,7 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 | Components (incl. variant sets)           | one file per component; `Button` + `Type=Primary` -> `ButtonPrimary` |
 | Instances                                 | a tag importing that component, with text passed as props            |
 | Text inside a component                   | an optional prop, defaulting to the design's own copy                |
+| Layer named `Button` / `Input` / `Link`   | a real `<button>`, `<input>` or `<a>` (`--no-semantics` to disable)  |
 | Vectors and icon groups                   | inline SVG, converted to valid JSX                                   |
 | Image fills                               | downloaded to `assets/`, rendered as `<img>`                         |
 | Invisible layers, masks                   | dropped                                                              |
@@ -99,8 +101,20 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 
 Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `layoutAlign` and `counterAxisSizingMode`.
 
+### Rate limits
+
+Figma meters REST access **by plan tier**, and the quota is not a burst window — a Starter account that runs out is told to come back in _days_. The client fails fast on that rather than sleeping through it, and reports the plan and the wait:
+
+```
+error: Figma rate limit exceeded on the starter plan. Quota resets in 4.6 days.
+```
+
+Short waits are still retried with backoff. Requests time out after 30s.
+
 ### Known trade-offs
 
+- **Element inference is name-based.** A layer called `Button` becomes a `<button>`; one called `CTA Container` does not. The rule only fires when the node's whole subtree is a single text leaf, so a wrapper like `Form Field` is left alone. It can misfire — `--no-semantics` turns it off.
+- **Variable names need Enterprise.** On other plans the variables endpoint is unavailable, so a bound Variable contributes a grouping key but no name. Colour **Styles** carry names on every plan — prefer them if you want `--color-primary` over `--color-blue-600`.
 - **Stacked paints** collapse to the topmost visible one; CSS has no clean equivalent. `inspect` shows the full node when a design depends on them.
 - **Text becomes props only up to a point.** Figma auto-names text layers after their own content, so a spec sheet with 50 labels would otherwise yield 50 props named things like `n2563Eb`. Past 12 text leaves a node is treated as a page, not a parameterised component, and its copy is emitted literally.
 - **Variants are separate components, not a prop union.** `Type=Primary` and `Type=Ghost` become `ButtonPrimary` and `ButtonGhost`. Collapsing them into one `Button` with a `type` prop is a v2 item.

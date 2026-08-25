@@ -87,9 +87,19 @@ describe('collectTokens', () => {
     expect(named('heading-small')).toMatchObject({ kind: 'color', value: '#0f1729' })
   })
 
-  it('groups a bound variable under one synthetic name', () => {
-    const token = table.tokens.find((t) => t.source?.source === 'variable')
-    expect(token).toMatchObject({ kind: 'color', name: 'blue-600', value: '#2663eb' })
+  it('groups an unnameable variable by value rather than giving it its own token', () => {
+    // Variable *names* need the Enterprise-only variables endpoint. Without
+    // them, one token per variable id yields `white`, `white-2`, `white-3` for
+    // the same colour: identical output, three meaningless names.
+    const token = table.tokens.find((t) => t.value === '#2663eb')
+    expect(token).toMatchObject({ kind: 'color', name: 'blue-600' })
+    expect(token!.sources.map((s) => s.key)).toContain('VariableID:2:9')
+    expect(table.tokens.filter((t) => t.value === '#2663eb')).toHaveLength(1)
+  })
+
+  it('emits no two tokens holding the same value', () => {
+    const values = table.tokens.map((t) => t.value)
+    expect(new Set(values).size).toBe(values.length)
   })
 
   it('leaves one-off unnamed colours as literals', () => {
@@ -101,7 +111,7 @@ describe('collectTokens', () => {
     expect(table.tokens.filter((t) => t.kind === 'spacing')).toHaveLength(0)
   })
 
-  it('resolves a value back to its theme name only via its own source', () => {
+  it('resolves through the source, and through the raw value as a fallback', () => {
     const { resolver } = table
     expect(
       resolver.resolve('color', '#ffffff', {
@@ -110,8 +120,9 @@ describe('collectTokens', () => {
         name: 'Surface/Raised',
       }),
     ).toBe('surface-raised')
-    // Same colour, no token: must not borrow the named token's name.
-    expect(resolver.resolve('color', '#ffffff')).toBeUndefined()
+    // A node the designer forgot to bind still lands on the same token rather
+    // than emitting a raw hex right beside it.
+    expect(resolver.resolve('color', '#ffffff')).toBe('surface-raised')
   })
 })
 

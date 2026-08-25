@@ -9,7 +9,7 @@ import { NameRegistry, toCamelCase, toFileName, toPascalCase } from '../src/nami
 
 const FIXTURES = new URL('../../core/test/fixtures/', import.meta.url)
 
-async function generate(file: string, nodeId: string) {
+async function generate(file: string, nodeId: string, options: Parameters<typeof emit>[1] = {}) {
   const response: FileNodesResponse = JSON.parse(
     readFileSync(fileURLToPath(new URL(`${file}.json`, FIXTURES)), 'utf8'),
   )
@@ -21,7 +21,7 @@ async function generate(file: string, nodeId: string) {
     componentSets: entry.componentSets,
     styles: entry.styles,
   })
-  const result = emit(doc)
+  const result = emit(doc, options)
   return { ...result, files: await formatAll(result.files) }
 }
 
@@ -100,6 +100,37 @@ describe('emit: card', () => {
   it('omits invisible layers from the output', async () => {
     const { files } = await generate('card', '1:2')
     expect(files.get('card.tsx')).not.toContain('should not be emitted')
+  })
+})
+
+describe('emit: semantic elements', () => {
+  it('emits a real <button> for a layer named like one', async () => {
+    const { files } = await generate('card', '1:2')
+    const button = files.get('button-primary.tsx')!
+    expect(button).toContain('<button')
+    expect(button).toContain('type="button"')
+    expect(button).not.toMatch(/<div/)
+  })
+
+  it('uses <span> inside a button, since <p> there is invalid HTML', async () => {
+    const { files } = await generate('card', '1:2')
+    const button = files.get('button-primary.tsx')!
+    expect(button).toContain('<span')
+    expect(button).not.toContain('<p ')
+  })
+
+  it('falls back to plain divs when semantics are off', async () => {
+    const { files } = await generate('card', '1:2', { semantics: false })
+    const button = files.get('button-primary.tsx')!
+    expect(button).toContain('<div')
+    expect(button).not.toContain('<button')
+  })
+
+  it('leaves a wrapper alone when it holds more than one text leaf', async () => {
+    // A `Form Field` is a label stacked above an input; only the inner control
+    // is an element, and collapsing the wrapper would lose the label.
+    const { files } = await generate('card', '1:2')
+    expect(files.get('card.tsx')).toContain('<div')
   })
 })
 

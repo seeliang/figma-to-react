@@ -4,8 +4,11 @@ export type ButtonGhostProps = {
 
 export function ButtonGhost({ buttonLabel = 'Button Label' }: ButtonGhostProps = {}) {
   return (
-    <div className="flex justify-center items-center w-90 h-[46px] py-[14px] px-6 rounded-lg">
-      <p className="text-[14px] text-blue-600">{buttonLabel}</p>
-    </div>
+    <button
+      type="button"
+      className="flex justify-center items-center w-90 h-[46px] py-[14px] px-6 rounded-lg"
+    >
+      <span className="text-[14px] text-blue-600">{buttonLabel}</span>
+    </button>
   )
 }

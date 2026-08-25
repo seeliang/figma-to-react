@@ -8,8 +8,8 @@ export interface Token {
   name: string
   /** The CSS value this token holds. */
   value: string
-  /** Figma style/variable key this token came from, when it had one. */
-  source?: TokenRef
+  /** Every Figma style/variable that resolves to this token. */
+  sources: TokenRef[]
   uses: number
 }
 
@@ -31,7 +31,10 @@ interface Candidate {
   kind: TokenKind
   value: string
   numeric?: number
-  source?: TokenRef
+  /** Named source, if any — the only kind that earns its own token. */
+  named?: TokenRef
+  /** Every source seen for this candidate, named or not. */
+  sources: TokenRef[]
   uses: number
 }
 
@@ -56,16 +59,27 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
   const candidates = new Map<string, Candidate>()
 
   const add = (kind: TokenKind, value: string, source?: TokenRef, numeric?: number) => {
-    // Group by the Figma construct when there is one, by value otherwise: two
-    // variables that happen to hold the same colour stay two tokens.
-    const key = source ? `${kind}:${source.source}:${source.key}` : `${kind}:${value}`
+    // Only a *named* source earns its own token. Figma Styles carry names on
+    // every plan; Variables do not unless the caller has Enterprise access to
+    // the variables endpoint, and an unnameable variable adds no information —
+    // grouping three of them under `white`, `white-2`, `white-3` is strictly
+    // worse than one `white`, since the output is identical either way.
+    const key = source?.name ? `${kind}:${source.source}:${source.key}` : `${kind}:${value}`
     const existing = candidates.get(key)
     if (existing) {
       existing.uses++
-      existing.source ??= source
+      if (source) existing.sources.push(source)
+      existing.named ??= source?.name ? source : undefined
       return
     }
-    candidates.set(key, { kind, value, numeric, source, uses: 1 })
+    candidates.set(key, {
+      kind,
+      value,
+      numeric,
+      named: source?.name ? source : undefined,
+      sources: source ? [source] : [],
+      uses: 1,
+    })
   }
 
   walk(doc.root, (node) => collectFromNode(node, add))
@@ -76,9 +90,13 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
   for (const c of [...candidates.values()].sort(byPriority)) {
     const name = nameFor(c, used)
     if (!name) continue
-    if (!c.source && (c.kind !== 'color' || c.uses < minUses)) continue
+    // Binding a value to a Style or Variable is a deliberate design decision,
+    // so it earns a token however rarely it is used — even when the name is
+    // unreadable and has to be synthesised. Only values bound to nothing at all
+    // have to earn their place by frequency.
+    if (c.sources.length === 0 && (c.kind !== 'color' || c.uses < minUses)) continue
     used.add(`${c.kind}:${name}`)
-    tokens.push({ kind: c.kind, name, value: c.value, source: c.source, uses: c.uses })
+    tokens.push({ kind: c.kind, name, value: c.value, sources: c.sources, uses: c.uses })
   }
 
   return { tokens, resolver: makeResolver(tokens) }
@@ -120,12 +138,12 @@ const paddings = (layout: IRNode['layout']) =>
 
 /** Named tokens win ties over frequency-named ones, then heavier usage wins. */
 const byPriority = (a: Candidate, b: Candidate): number => {
-  const rank = (c: Candidate) => (c.source?.name ? 0 : c.source ? 1 : 2)
+  const rank = (c: Candidate) => (c.named ? 0 : 1)
   return rank(a) - rank(b) || b.uses - a.uses || a.value.localeCompare(b.value)
 }
 
 function nameFor(c: Candidate, used: Set<string>): string | undefined {
-  const base = c.source?.name ? slugify(c.source.name) : synthesize(c)
+  const base = c.named ? slugify(c.named.name!) : synthesize(c)
   if (!base) return undefined
 
   let name = base
@@ -161,7 +179,9 @@ export function nameColor(css: string): string {
   const { h, l } = toHsl(rgb)
 
   const family = familyFor(rgb, h, l)
-  return family === 'white' || family === 'black' ? family : `${family}-${nearestStep(lightness(rgb))}`
+  return family === 'white' || family === 'black'
+    ? family
+    : `${family}-${nearestStep(lightness(rgb))}`
 }
 
 /**
@@ -204,8 +224,17 @@ const GREY_CHROMA = 0.2
  * uniform, so one table serves every hue.
  */
 const STEP_LIGHTNESS: [number, number][] = [
-  [97.6, 50], [94.5, 100], [89.6, 200], [82.4, 300], [71.4, 400], [60.3, 500],
-  [49.7, 600], [40.0, 700], [31.3, 800], [24.9, 900], [12.4, 950],
+  [97.6, 50],
+  [94.5, 100],
+  [89.6, 200],
+  [82.4, 300],
+  [71.4, 400],
+  [60.3, 500],
+  [49.7, 600],
+  [40.0, 700],
+  [31.3, 800],
+  [24.9, 900],
+  [12.4, 950],
 ]
 
 /** CIE L* from sRGB, 0 (black) to 100 (white). */
@@ -227,8 +256,6 @@ function nearestStep(l: number): number {
 }
 
 const achromatic = (l: number): string => (l >= 0.99 ? 'white' : l <= 0.01 ? 'black' : 'neutral')
-
-
 
 const HUES: [number, string][] = [
   [15, 'red'],
@@ -284,11 +311,12 @@ function makeResolver(tokens: Token[]): TokenResolver {
   const byValue = new Map<string, string>()
 
   for (const t of tokens) {
-    if (t.source) bySource.set(`${t.kind}:${t.source.source}:${t.source.key}`, t.name)
-    // Only unnamed tokens may be matched by raw value; a value that also has a
-    // named token elsewhere must not silently borrow that name.
-    if (!t.source && !byValue.has(`${t.kind}:${t.value}`))
-      byValue.set(`${t.kind}:${t.value}`, t.name)
+    for (const source of t.sources) {
+      bySource.set(`${t.kind}:${source.source}:${source.key}`, t.name)
+    }
+    // A value may also be matched literally, so a node the designer forgot to
+    // bind still resolves to the same token rather than emitting a raw hex.
+    if (!byValue.has(`${t.kind}:${t.value}`)) byValue.set(`${t.kind}:${t.value}`, t.name)
   }
 
   return {

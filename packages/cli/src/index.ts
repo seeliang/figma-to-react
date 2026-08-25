@@ -32,6 +32,7 @@ withCommonOptions(
     .requiredOption('-o, --out <dir>', 'output directory')
     .option('--no-assets', 'skip downloading vectors and images')
     .option('--repeat-threshold <n>', 'identical siblings before collapsing into .map()', '3')
+    .option('--no-semantics', 'emit plain divs instead of inferring <button>, <input> and <a>')
     .option('--dry-run', 'print what would be written without touching the filesystem'),
 ).action(async (target: string, opts) => {
   await withErrorHandling(async () => {
@@ -43,6 +44,7 @@ withCommonOptions(
       assets: opts.assets !== false,
       minUses: Number(opts.minUses),
       repeatThreshold: Number(opts.repeatThreshold),
+      semantics: opts.semantics !== false,
       onProgress: progress,
     })
 

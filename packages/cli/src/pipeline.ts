@@ -20,6 +20,8 @@ export interface RunOptions {
   assets: boolean
   minUses?: number
   repeatThreshold?: number
+  /** Infer `<button>`, `<input>` and `<a>` from layer names. */
+  semantics?: boolean
   onProgress?: (message: string) => void
 }
 
@@ -89,6 +91,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const emitted = emit(doc, {
     resolver: table?.resolver,
     repeatThreshold: options.repeatThreshold ?? 3,
+    semantics: options.semantics ?? true,
   })
 
   const files = await formatAll(emitted.files, (file, err) => {
