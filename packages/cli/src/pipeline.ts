@@ -2,6 +2,7 @@ import {
   FigmaClient,
   auditDesign,
   collectTokens,
+  emitFontCss,
   emitThemeCss,
   normalize,
   parseFigmaTarget,
@@ -25,6 +26,8 @@ export interface RunOptions {
   semantics?: boolean
   /** Emit `data-figma-id` on every element, for layout measurement. */
   traceIds?: boolean
+  /** Emit a Google Fonts `@import` for the typefaces in use. */
+  fontImport?: boolean
   onProgress?: (message: string) => void
 }
 
@@ -37,6 +40,8 @@ export interface RunResult {
   /** Binary assets, keyed by file name relative to `<out>/assets`. */
   assets: Map<string, Uint8Array>
   themeCss?: string
+  /** Loads the typefaces the theme names; must be imported before anything else. */
+  fontCss?: string
   warnings: string[]
   /** Gaps in the design file, as distinct from problems with this tool. */
   design: DesignFinding[]
@@ -108,6 +113,10 @@ export async function run(options: RunOptions): Promise<RunResult> {
     files,
     assets: assetResult.files,
     themeCss: table ? emitThemeCss(table) : undefined,
+    fontCss:
+      table && options.fontImport !== false && table.fonts.length > 0
+        ? emitFontCss(table.fonts)
+        : undefined,
     warnings,
     design,
   }

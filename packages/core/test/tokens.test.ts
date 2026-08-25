@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import type { FileNodesResponse } from '../src/figma/types.js'
 import { normalize } from '../src/ir/normalize.js'
 import { collectTokens, nameColor, slugify } from '../src/tokens/collect.js'
-import { emitThemeCss } from '../src/tokens/emit.js'
+import { emitFontCss, emitThemeCss, googleFontsUrl } from '../src/tokens/emit.js'
 
 function docFor(file: string, nodeId: string) {
   const response: FileNodesResponse = JSON.parse(
@@ -146,6 +146,59 @@ describe('typefaces', () => {
     expect(emitThemeCss(table)).toContain(
       '--font-inter: Inter, ui-sans-serif, system-ui, sans-serif;',
     )
+  })
+})
+
+describe('font loading', () => {
+  const table = collectTokens(docFor('card', '1:2'), { minUses: 2 })
+
+  it('requests exactly the weights the design draws in, and no others', () => {
+    const css = emitFontCss(table.fonts)
+    expect(css).toContain('family=Inter:wght@400;500;600')
+    expect(css).not.toContain('100')
+    expect(css).not.toContain('900')
+  })
+
+  it('asks for display=swap so text is readable before the font lands', () => {
+    expect(emitFontCss(table.fonts)).toContain('display=swap')
+  })
+
+  it('keeps the import out of the theme file, where a bundler would drop it', () => {
+    // A CSS @import is only valid ahead of every other rule. Inside the theme
+    // file it lands mid-bundle once inlined, and is silently discarded.
+    expect(emitThemeCss(table)).not.toContain('fonts.googleapis')
+  })
+
+  it('says the import must come first, since nothing else enforces it', () => {
+    expect(emitFontCss(table.fonts)).toContain('BEFORE anything else')
+  })
+
+  it('escapes spaces in a family name', () => {
+    expect(
+      googleFontsUrl([{ family: 'Source Serif 4', styles: [{ weight: 400, italic: false }] }]),
+    ).toContain('family=Source+Serif+4')
+  })
+
+  it('requests italics only when the design uses them', () => {
+    const roman = googleFontsUrl([{ family: 'Inter', styles: [{ weight: 400, italic: false }] }])
+    expect(roman).toContain('wght@400')
+    expect(roman).not.toContain('ital')
+
+    const italic = googleFontsUrl([
+      {
+        family: 'Inter',
+        styles: [
+          { weight: 400, italic: false },
+          { weight: 400, italic: true },
+        ],
+      },
+    ])
+    expect(italic).toContain('ital,wght@0,400;1,400')
+  })
+
+  it('emits nothing when the design names no typeface', () => {
+    expect(emitFontCss([])).toBe('')
+    expect(googleFontsUrl([])).toBe('')
   })
 })
 

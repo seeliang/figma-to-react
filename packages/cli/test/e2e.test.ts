@@ -72,7 +72,12 @@ describe('figma2react gen', () => {
     const out = await mkdtemp(join(tmpdir(), 'f2r-'))
     const { stdout } = await cli(['gen', 'TESTKEY:1-2', '--out', out])
 
-    expect((await readdir(out)).sort()).toEqual(['button-primary.tsx', 'card.tsx', 'tokens.css'])
+    expect((await readdir(out)).sort()).toEqual([
+      'button-primary.tsx',
+      'card.tsx',
+      'fonts.css',
+      'tokens.css',
+    ])
     expect(stdout).toContain('root component: <Card />')
   })
 
@@ -95,6 +100,24 @@ describe('figma2react gen', () => {
 
     expect(card).toContain('bg-surface-raised')
     expect(css).toContain('--color-surface-raised: #ffffff;')
+  })
+
+  it('writes a font loader and tells you it must be imported first', async () => {
+    const out = await mkdtemp(join(tmpdir(), 'f2r-'))
+    const { stdout } = await cli(['gen', 'TESTKEY:1-2', '--out', out])
+
+    const fonts = await readFile(join(out, 'fonts.css'), 'utf8')
+    expect(fonts).toContain('fonts.googleapis.com')
+    expect(fonts).toContain('display=swap')
+    // Ordering is not enforceable by the file itself, so the CLI says it too.
+    expect(stdout).toContain("@import './fonts.css';")
+    expect(stdout).toContain('fonts.css must come first')
+  })
+
+  it('skips the font loader on --no-font-import', async () => {
+    const out = await mkdtemp(join(tmpdir(), 'f2r-'))
+    await cli(['gen', 'TESTKEY:1-2', '--out', out, '--no-font-import'])
+    expect(await readdir(out)).not.toContain('fonts.css')
   })
 
   it('falls back to literal values with --no-tokens', async () => {

@@ -35,6 +35,7 @@ withCommonOptions(
     .option('--no-semantics', 'emit plain divs instead of inferring <button>, <input> and <a>')
     .option('--no-design-notes', 'skip the report of gaps in the Figma file itself')
     .option('--trace-ids', 'emit data-figma-id on every element, for measuring layout fidelity')
+    .option('--no-font-import', 'skip the Google Fonts @import for the typefaces in use')
     .option('--dry-run', 'print what would be written without touching the filesystem'),
 ).action(async (target: string, opts) => {
   await withErrorHandling(async () => {
@@ -48,6 +49,7 @@ withCommonOptions(
       repeatThreshold: Number(opts.repeatThreshold),
       semantics: opts.semantics !== false,
       traceIds: opts.traceIds === true,
+      fontImport: opts.fontImport !== false,
       onProgress: progress,
     })
 
@@ -58,6 +60,7 @@ withCommonOptions(
         ([name, bytes]) => [join('assets', name), bytes] as [string, Uint8Array],
       ),
     ]
+    if (result.fontCss) planned.push(['fonts.css', result.fontCss])
     if (result.themeCss) planned.push(['tokens.css', result.themeCss])
 
     if (opts.dryRun) {
@@ -79,9 +82,13 @@ withCommonOptions(
     console.log(`  root component: <${result.rootComponent} />`)
     if (result.themeCss) {
       console.log(
-        '\nAdd to your stylesheet (order matters):\n' +
+        '\nAdd to your stylesheet, in this order:\n' +
+          (result.fontCss ? "  @import './fonts.css';\n" : '') +
           "  @import 'tailwindcss';\n" +
           "  @import './tokens.css';\n" +
+          (result.fontCss
+            ? 'fonts.css must come first: a CSS @import is only valid ahead of every other rule.\n'
+            : '') +
           'If the output directory is gitignored, also add an @source line pointing at it.',
       )
     }

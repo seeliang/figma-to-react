@@ -115,10 +115,9 @@ the ones big enough to notice. To measure it instead, generate with
 
 ```
 57 nodes compared
-  within 1px   32 (56%)
-  within 2px   45 (79%)
-  within 4px   54 (95%)
-  within 8px   56 (98%)
+  within 1px   35 (61%)
+  within 2px   52 (91%)
+  within 4px   57 (100%)
 ```
 
 Three bugs came out of this that no amount of looking had found: hugging text
@@ -126,8 +125,10 @@ rendered 332px too wide, a stale `layoutAlign` stretched an input to its
 container, and Figma's "Auto" line height resolved about 3px per line
 differently in the browser — invisible per node, tens of pixels down a column.
 
-What remains is font rendering: a few px of width on text, because Figma and the
-browser rasterise the same typeface differently. That is not fixable in codegen.
+A fourth came out of it too: the residual few px of text width looked like
+unavoidable font rasterisation, but was the _wrong version_ of the typeface —
+the locally installed Inter, not the one Figma used. Loading the real webfont
+took every node inside 4px.
 
 `--trace-ids` is debug output and off by default.
 

@@ -16,6 +16,14 @@ export interface Token {
 export interface TokenTable {
   tokens: Token[]
   resolver: TokenResolver
+  /** Every typeface used, with the exact styles the design draws in. */
+  fonts: FontUsage[]
+}
+
+export interface FontUsage {
+  family: string
+  /** Distinct `weight`/`italic` pairs, so only what is used gets requested. */
+  styles: { weight: number; italic: boolean }[]
 }
 
 export interface CollectOptions {
@@ -82,7 +90,24 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     })
   }
 
-  walk(doc.root, (node) => collectFromNode(node, add))
+  const fontStyles = new Map<string, Map<string, { weight: number; italic: boolean }>>()
+  walk(doc.root, (node) => {
+    collectFromNode(node, add)
+    const t = node.text
+    if (!t?.fontFamily) return
+    const styles = fontStyles.get(t.fontFamily.name) ?? new Map()
+    const weight = t.fontWeight ?? 400
+    const italic = t.italic === true
+    styles.set(`${weight}:${italic}`, { weight, italic })
+    fontStyles.set(t.fontFamily.name, styles)
+  })
+
+  const fonts: FontUsage[] = [...fontStyles.entries()].map(([family, styles]) => ({
+    family,
+    styles: [...styles.values()].sort(
+      (a, b) => Number(a.italic) - Number(b.italic) || a.weight - b.weight,
+    ),
+  }))
 
   const tokens: Token[] = []
   const used = new Set<string>()
@@ -102,7 +127,7 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     tokens.push({ kind: c.kind, name, value: c.value, sources: c.sources, uses: c.uses })
   }
 
-  return { tokens, resolver: makeResolver(tokens) }
+  return { tokens, resolver: makeResolver(tokens), fonts }
 }
 
 /**
