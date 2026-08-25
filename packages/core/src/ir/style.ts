@@ -305,7 +305,10 @@ export function toTextStyle(node: FigmaNode, ctx: StyleContext): TextStyle | und
  */
 function resolveLineHeight(s: TypeStyle | undefined): number | undefined {
   if (!s) return undefined
-  if (s.lineHeightUnit === 'INTRINSIC_%') return undefined
+  // `INTRINSIC_%` is Figma's "Auto" line height. Both Figma and the browser
+  // then defer to the font, but they resolve it differently — roughly 3px per
+  // line here — and in a stacked column that error accumulates into tens of
+  // pixels of drift. Figma still reports the value it computed, so use it.
   if (s.lineHeightPx !== undefined) return round(s.lineHeightPx)
   if (s.lineHeightPercentFontSize !== undefined && s.fontSize !== undefined) {
     return round((s.lineHeightPercentFontSize / 100) * s.fontSize)

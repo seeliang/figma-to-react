@@ -22,6 +22,12 @@ export interface EmitOptions {
    */
   maxTextSlots?: number
   /**
+   * Emit `data-figma-id` on every element. Off by default — it is debug output,
+   * not something to ship — but it is what lets a rendered page be measured
+   * against the Figma geometry it came from, node by node.
+   */
+  traceIds?: boolean
+  /**
    * Infer `<button>`, `<input>` and `<a>` from layer names. On by default:
    * a `<div>` styled as a button has no keyboard activation and is not
    * announced as a button, which is a correctness problem, not a cosmetic one.
@@ -41,6 +47,7 @@ interface EmitState {
   repeatThreshold: number
   maxTextSlots: number
   semantics: boolean
+  traceIds: boolean
   registry: NameRegistry
   /** Component id to the name and file it was emitted as. */
   emitted: Map<string, { name: string; file: string }>
@@ -59,6 +66,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
     repeatThreshold: options.repeatThreshold ?? 3,
     maxTextSlots: options.maxTextSlots ?? 12,
     semantics: options.semantics ?? true,
+    traceIds: options.traceIds ?? false,
     registry: new NameRegistry(),
     emitted: new Map(),
     files: new Map(),
@@ -219,14 +227,15 @@ function renderNode(
         resolver: state.resolver,
         parent: parent?.layout,
       })
-      return placement
-        ? `${pad}<div className=${quote(placement)}>\n${pad}  ${tag}\n${pad}</div>`
+      const trace = traceAttr(node, state)
+      return placement || trace
+        ? `${pad}<div${placement ? ` className=${quote(placement)}` : ''}${trace}>\n${pad}  ${tag}\n${pad}</div>`
         : `${pad}${tag}`
     }
   }
 
   const className = classesFor(node, { resolver: state.resolver, parent: parent?.layout })
-  const attrs = className ? ` className=${quote(className)}` : ''
+  const attrs = (className ? ` className=${quote(className)}` : '') + traceAttr(node, state)
 
   switch (node.kind) {
     case 'text':
@@ -293,10 +302,14 @@ function renderSemantic(
       .join(' ')
     attrs.push(`${semantic.text}={${textExpr(leaf, ctx)}}`)
     if (merged) attrs.push(`className=${quote(merged)}`)
+    const trace = traceAttr(node, state).trim()
+    if (trace) attrs.push(trace)
     return `${pad}<${semantic.tag} ${attrs.join(' ')} />`
   }
 
   if (className) attrs.push(`className=${quote(className)}`)
+  const semanticTrace = traceAttr(node, state).trim()
+  if (semanticTrace) attrs.push(semanticTrace)
   const children = renderChildren(node, state, {
     ...ctx,
     indent: ctx.indent + 2,
@@ -323,6 +336,10 @@ const TYPOGRAPHY =
 
 /** Distinguishes `text-slate-400` and `font-medium` from `flex-1` and `h-full`. */
 const isTypographyClass = (cls: string): boolean => TYPOGRAPHY.test(cls)
+
+/** `data-figma-id`, or nothing when tracing is off. */
+const traceAttr = (node: IRNode, state: EmitState): string =>
+  state.traceIds ? ` data-figma-id=${quote(node.id)}` : ''
 
 /** The text as a JSX expression: a prop reference where one exists, else a literal. */
 function textExpr(leaf: IRNode, ctx: RenderCtx): string {

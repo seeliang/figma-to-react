@@ -34,7 +34,7 @@ export function Card({
   return (
     <div className="flex flex-col items-start gap-4 w-80 p-6 bg-[#ffffff] border border-[#e6e8eb] rounded-lg overflow-hidden shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)]">
       <div className="flex justify-between items-center gap-2 w-full">
-        <h3 className="font-[Inter] text-[18px] leading-[24px] font-semibold tracking-[-0.2px] text-[#0f1729]">
+        <h3 className="w-max font-[Inter] text-[18px] leading-[24px] font-semibold tracking-[-0.2px] text-[#0f1729]">
           {title}
         </h3>
         <span className="w-4 h-4" data-figma-vector="1:5" aria-hidden="true" />
@@ -58,7 +58,7 @@ export function ButtonPrimary({ label = 'View more' }: ButtonPrimaryProps = {}) 
       type="button"
       className="flex justify-center items-center py-2 px-4 bg-[#2663eb] rounded-md cursor-pointer"
     >
-      <span className="font-[Inter] text-[14px] leading-[20px] font-medium text-center text-[#ffffff]">
+      <span className="w-max font-[Inter] text-[14px] leading-[20px] font-medium text-center text-[#ffffff]">
         {label}
       </span>
     </button>

@@ -23,6 +23,8 @@ export interface RunOptions {
   repeatThreshold?: number
   /** Infer `<button>`, `<input>` and `<a>` from layer names. */
   semantics?: boolean
+  /** Emit `data-figma-id` on every element, for layout measurement. */
+  traceIds?: boolean
   onProgress?: (message: string) => void
 }
 
@@ -92,6 +94,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     resolver: table?.resolver,
     repeatThreshold: options.repeatThreshold ?? 3,
     semantics: options.semantics ?? true,
+    traceIds: options.traceIds ?? false,
   })
 
   const files = await formatAll(emitted.files, (file, err) => {

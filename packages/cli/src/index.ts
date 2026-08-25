@@ -34,6 +34,7 @@ withCommonOptions(
     .option('--repeat-threshold <n>', 'identical siblings before collapsing into .map()', '3')
     .option('--no-semantics', 'emit plain divs instead of inferring <button>, <input> and <a>')
     .option('--no-design-notes', 'skip the report of gaps in the Figma file itself')
+    .option('--trace-ids', 'emit data-figma-id on every element, for measuring layout fidelity')
     .option('--dry-run', 'print what would be written without touching the filesystem'),
 ).action(async (target: string, opts) => {
   await withErrorHandling(async () => {
@@ -46,6 +47,7 @@ withCommonOptions(
       minUses: Number(opts.minUses),
       repeatThreshold: Number(opts.repeatThreshold),
       semantics: opts.semantics !== false,
+      traceIds: opts.traceIds === true,
       onProgress: progress,
     })
 

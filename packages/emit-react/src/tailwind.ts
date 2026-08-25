@@ -28,7 +28,7 @@ export interface ClassContext {
 export function classesFor(node: IRNode, ctx: ClassContext): string {
   const out: string[] = []
   out.push(...layoutClasses(node, ctx))
-  out.push(...sizingClasses(node.layout, ctx))
+  out.push(...sizingClasses(node.layout, ctx, node.kind === 'text'))
   out.push(...spacingClasses(node.layout, ctx))
   out.push(...boxClasses(node.box, ctx))
   if (node.text) out.push(...textClasses(node.text, ctx))
@@ -111,13 +111,13 @@ const JUSTIFY = { start: 'start', center: 'center', end: 'end', between: 'betwee
 // sizing
 // ---------------------------------------------------------------------------
 
-function sizingClasses(layout: Layout, ctx: ClassContext): string[] {
+function sizingClasses(layout: Layout, ctx: ClassContext, isText = false): string[] {
   const out: string[] = []
   const parentAxis = ctx.parent?.mode === 'flex' ? (ctx.parent.direction ?? 'row') : undefined
 
-  const width = sizeClass(layout.width, 'w', parentAxis === 'row', layout, ctx)
+  const width = sizeClass(layout.width, 'w', parentAxis === 'row', layout, ctx, isText)
   if (width) out.push(...width)
-  const height = sizeClass(layout.height, 'h', parentAxis === 'column', layout, ctx)
+  const height = sizeClass(layout.height, 'h', parentAxis === 'column', layout, ctx, isText)
   if (height) out.push(...height)
 
   return out
@@ -136,6 +136,7 @@ function sizeClass(
   isMainAxis: boolean,
   layout: Layout,
   ctx: ClassContext,
+  isText = false,
 ): string[] | undefined {
   switch (size.kind) {
     case 'fixed':
@@ -143,6 +144,11 @@ function sizeClass(
     case 'fill':
       return isMainAxis ? ['flex-1'] : [`${prefix}-full`]
     case 'hug':
+      // Figma's HUG on a text node means "as wide as the longest line" — it
+      // does not wrap, and overflows its parent if it must. A block element
+      // wraps at the container width instead, which produced extra lines and
+      // pushed everything below it down the page.
+      if (isText && prefix === 'w') return ['w-max']
       return ctx.parent?.mode === 'none' && layout.position ? [`${prefix}-fit`] : undefined
   }
 }

@@ -33,7 +33,7 @@ export function toLayout(node: FigmaNode, parent?: FigmaNode): Layout {
   const padding = toPadding(node)
   if (padding) layout.padding = padding
 
-  const selfAlign = mapSelfAlign(node.layoutAlign)
+  const selfAlign = mapSelfAlign(node, parent)
   if (selfAlign) layout.alignSelf = selfAlign
 
   // Absolute fallback: only meaningful when the parent gave no layout intent.
@@ -73,6 +73,15 @@ const mapPrimary = (a?: AxisAlign): Layout['justify'] => {
   }
 }
 
+/**
+ * Figma and CSS disagree on the cross-axis default, and the REST API omits a
+ * value when it is the default — so an absent `counterAxisAlignItems` means
+ * MIN, while an absent `align-items` means `stretch`.
+ *
+ * Leaving it out therefore stretches every child to the container's width. A
+ * hugging text label 57px wide rendered at 381px, because a block-level `<p>`
+ * fills whatever it is stretched to.
+ */
 const mapCounter = (a?: AxisAlign): Layout['align'] => {
   switch (a) {
     case 'CENTER':
@@ -82,15 +91,27 @@ const mapCounter = (a?: AxisAlign): Layout['align'] => {
     case 'BASELINE':
       return 'baseline'
     case 'MIN':
-      // Not the default: flexbox stretches by default, Figma's MIN does not.
-      return 'start'
     default:
-      return undefined
+      return 'start'
   }
 }
 
-const mapSelfAlign = (a?: FigmaNode['layoutAlign']): Layout['alignSelf'] => {
-  switch (a) {
+/**
+ * `layoutAlign` is the older signal and Figma keeps writing `STRETCH` into it
+ * even where the modern `layoutSizing*` says the node hugs. The explicit value
+ * wins: an input that hugs at 138px was rendering stretched to its container's
+ * full 360px because the stale `STRETCH` was taken at face value.
+ */
+const mapSelfAlign = (node: FigmaNode, parent?: FigmaNode): Layout['alignSelf'] => {
+  const parentMode = parent?.layoutMode ?? 'NONE'
+  if (parentMode === 'NONE') return undefined
+
+  // The cross axis is the one the parent does *not* stack along.
+  const crossSizing =
+    parentMode === 'HORIZONTAL' ? node.layoutSizingVertical : node.layoutSizingHorizontal
+  if (crossSizing && crossSizing !== 'FILL') return undefined
+
+  switch (node.layoutAlign) {
     case 'STRETCH':
       return 'stretch'
     case 'CENTER':

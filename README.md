@@ -105,6 +105,32 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 
 Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `layoutAlign` and `counterAxisSizingMode`.
 
+### Measuring layout fidelity
+
+Comparing generated output against the Figma frame by eye catches bugs, but only
+the ones big enough to notice. To measure it instead, generate with
+`--trace-ids` — every element then carries `data-figma-id` — and open
+`examples/fidelity.html`, which mounts the root unscaled and diffs every node's
+`getBoundingClientRect()` against the `absoluteBoundingBox` Figma reported.
+
+```
+57 nodes compared
+  within 1px   32 (56%)
+  within 2px   45 (79%)
+  within 4px   54 (95%)
+  within 8px   56 (98%)
+```
+
+Three bugs came out of this that no amount of looking had found: hugging text
+rendered 332px too wide, a stale `layoutAlign` stretched an input to its
+container, and Figma's "Auto" line height resolved about 3px per line
+differently in the browser — invisible per node, tens of pixels down a column.
+
+What remains is font rendering: a few px of width on text, because Figma and the
+browser rasterise the same typeface differently. That is not fixable in codegen.
+
+`--trace-ids` is debug output and off by default.
+
 ### Design notes
 
 After generating, the CLI reports what is missing **from the Figma file** — kept
