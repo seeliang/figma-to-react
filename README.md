@@ -122,6 +122,12 @@ Each story carries `parameters.design`, so
 the exact Figma node beside the component. The node id is already known, so the
 pairing is free.
 
+The design panel needs the **real file key** in the URL, which means generating
+against the real API — or, when working offline against a recorded fixture,
+passing the real key anyway (`<realKey>:<nodeId>`), since the fixture server
+ignores it. A placeholder key produces a panel that reports the file as
+inaccessible, which reads exactly like a permissions problem and is not one.
+
 Stories are **build output**. They are overwritten on every run; hand-written
 stories belong in a sibling `*.custom.stories.tsx`, which the generator never
 touches.

@@ -13,7 +13,10 @@ const meta = {
   component: FormField,
   tags: ['autodocs'],
   parameters: {
-    design: { type: 'figma', url: 'https://www.figma.com/design/K/component?node-id=2-73' },
+    design: {
+      type: 'figma',
+      url: 'https://www.figma.com/design/uA3bE5ofr6BgRakJzudL4L/component?node-id=2-73',
+    },
   },
 } satisfies Meta<typeof FormField>
 

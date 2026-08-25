@@ -19,7 +19,10 @@ const meta = {
   component: ButtonPrimary,
   tags: ['autodocs'],
   parameters: {
-    design: { type: 'figma', url: 'https://www.figma.com/design/K/component?node-id=2-66' },
+    design: {
+      type: 'figma',
+      url: 'https://www.figma.com/design/uA3bE5ofr6BgRakJzudL4L/component?node-id=2-66',
+    },
   },
 } satisfies Meta<typeof ButtonPrimary>
 
