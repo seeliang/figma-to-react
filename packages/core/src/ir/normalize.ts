@@ -31,7 +31,12 @@ export function normalize(input: NormalizeInput): IRDocument {
   const components = new Map<string, IRNode>()
   const componentNames = { ...(input.components ?? {}), ...(input.componentSets ?? {}) }
 
-  const root = visit(input.document, undefined, ctx, componentNames, components)
+  // Resolve every component's display name up front: an INSTANCE may appear
+  // before the COMPONENT it points at, and the name depends on the component's
+  // parent variant set, which is only visible from above.
+  const names = collectComponentNames(input.document, componentNames)
+
+  const root = visit(input.document, undefined, ctx, names, components)
   if (!root) {
     throw new Error(`Root node ${input.document.id} (${input.document.name}) is not visible`)
   }
@@ -39,11 +44,50 @@ export function normalize(input: NormalizeInput): IRDocument {
   return { root, fileKey: input.fileKey, components }
 }
 
+/**
+ * Figma names a variant by its properties (`State=Default`), which is only
+ * meaningful next to the variant set's own name. `Input Field` + `State=Default`
+ * reads as `InputFieldDefault`; the bare variant name would collide across every
+ * set in the file.
+ */
+function collectComponentNames(
+  root: FigmaNode,
+  meta: Record<string, ComponentMeta>,
+): Map<string, string> {
+  const names = new Map<string, string>()
+
+  const visitNames = (node: FigmaNode, parent?: FigmaNode) => {
+    if (node.type === 'COMPONENT') {
+      names.set(node.id, componentDisplayName(node, parent))
+    }
+    for (const child of node.children ?? []) visitNames(child, node)
+  }
+  visitNames(root)
+
+  // Components defined in another file are only known through the response's
+  // component map, which carries the published name.
+  for (const [id, m] of Object.entries(meta)) {
+    if (!names.has(id)) names.set(id, m.name)
+  }
+  return names
+}
+
+function componentDisplayName(node: FigmaNode, parent?: FigmaNode): string {
+  if (parent?.type !== 'COMPONENT_SET') return node.name
+  // `Type=Primary, Size=Large` -> `Primary Large`
+  const variant = node.name
+    .split(',')
+    .map((part) => part.split('=').slice(1).join('=').trim())
+    .filter(Boolean)
+    .join(' ')
+  return variant ? `${parent.name} ${variant}` : parent.name
+}
+
 function visit(
   node: FigmaNode,
   parent: FigmaNode | undefined,
   ctx: StyleContext,
-  componentNames: Record<string, ComponentMeta>,
+  componentNames: Map<string, string>,
   components: Map<string, IRNode>,
 ): IRNode | undefined {
   // Invisible layers and masks produce no markup. Masks in particular would
@@ -83,8 +127,14 @@ function visit(
   if (kind === 'instance' && node.componentId) {
     ir.component = {
       id: node.componentId,
-      name: componentNames[node.componentId]?.name ?? node.name,
+      name: componentNames.get(node.componentId) ?? node.name,
     }
+  }
+
+  // A COMPONENT node is the definition itself, keyed by its own id — the same
+  // id an INSTANCE points at through `componentId`.
+  if (kind === 'component') {
+    ir.component = { id: node.id, name: componentNames.get(node.id) ?? node.name }
   }
 
   // Vector subtrees are flattened into one exported SVG, so their children are
@@ -96,9 +146,10 @@ function visit(
     }
   }
 
-  // Record the first occurrence of each component so the emitter can generate
-  // it once and import it everywhere else.
-  if (kind === 'instance' && ir.component && !components.has(ir.component.id)) {
+  // Register the component so the emitter generates it once and imports it
+  // everywhere else. A real COMPONENT definition always wins over an INSTANCE
+  // of it, which only carries that one call site's overrides.
+  if (ir.component && (kind === 'component' || !components.has(ir.component.id))) {
     components.set(ir.component.id, ir)
   }
 
@@ -108,6 +159,9 @@ function visit(
 function classify(node: FigmaNode): IRKind {
   if (node.type === 'TEXT') return 'text'
   if (needsVectorExport(node)) return 'vector'
+  // A COMPONENT_SET is only a canvas grouping of variants; it has no runtime
+  // meaning, so it stays a plain box holding one tag per variant.
+  if (node.type === 'COMPONENT') return 'component'
   if (node.type === 'INSTANCE' && node.componentId) return 'instance'
   if (hasImageFill(node) && (node.children?.length ?? 0) === 0) return 'image'
   return 'box'

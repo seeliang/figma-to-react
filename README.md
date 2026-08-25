@@ -36,7 +36,9 @@ Naming, in priority order:
 
 1. **Figma Styles** — `Surface/Raised` becomes `--color-surface-raised`. Style names ship in the file-nodes response on every plan, so this is the common case for design-system files.
 2. **Figma Variables** — the [Variables REST API is Enterprise-only](https://developers.figma.com/docs/rest-api/variables-endpoints), so the name is usually unavailable. The variable _id_ is still a correct grouping key, so every node bound to one variable gets one shared, synthesised name.
-3. **Frequency** — an unnamed colour used `--min-uses` times or more earns a theme entry, named from its own HSL against Tailwind's ramp (`#2563eb` → `blue-600`), deterministically, so re-running produces the same names.
+3. **Frequency** — an unnamed colour used `--min-uses` times or more earns a theme entry, named from its own colour against Tailwind's ramp (`#2563eb` → `blue-600`), deterministically, so re-running produces the same names.
+
+Naming uses **chroma** to decide whether something is a grey, and **CIE L\*** to place it on the ramp. Both matter: HSL saturation calls `#0f172a` a 47%-saturated blue, which would name a plain slate `blue-950` and stand it beside a genuinely blue `blue-600`; and HSL lightness is not comparable across hues, drifting green two to three steps.
 
 Spacing, radii and type sizes are deliberately **not** named by frequency. Tailwind's scale already covers them, and inventing `--spacing-7` where `p-7` exists makes the output worse.
 
@@ -82,23 +84,27 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 
 ## What it does with a design
 
-| Figma                                     | Output                                                         |
-| ----------------------------------------- | -------------------------------------------------------------- |
-| Auto Layout                               | flexbox — direction, `gap`, padding, `justify-*`, `items-*`    |
-| `layoutSizing` FIXED / HUG / FILL         | fixed width, nothing, or `flex-1` / `w-full` depending on axis |
-| No Auto Layout                            | absolute positioning against the parent's bounding box         |
-| Components / instances                    | one file per component, imported at each use                   |
-| Text inside a component                   | an optional prop, defaulting to the design's own copy          |
-| Vectors and icon groups                   | inline SVG, converted to valid JSX                             |
-| Image fills                               | downloaded to `assets/`, rendered as `<img>`                   |
-| Invisible layers, masks                   | dropped                                                        |
-| ≥3 identical siblings with differing text | collapsed into a `.map()`                                      |
+| Figma                                     | Output                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------- |
+| Auto Layout                               | flexbox — direction, `gap`, padding, `justify-*`, `items-*`          |
+| `layoutSizing` FIXED / HUG / FILL         | fixed width, nothing, or `flex-1` / `w-full` depending on axis       |
+| No Auto Layout                            | absolute positioning against the parent's bounding box               |
+| Components (incl. variant sets)           | one file per component; `Button` + `Type=Primary` -> `ButtonPrimary` |
+| Instances                                 | a tag importing that component, with text passed as props            |
+| Text inside a component                   | an optional prop, defaulting to the design's own copy                |
+| Vectors and icon groups                   | inline SVG, converted to valid JSX                                   |
+| Image fills                               | downloaded to `assets/`, rendered as `<img>`                         |
+| Invisible layers, masks                   | dropped                                                              |
+| ≥3 identical siblings with differing text | collapsed into a `.map()`                                            |
 
 Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `layoutAlign` and `counterAxisSizingMode`.
 
 ### Known trade-offs
 
 - **Stacked paints** collapse to the topmost visible one; CSS has no clean equivalent. `inspect` shows the full node when a design depends on them.
+- **Text becomes props only up to a point.** Figma auto-names text layers after their own content, so a spec sheet with 50 labels would otherwise yield 50 props named things like `n2563Eb`. Past 12 text leaves a node is treated as a page, not a parameterised component, and its copy is emitted literally.
+- **Variants are separate components, not a prop union.** `Type=Primary` and `Type=Ghost` become `ButtonPrimary` and `ButtonGhost`. Collapsing them into one `Button` with a `type` prop is a v2 item.
+- **Synthesised colour names approximate Tailwind's ramp, they do not reproduce it.** Family and ordering are reliable; the step lands within one of the real ramp. The point is a stable, readable name, not a palette match.
 - **Heading levels** come from font size alone (`≥32px` → `h1`, `≥24` → `h2`, `≥18` → `h3`), because Figma carries no semantic signal. Expect to fix some by hand.
 - **Text styles become colour tokens.** A `Heading/Small` text style yields `--color-heading-small`, since the colour is the only part of it the REST API exposes per-node.
 - Gradients other than linear degrade to their nearest CSS equivalent.

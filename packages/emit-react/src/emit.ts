@@ -12,6 +12,13 @@ export interface EmitOptions {
   repeatThreshold?: number
   /** Emit each distinct component to its own file and import it. */
   splitComponents?: boolean
+  /**
+   * Above this many text leaves, a node is a page rather than a parameterised
+   * component, and its copy is emitted literally instead of as props. Figma
+   * auto-names text layers after their own content, so a spec sheet would
+   * otherwise produce dozens of props named things like `n2563Eb`.
+   */
+  maxTextSlots?: number
 }
 
 export interface EmitResult {
@@ -24,6 +31,7 @@ export interface EmitResult {
 interface EmitState {
   resolver: TokenResolver
   repeatThreshold: number
+  maxTextSlots: number
   registry: NameRegistry
   /** Component id to the name and file it was emitted as. */
   emitted: Map<string, { name: string; file: string }>
@@ -40,6 +48,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
   const state: EmitState = {
     resolver: options.resolver ?? noTokens,
     repeatThreshold: options.repeatThreshold ?? 3,
+    maxTextSlots: options.maxTextSlots ?? 12,
     registry: new NameRegistry(),
     emitted: new Map(),
     files: new Map(),
@@ -130,7 +139,8 @@ function renderFile(
 ): string {
   state.imports = new Set()
 
-  const slots = opts.isComponentRoot ? textSlots(root) : []
+  const found = opts.isComponentRoot ? textSlots(root) : []
+  const slots = found.length > state.maxTextSlots ? [] : found
   const slotByNode = new Map<string, TextSlot>()
   for (const slot of slots) {
     const node = at(root, slot.path)
@@ -170,8 +180,9 @@ function renderNode(
 ): string {
   const pad = ' '.repeat(ctx.indent)
 
-  // An instance of an already-emitted component collapses to a single tag.
-  if (node.kind === 'instance' && node.component && state.splitComponents) {
+  // Both a definition and a use collapse to a single tag; the definition's own
+  // markup lives in its file, which is rendered separately.
+  if ((node.kind === 'instance' || node.kind === 'component') && node.component && state.splitComponents) {
     // Skip inside the component's own definition file: that instance *is*
     // the definition, so it must render its markup rather than import itself.
     const target = state.emitted.get(node.component.id)

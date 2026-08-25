@@ -158,32 +158,65 @@ function synthesize(c: Candidate): string | undefined {
 export function nameColor(css: string): string {
   const rgb = parseCss(css)
   if (!rgb) return 'color'
-  const { h, s, l } = toHsl(rgb)
+  const { h, l } = toHsl(rgb)
 
-  const family = s < 0.08 ? achromatic(l) : hueFamily(h)
-  return family === 'white' || family === 'black' ? family : `${family}-${nearestStep(l)}`
+  const family = familyFor(rgb, h, l)
+  return family === 'white' || family === 'black' ? family : `${family}-${nearestStep(lightness(rgb))}`
 }
 
 /**
- * Lightness of each step on Tailwind's own ramp (measured from its blue scale,
- * which the other hues track closely). A linear 1-l mapping drifts about a full
- * step in the mid-tones, so #2563eb — Tailwind's own blue-600 — would come out
- * named blue-500. Nearest-neighbour against the real ramp keeps the synthesised
- * names recognisable to anyone who knows Tailwind.
+ * Chroma, not HSL saturation, decides whether a colour is a grey.
+ *
+ * HSL saturation is misleading at the extremes: #0f172a is a dark slate that
+ * anyone would call grey, yet its saturation is 0.47, which would name it
+ * `blue-950` and stand it next to a genuinely blue `blue-600` (#2563eb) in the
+ * same theme. The distance between the channels is the honest signal, and it
+ * separates those two cleanly (0.11 against 0.78).
+ */
+function familyFor(rgb: { r: number; g: number; b: number }, h: number, l: number): string {
+  const chroma = (Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)) / 255
+
+  if (chroma < 0.02) return achromatic(l)
+  // Channel spread necessarily collapses toward white, so a pale tint that is
+  // plainly green (#f0fdf4) carries less chroma than a mid grey. Near white,
+  // judge it on a much lower bar or every tint flattens to `gray-50`.
+  const threshold = l > 0.85 ? 0.04 : GREY_CHROMA
+  if (chroma < threshold) {
+    // Tailwind's own grey ramps are tinted; match the tint rather than
+    // flattening every muted colour to `neutral`.
+    if (h >= 180 && h < 260) return 'slate'
+    if (h >= 20 && h < 70) return 'stone'
+    return 'gray'
+  }
+  return hueFamily(h)
+}
+
+/** Below this channel spread a colour reads as grey. Tailwind's slate-500
+ *  (#64748b) sits at 0.15, and a muted brand colour rarely drops this low. */
+const GREY_CHROMA = 0.2
+
+/**
+ * CIE L* of each step on Tailwind's ramp, averaged across the slate, blue,
+ * green, red and amber scales.
+ *
+ * HSL lightness is not comparable across hues — green-500 and blue-500 differ
+ * by 0.15 in HSL-L, enough to name #22c55e as `green-700`. L* is perceptually
+ * uniform, so one table serves every hue.
  */
 const STEP_LIGHTNESS: [number, number][] = [
-  [0.969, 50],
-  [0.927, 100],
-  [0.873, 200],
-  [0.784, 300],
-  [0.678, 400],
-  [0.598, 500],
-  [0.533, 600],
-  [0.48, 700],
-  [0.402, 800],
-  [0.329, 900],
-  [0.21, 950],
+  [97.6, 50], [94.5, 100], [89.6, 200], [82.4, 300], [71.4, 400], [60.3, 500],
+  [49.7, 600], [40.0, 700], [31.3, 800], [24.9, 900], [12.4, 950],
 ]
+
+/** CIE L* from sRGB, 0 (black) to 100 (white). */
+function lightness({ r, g, b }: { r: number; g: number; b: number }): number {
+  const lin = (c: number) => {
+    const n = c / 255
+    return n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4
+  }
+  const y = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+  return y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y
+}
 
 function nearestStep(l: number): number {
   let best = STEP_LIGHTNESS[0]!
@@ -194,6 +227,8 @@ function nearestStep(l: number): number {
 }
 
 const achromatic = (l: number): string => (l >= 0.99 ? 'white' : l <= 0.01 ? 'black' : 'neutral')
+
+
 
 const HUES: [number, string][] = [
   [15, 'red'],

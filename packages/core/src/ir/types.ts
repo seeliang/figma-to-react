@@ -125,7 +125,12 @@ export interface TextStyle {
   color?: ColorValue
 }
 
-export type IRKind = 'box' | 'text' | 'image' | 'vector' | 'instance'
+/**
+ * `component` is a component *definition* found in the file; `instance` is a use
+ * of one. Both emit as a tag at their position in the tree, and both resolve
+ * through `IRNode.component.id`.
+ */
+export type IRKind = 'box' | 'text' | 'image' | 'vector' | 'instance' | 'component'
 
 export interface IRAsset {
   kind: 'svg' | 'image'
@@ -148,7 +153,7 @@ export interface IRNode {
   /** Text content for `kind: 'text'`. */
   content?: string
   asset?: IRAsset
-  /** For `kind: 'instance'`: the main component's id and name. */
+  /** For `kind: 'instance'` and `kind: 'component'`: the component's id and name. */
   component?: { id: string; name: string }
   children: IRNode[]
 }

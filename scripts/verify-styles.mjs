@@ -10,21 +10,34 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
-const GENERATED = 'examples/src/generated'
+// Every directory figma2react writes into. A missing one is skipped, not fatal:
+// the design-system output needs a Figma token that CI may not have.
+const GENERATED = ['examples/src/generated', 'examples/src/design-system']
 const DIST = 'examples/dist/assets'
 
-const componentFiles = (await readdir(GENERATED)).filter((f) => f.endsWith('.tsx'))
-if (componentFiles.length === 0) {
-  console.error(`No generated components in ${GENERATED} — run figma2react gen first.`)
-  process.exit(1)
+const used = new Set()
+let scanned = 0
+
+for (const dir of GENERATED) {
+  let files
+  try {
+    files = (await readdir(dir)).filter((f) => f.endsWith('.tsx'))
+  } catch {
+    console.log(`  skipping ${dir} (not generated)`)
+    continue
+  }
+  for (const file of files) {
+    const source = await readFile(join(dir, file), 'utf8')
+    for (const [, value] of source.matchAll(/className="([^"]+)"/g)) {
+      for (const cls of value.split(/\s+/)) if (cls) used.add(cls)
+    }
+    scanned++
+  }
 }
 
-const used = new Set()
-for (const file of componentFiles) {
-  const source = await readFile(join(GENERATED, file), 'utf8')
-  for (const [, value] of source.matchAll(/className="([^"]+)"/g)) {
-    for (const cls of value.split(/\s+/)) if (cls) used.add(cls)
-  }
+if (scanned === 0) {
+  console.error('No generated components found — run figma2react gen first.')
+  process.exit(1)
 }
 
 const cssFile = (await readdir(DIST)).find((f) => f.endsWith('.css'))
@@ -45,4 +58,4 @@ if (missing.length > 0) {
   process.exit(1)
 }
 
-console.log(`All ${used.size} generated classes resolve to CSS rules in ${cssFile}.`)
+console.log(`All ${used.size} generated classes from ${scanned} component(s) resolve to CSS rules.`)
