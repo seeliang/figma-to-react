@@ -75,9 +75,11 @@ describe('figma2react gen', () => {
     // tokens.json is the same theme as data: the CSS is for browsers, this is
     // for the generated theme story and the drift check.
     expect((await readdir(out)).sort()).toEqual([
+      '.figma-to-react-output.json',
       'button-primary.tsx',
       'card.tsx',
       'fonts.css',
+      'styles.css',
       'tokens.css',
       'tokens.json',
     ])
@@ -99,10 +101,10 @@ describe('figma2react gen', () => {
     await cli(['gen', 'TESTKEY:1-2', '--out', out, '--min-uses', '2'])
 
     const card = await readFile(join(out, 'card.tsx'), 'utf8')
-    const css = await readFile(join(out, 'tokens.css'), 'utf8')
+    const css = await readFile(join(out, 'styles.css'), 'utf8')
 
-    expect(card).toContain('bg-surface-raised')
-    expect(css).toContain('--color-surface-raised: #ffffff;')
+    expect(card).toContain("import './styles.css'")
+    expect(css).toContain('var(--color-surface-raised)')
   })
 
   it('writes a font loader and tells you it must be imported first', async () => {
@@ -127,8 +129,8 @@ describe('figma2react gen', () => {
     const out = await mkdtemp(join(tmpdir(), 'f2r-'))
     await cli(['gen', 'TESTKEY:1-2', '--out', out, '--no-tokens'])
 
-    const card = await readFile(join(out, 'card.tsx'), 'utf8')
-    expect(card).toContain('bg-[#ffffff]')
+    const styles = await readFile(join(out, 'styles.css'), 'utf8')
+    expect(styles).toContain('background: #ffffff;')
     expect(await readdir(out)).not.toContain('tokens.css')
   })
 
@@ -260,18 +262,15 @@ const THEME_STUB = `export declare function expectTokensRendered(
 `
 
 describe('figma2react tokens', () => {
-  it('prints a Tailwind v4 theme block to stdout', async () => {
+  it('prints a CSS custom-property block to stdout', async () => {
     const { stdout } = await cli(['tokens', 'TESTKEY:1-2', '--min-uses', '2'])
-    expect(stdout).toContain('@theme {')
+    expect(stdout).toContain(':root {')
     expect(stdout).toContain('--color-surface-raised: #ffffff;')
   })
 
   it('emits a fragment, not an entry point', async () => {
     const { stdout } = await cli(['tokens', 'TESTKEY:1-2', '--min-uses', '2'])
-    // Importing tailwindcss from the generated file would root Tailwind's
-    // source scan in the generated directory, which is usually gitignored.
-    // The wiring comment mentions the import as instructions, so only active
-    // CSS counts here.
+    // A token fragment must remain plain CSS; only active CSS counts here.
     const active = stdout.replace(/\/\*[\s\S]*?\*\//g, '')
     expect(active).not.toContain("@import 'tailwindcss'")
     expect(stdout).toContain('Wire it up from your own stylesheet')

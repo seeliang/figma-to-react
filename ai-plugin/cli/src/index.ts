@@ -36,7 +36,7 @@ const program = new Command()
 
 program
   .name('figma2react')
-  .description('Generate Tailwind-styled React components from a Figma frame')
+  .description('Generate plain-CSS React components from a Figma frame')
   .version('0.1.0')
   .option('--offline', 'serve the recorded response in design-system.json instead of calling Figma')
   .option('--live', 'call the Figma REST API, spending quota')
@@ -54,11 +54,12 @@ let locatedConfig: string | undefined
  */
 program.hook('preAction', async (_root, action) => {
   const opts = program.opts<{ offline?: boolean; live?: boolean }>()
-  const actionOpts = action.opts() as { config?: string; audit?: boolean; diff?: boolean }
+  const actionOpts = action.opts() as { config?: string; audit?: boolean; diff?: boolean; apply?: boolean }
   locatedConfig = await findConfig(actionOpts.config)
   await loadEnv(locatedConfig)
 
-  const live = isLive(action.name(), opts, actionOpts)
+  const colorPreview = action.name() === 'theme' && action.args[0] === 'color' && !actionOpts.apply
+  const live = isLive(action.name(), opts, { ...actionOpts, colorPreview })
   if (live) {
     console.error('  live: this spends Figma REST quota')
     return
@@ -99,7 +100,7 @@ function resolveTarget(target: string | undefined, config: DesignSystemConfig | 
 const withCommonOptions = (cmd: Command) =>
   cmd
     .option('-t, --token <token>', 'Figma personal access token (default: $FIGMA_TOKEN)')
-    .option('--no-tokens', 'emit literal values instead of lifting them into a Tailwind theme')
+    .option('--no-tokens', 'emit literal values instead of writing CSS custom properties')
     .option('--min-uses <n>', 'times an unnamed colour must appear to earn a theme entry', '3')
 
 withCommonOptions(
@@ -143,6 +144,8 @@ interface GenOptions {
   layer?: string
   dryRun?: boolean
   designNotes?: boolean
+  apply?: boolean
+  requireBoundColours?: boolean
 }
 
 /**
@@ -202,6 +205,9 @@ async function runGen(
       ...ownership(config),
       onProgress: progress,
     })
+    if (opts.requireBoundColours && result.design.some((finding) => finding.code === 'unbound-colours')) {
+      throw new Error('Colour refresh was not applied: bind every colour to a Figma Colour Style or Variable first.')
+    }
 
     const base = locatedConfig && !opts.out ? join(dirname(locatedConfig), outDirName) : outDirName
     const outDir = resolve(base)
@@ -230,6 +236,7 @@ async function runGen(
         ([name, bytes]) => [join('assets', name), bytes] as [string, Uint8Array],
       ),
     ]
+    if (!requestedLayer || requestedLayer !== 'theme') planned.push(['styles.css', result.css])
     if (result.geometry && (!requestedLayer || requestedLayer === 'theme')) {
       planned.push(['figma-geometry.json', `${JSON.stringify(result.geometry, null, 2)}\n`])
     }
@@ -255,6 +262,36 @@ async function runGen(
       ])
     }
 
+    // Keep a narrow ownership record: later runs can report files that Figma no
+    // longer produces without guessing which files in a package belong to users.
+    const outputManifest = '.figma-to-react-output.json'
+    const ownedPath = join(outDir, outputManifest)
+    const nextFiles = planned.map(([name]) => name)
+    try {
+      const prior = JSON.parse(await readFile(ownedPath, 'utf8')) as { files?: string[] }
+      const stale = (prior.files ?? []).filter((file) => file !== outputManifest && !nextFiles.includes(file))
+      if (stale.length) console.warn(`\nStale generated files (left untouched):\n${stale.map((file) => `  - ${file}`).join('\n')}`)
+    } catch {
+      // The first run has no ownership baseline.
+    }
+    planned.push([
+      outputManifest,
+      `${JSON.stringify({ version: 1, files: [...nextFiles, outputManifest].sort() }, null, 2)}\n`,
+    ])
+
+    const changes: string[] = []
+    for (const [name, body] of planned) {
+      try {
+        const previous = await readFile(join(outDir, name))
+        const next = typeof body === 'string' ? Buffer.from(body) : Buffer.from(body)
+        if (!previous.equals(next)) changes.push(`  ~ ${name}`)
+      } catch {
+        changes.push(`  + ${name}`)
+      }
+    }
+    if (changes.length) console.log(`\nPlanned changes:\n${changes.join('\n')}`)
+    else console.log('\nGenerated output is unchanged.')
+
     if (opts.dryRun) {
       console.log(`\nWould write ${planned.length} file(s) to ${outDir}:`)
       for (const [name, body] of planned) {
@@ -279,12 +316,11 @@ async function runGen(
       console.log(
         '\nAdd to your stylesheet, in this order:\n' +
           (result.fontCss ? "  @import './fonts.css';\n" : '') +
-          "  @import 'tailwindcss';\n" +
           "  @import './tokens.css';\n" +
           (result.fontCss
             ? 'fonts.css must come first: a CSS @import is only valid ahead of every other rule.\n'
             : '') +
-          'If the output directory is gitignored, also add an @source line pointing at it.',
+          'Generated components import their adjacent styles.css automatically.',
       )
     }
 
@@ -296,7 +332,7 @@ withCommonOptions(
   program
     .command('tokens')
     .argument('[figma-url]', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
-    .description('extract design tokens as a Tailwind v4 @theme block')
+    .description('extract design tokens as a CSS custom-property block')
     .option('-o, --out <file>', 'write to a file instead of stdout')
     .option('--config <file>', 'design-system.json to read the target from', CONFIG_FILE),
 ).action(async (target: string | undefined, opts) => {
@@ -452,6 +488,7 @@ withCommonOptions(
     .description('generate the theme; --audit for readiness, --diff for what would change')
     .option('--audit', 'stage 0: is the design file ready to generate a theme from?')
     .option('--diff', 'stage 3: what the theme would gain, lose or change')
+    .option('--apply', 'with `theme color`, write the planned generated output')
     .option('--json', 'with --audit, emit the findings as JSON')
     .option('-o, --out <dir>', 'output directory')
     .option('--no-assets', 'skip downloading vectors and images')
@@ -467,11 +504,17 @@ withCommonOptions(
     .option('--config <file>', 'design-system.json to read layers and ownership from', CONFIG_FILE),
 ).action(async (target: string | undefined, opts, command: Command) => {
   await withErrorHandling(async () => {
+    if (target === 'color') return runThemeColor(undefined, opts, command)
     if (opts.audit) return runAudit(target, opts)
     if (opts.diff) return runThemeDiff(target, opts)
     return runGen(target, opts, command)
   })
 })
+
+async function runThemeColor(target: string | undefined, opts: GenOptions, command: Command): Promise<void> {
+  console.log(opts.apply ? '\nApplying the complete generated output from this design snapshot.' : '\nPreview only; add --apply to write the complete generated output.')
+  await runGen(target, { ...opts, dryRun: !opts.apply, requireBoundColours: Boolean(opts.apply) }, command)
+}
 
 program
   .command('init')

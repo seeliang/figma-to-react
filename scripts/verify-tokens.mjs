@@ -7,7 +7,7 @@
  *    the design moved and nobody regenerated, or where somebody edited
  *    generated output by hand.
  *
- * 2. **Collisions** — an app may import several `@theme` blocks, and Tailwind
+ * 2. **Collisions** — an app may import several token stylesheets, and CSS
  *    resolves a repeated custom property by import order. Two design files
  *    that both synthesise `--color-blue-600` therefore silently agree on one
  *    value, and the loser renders wrong while every build stays green. That is
@@ -90,7 +90,7 @@ async function collectFromFixture() {
 }
 
 /**
- * Every `@theme` block the app's stylesheet pulls in, checked for the same
+ * Every imported token stylesheet, checked for the same
  * property declared twice at different values.
  */
 async function checkCollisions() {
@@ -117,7 +117,7 @@ async function checkCollisions() {
     ([, uses]) => new Set(uses.map((u) => u.value)).size > 1,
   )
   if (clashes.length === 0) {
-    console.log(`No conflicting @theme declarations across ${declarations.size} propert(ies).`)
+    console.log(`No conflicting custom-property declarations across ${declarations.size} propert(ies).`)
     return
   }
 

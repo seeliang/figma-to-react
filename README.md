@@ -1,6 +1,6 @@
 # figma-to-react
 
-Generate Tailwind-styled React components from a Figma frame, over the Figma REST API.
+Generate plain-CSS React components from a Figma frame, over the Figma REST API.
 
 ```bash
 export FIGMA_TOKEN=figd_...
@@ -11,7 +11,8 @@ pnpm figma2react gen 'https://www.figma.com/design/AbC123/My-File?node-id=1-2' -
 src/components/
   card.tsx            <- the frame
   button-primary.tsx  <- each component, generated once and imported
-  tokens.css          <- a Tailwind @theme block
+  tokens.css          <- CSS custom properties
+  styles.css          <- generated component rules
   assets/             <- raster fills
 ```
 
@@ -26,7 +27,7 @@ What none of them do well is **token resolution**. Every tool emits `bg-[#3b82f6
 ```
 
 ```css
-@theme {
+:root {
   --color-surface-raised: #ffffff;
   --color-heading-small: #0f1729;
 }
@@ -46,7 +47,8 @@ Spacing, radii and type sizes are deliberately **not** named by frequency. Tailw
 
 ```
 figma2react gen <figma-url> --out <dir>     generate components
-figma2react tokens <figma-url>              print the @theme block
+figma2react tokens <figma-url>              print CSS custom properties
+figma2react theme color [--apply]           preview or apply a guarded colour refresh
 figma2react inspect <figma-url>             dump the IR as JSON
 ```
 
@@ -72,7 +74,6 @@ Accepts a full Figma URL, a bare file key, or `<fileKey>:<nodeId>`. Node ids are
 `tokens.css` is a **fragment**, not an entry point. Import it from your own stylesheet:
 
 ```css
-@import 'tailwindcss';
 @import './generated/tokens.css';
 ```
 

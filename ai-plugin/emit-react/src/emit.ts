@@ -3,7 +3,7 @@ import { noTokens } from '@figma-to-react/core'
 import { NameRegistry, toCamelCase, toFileName, toPascalCase } from './naming.js'
 import { semanticFor, textLeaves, textTagFor } from './semantics.js'
 import type { Semantic } from './semantics.js'
-import { classesFor, placementClasses } from './tailwind.js'
+import { CssEmitter, scopeFor } from './css.js'
 
 export interface EmitOptions {
   resolver?: TokenResolver
@@ -64,6 +64,8 @@ export interface EmitResult {
    * the IR again and re-derive names that must match exactly.
    */
   components: ComponentEntry[]
+  /** Plain CSS referenced by the emitted components. */
+  css: string
 }
 
 export interface ComponentEntry {
@@ -103,6 +105,7 @@ interface EmitState {
   splitComponents: boolean
   layers: Record<string, Layer>
   layerPackages: Partial<Record<Layer, string>>
+  css: CssEmitter
 }
 
 export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
@@ -120,6 +123,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
     splitComponents: options.splitComponents ?? true,
     layers: options.layers ?? {},
     layerPackages: options.layerPackages ?? {},
+    css: new CssEmitter(scopeFor(doc.fileKey)),
   }
 
   // Components first: the root's own instances resolve to imports of these.
@@ -132,7 +136,7 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
   const rootFile = toFileName(rootName)
   state.files.set(rootFile, renderFile(rootName, doc.root, state, { isComponentRoot: true }))
 
-  return { files: state.files, rootComponent: rootName, components: state.manifest }
+  return { files: state.files, rootComponent: rootName, components: state.manifest, css: state.css.css() }
 }
 
 /** The set name is the unit a designer sorts, so that is what the map is keyed by. */
@@ -268,7 +272,7 @@ function renderFile(
     ? `{ ${slots.map((s) => `${s.prop} = ${quote(s.defaultValue)}`).join(', ')} }: ${name}Props = {}`
     : ''
 
-  const importLines = [...state.imports].sort().join('\n')
+  const importLines = ["import './styles.css'", ...state.imports].sort().join('\n')
 
   return `${importLines ? `${importLines}\n\n` : ''}${propsType}export function ${name}(${signature}) {
   return (
@@ -314,10 +318,10 @@ function renderNode(
       // the parent has to go on a wrapper. Without this a component dropped
       // into an absolutely positioned parent lands at the flow position and
       // silently overlaps whatever is already there.
-      const placement = placementClasses(node, {
+      const placement = state.css.classFor(node, {
         resolver: state.resolver,
         parent: parent?.layout,
-      })
+      }, true)
       const trace = traceAttr(node, state)
       return placement || trace
         ? `${pad}<div${placement ? ` className=${quote(placement)}` : ''}${trace}>\n${pad}  ${tag}\n${pad}</div>`
@@ -325,7 +329,7 @@ function renderNode(
     }
   }
 
-  const className = classesFor(node, { resolver: state.resolver, parent: parent?.layout })
+  const className = state.css.classFor(node, { resolver: state.resolver, parent: parent?.layout })
   const attrs = (className ? ` className=${quote(className)}` : '') + traceAttr(node, state)
 
   switch (node.kind) {
@@ -378,19 +382,17 @@ function renderSemantic(
 ): string {
   const leaf = textLeaves(node)[0]!
   const attrs = [...semantic.attrs]
-  const className = [classNameIn, ...(semantic.classes ?? [])].filter(Boolean).join(' ')
+  if (semantic.classes?.includes('cursor-pointer')) state.css.add(classNameIn, ['cursor: pointer;'])
+  const className = classNameIn
 
   if (semantic.void) {
     // Take only what the dropped text leaf contributes that the container does
     // not: how the text looks. Its box classes would fight the container's —
     // the leaf's `h-full` against the container's `h-11` is two heights on one
     // element, decided by stylesheet order rather than by intent.
-    const leafClasses = classesFor(leaf, { resolver: state.resolver, parent: node.layout })
-      .split(' ')
-      .filter(isTypographyClass)
-    const merged = [className, ...leafClasses, ...replacedSize(node, state)]
-      .filter(Boolean)
-      .join(' ')
+    const leafClass = state.css.classFor(leaf, { resolver: state.resolver, parent: node.layout })
+    const replacementClass = replacedSize(node, state)
+    const merged = [className, leafClass, replacementClass].filter(Boolean).join(' ')
     attrs.push(`${semantic.text}={${textExpr(leaf, ctx)}}`)
     if (merged) attrs.push(`className=${quote(merged)}`)
     const trace = traceAttr(node, state).trim()
@@ -415,18 +417,13 @@ function renderSemantic(
  * wider and pushes the layout around it. Where the design measured a hug, pin
  * that measurement.
  */
-function replacedSize(node: IRNode, state: EmitState): string[] {
+function replacedSize(node: IRNode, state: EmitState): string {
   const { width } = node.layout
-  if (width.kind !== 'hug' || width.px === undefined) return []
-  void state
-  return [`w-[${width.px}px]`]
+  if (width.kind !== 'hug' || width.px === undefined) return ''
+  const name = state.css.classFor(node, { resolver: state.resolver, parent: undefined })
+  state.css.add(name, [`width: ${width.px}px;`])
+  return name
 }
-
-const TYPOGRAPHY =
-  /^(text-|font-|leading-|tracking-|italic$|uppercase$|lowercase$|capitalize$|underline$|line-through$)/
-
-/** Distinguishes `text-slate-400` and `font-medium` from `flex-1` and `h-full`. */
-const isTypographyClass = (cls: string): boolean => TYPOGRAPHY.test(cls)
 
 /** `data-figma-id`, or nothing when tracing is off. */
 const traceAttr = (node: IRNode, state: EmitState): string =>
@@ -538,7 +535,7 @@ function collectText(node: IRNode): string[] {
 function structuralKey(node: IRNode, state: EmitState, parent: IRNode): string {
   const parts: string[] = []
   const visit = (n: IRNode, p: IRNode | undefined) => {
-    parts.push(n.kind, classesFor(n, { resolver: state.resolver, parent: p?.layout }))
+    parts.push(n.kind, n.name, n.layout.mode, String(p?.layout.mode ?? ''))
     parts.push(String(n.children.length))
     n.children.forEach((c) => visit(c, n))
   }

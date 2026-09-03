@@ -68,14 +68,17 @@ describe('emit: card', () => {
     expect([...files.keys()].sort()).toEqual(['button-primary.tsx', 'card.tsx'])
   })
 
-  it('matches the card snapshot', async () => {
-    const { files } = await generate('card', '1:2')
-    expect(files.get('card.tsx')).toMatchSnapshot()
+  it('emits TSX that imports its generated stylesheet', async () => {
+    const { files, css } = await generate('card', '1:2')
+    expect(files.get('card.tsx')).toContain("import './styles.css'")
+    expect(files.get('card.tsx')).toContain('className="f2r-test-1-2"')
+    expect(css).toContain('.f2r-test-1-2')
+    expect(css).toContain('display: flex;')
   })
 
-  it('matches the extracted component snapshot', async () => {
-    const { files } = await generate('card', '1:2')
-    expect(files.get('button-primary.tsx')).toMatchSnapshot()
+  it('uses CSS custom properties for named colours', async () => {
+    const { css } = await generate('card', '1:2', { resolver: { resolve: (kind) => kind === 'color' ? 'primary' : undefined } })
+    expect(css).toContain('var(--color-primary)')
   })
 
   it('imports the extracted component rather than inlining it again', async () => {
@@ -119,9 +122,9 @@ describe('emit: semantic elements', () => {
     expect(button).not.toContain('<p ')
   })
 
-  it('gives a button a pointer cursor, which Tailwind v4 Preflight removes', async () => {
-    const { files } = await generate('card', '1:2')
-    expect(files.get('button-primary.tsx')).toContain('cursor-pointer')
+  it('gives a button a pointer cursor in generated CSS', async () => {
+    const { css } = await generate('card', '1:2')
+    expect(css).toContain('cursor: pointer;')
   })
 
   it('does not put a pointer cursor on an input, which wants a text caret', async () => {
@@ -155,30 +158,31 @@ describe('emit: component placement', () => {
   })
 
   it('carries placement onto a wrapper when the parent positions absolutely', async () => {
-    const { files } = await generate('legacy', '3:1')
+    const { files, css } = await generate('legacy', '3:1')
     const src = files.get('absolute-group.tsx')!
     // Every absolutely positioned child keeps its offset, tag or div alike.
-    expect(src.match(/absolute left-\[/g)?.length).toBeGreaterThan(0)
+    expect(src).toContain('f2r-test-3-')
+    expect(css).toContain('position: absolute;')
   })
 })
 
 describe('emit: absolute layout', () => {
-  it('matches the absolute-positioning snapshot', async () => {
-    const { files } = await generate('legacy', '3:1')
-    expect(files.get('absolute-group.tsx')).toMatchSnapshot()
+  it('emits CSS for absolute positioning', async () => {
+    const { css } = await generate('legacy', '3:1')
+    expect(css).toContain('position: relative;')
+    expect(css).toContain('left: 20px;')
   })
 
   it('makes a no-layout parent the containing block for its children', async () => {
-    const { files } = await generate('legacy', '3:1')
-    const src = files.get('absolute-group.tsx')!
-    expect(src).toContain('relative')
-    expect(src).toContain('absolute left-[20px] top-[20px]')
+    const { css } = await generate('legacy', '3:1')
+    expect(css).toContain('position: relative;')
+    expect(css).toContain('top: 20px;')
   })
 })
 
 describe('emit: legacy sizing', () => {
-  it('matches the legacy-row snapshot', async () => {
-    const { files } = await generate('legacy', '2:1')
-    expect(files.get('legacy-row.tsx')).toMatchSnapshot()
+  it('emits flex sizing into CSS', async () => {
+    const { css } = await generate('legacy', '2:1')
+    expect(css).toContain('flex: 1 1 0%;')
   })
 })

@@ -109,26 +109,25 @@ const renderSwatchComponent = () => `type TokenRow = {
 
 function TokenGrid({ tokens = [] }: { tokens?: TokenRow[] }) {
   return (
-    <div className="p-8 grid gap-4 grid-cols-[repeat(auto-fill,minmax(190px,1fr))]">
+    <div style={{ padding: 32, display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
       {tokens.map((t) => (
-        <figure key={t.cssVar} className="m-0 flex flex-col gap-2">
+        <figure key={t.cssVar} style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div
             data-token={t.cssVar}
             data-token-value={t.value}
             data-token-named={String(t.named)}
-            className="h-16 rounded border border-black/10"
             style={
               t.kind === 'color'
-                ? { background: \`var(\${t.cssVar})\` }
-                : { fontFamily: \`var(\${t.cssVar})\`, display: 'grid', placeItems: 'center' }
+                ? { height: 64, borderRadius: 4, border: '1px solid rgb(0 0 0 / 0.1)', background: \`var(\${t.cssVar})\` }
+                : { height: 64, borderRadius: 4, border: '1px solid rgb(0 0 0 / 0.1)', fontFamily: \`var(\${t.cssVar})\`, display: 'grid', placeItems: 'center' }
             }
           >
             {t.kind === 'color' ? null : 'Ag'}
           </div>
-          <figcaption className="text-xs leading-snug">
-            <code className="font-mono">{t.cssVar}</code>
-            <div className="text-black/60">{t.value}</div>
-            {t.named ? null : <div className="text-amber-700">derived — no Style bound</div>}
+          <figcaption style={{ fontSize: 12, lineHeight: 1.35 }}>
+            <code style={{ fontFamily: 'ui-monospace, monospace' }}>{t.cssVar}</code>
+            <div style={{ color: 'rgb(0 0 0 / 0.6)' }}>{t.value}</div>
+            {t.named ? null : <div style={{ color: '#b45309' }}>derived — no Style bound</div>}
           </figcaption>
         </figure>
       ))}

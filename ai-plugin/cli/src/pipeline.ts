@@ -60,6 +60,8 @@ export interface RunResult {
   components: ComponentEntry[]
   /** Component sources, keyed by file name relative to the output dir. */
   files: Map<string, string>
+  /** Plain stylesheet referenced by generated component files. */
+  css: string
   /** Binary assets, keyed by file name relative to `<out>/assets`. */
   assets: Map<string, Uint8Array>
   themeCss?: string
@@ -197,6 +199,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     rootComponent: emitted.rootComponent,
     components: emitted.components,
     files,
+    css: emitted.css,
     assets: assetResult.files,
     themeCss: table ? emitThemeCss(table) : undefined,
     fontCss:

@@ -31,6 +31,7 @@ const readOnly = (command: string, modes: ThemeModes): boolean =>
 interface ThemeModes {
   audit?: boolean
   diff?: boolean
+  colorPreview?: boolean
 }
 
 export function isLive(
@@ -40,7 +41,7 @@ export function isLive(
 ): boolean {
   if (opts.live) return true
   if (opts.offline) return false
-  return !readOnly(command, modes)
+  return !readOnly(command, modes) && !modes.colorPreview
 }
 
 /**

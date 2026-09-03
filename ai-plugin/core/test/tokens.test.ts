@@ -204,11 +204,11 @@ describe('font loading', () => {
 })
 
 describe('emitThemeCss', () => {
-  it('emits a Tailwind v4 @theme block with rem lengths', () => {
+  it('emits a plain CSS custom-property block with rem lengths', () => {
     const table = collectTokens(docFor('card', '1:2'), { minUses: 2 })
-    const css = emitThemeCss(table, { includeImport: true })
-    expect(css).toContain("@import 'tailwindcss';")
-    expect(css).toContain('@theme {')
+    const css = emitThemeCss(table)
+    expect(css).toContain(':root {')
+    expect(css).not.toContain('tailwindcss')
     expect(css).toContain('--color-surface-raised: #ffffff;')
   })
 

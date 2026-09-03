@@ -1,3 +1,5 @@
+import './styles.css'
+
 export type ButtonSecondaryDefaultProps = {
   buttonLabel?: string
 }
@@ -6,15 +8,8 @@ export function ButtonSecondaryDefault({
   buttonLabel = 'Button Label',
 }: ButtonSecondaryDefaultProps = {}) {
   return (
-    <button
-      type="button"
-      className="flex justify-center items-center w-90 h-[46px] py-[14px] px-6 bg-white border border-blue-200 rounded-lg cursor-pointer"
-      data-figma-id="2:68"
-    >
-      <span
-        className="w-max font-inter text-[14px] leading-[16.94px] font-semibold text-slate-950"
-        data-figma-id="2:69"
-      >
+    <button type="button" className="f2r-ua3be5ofr6bgrakjzudl4l-2-68" data-figma-id="2:68">
+      <span className="f2r-ua3be5ofr6bgrakjzudl4l-2-69" data-figma-id="2:69">
         {buttonLabel}
       </span>
     </button>

@@ -1,5 +1,3 @@
-/* Fonts must be imported before Tailwind and token declarations. */
-@import '@ds/theme/fonts.css';
-@import 'tailwindcss';
-@import '@ds/theme/tokens.css';
-@source '../packages/*/src';
+/* Fonts must be imported before token declarations. */
+@import '../packages/theme/src/fonts.css';
+@import '../packages/theme/src/tokens.css';

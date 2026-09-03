@@ -1,5 +1,5 @@
 export * from './emit.js'
 export * from './naming.js'
-export * from './tailwind.js'
+export * from './css.js'
 export * from './format.js'
 export * from './semantics.js'

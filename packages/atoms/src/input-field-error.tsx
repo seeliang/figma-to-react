@@ -1,3 +1,5 @@
+import './styles.css'
+
 export type InputFieldErrorProps = {
   invalidInput?: string
 }
@@ -7,7 +9,7 @@ export function InputFieldError({ invalidInput = 'Invalid input' }: InputFieldEr
     <input
       type="text"
       placeholder={invalidInput}
-      className="flex justify-center items-center h-11 py-3 px-[14px] bg-white border border-[#ef4444] rounded-lg font-inter text-[14px] leading-[16.94px] text-slate-400 w-[110px]"
+      className="f2r-ua3be5ofr6bgrakjzudl4l-2-63 f2r-ua3be5ofr6bgrakjzudl4l-2-64 f2r-ua3be5ofr6bgrakjzudl4l-2-63"
       data-figma-id="2:63"
     />
   )

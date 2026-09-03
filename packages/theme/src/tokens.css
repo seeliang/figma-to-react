@@ -2,22 +2,9 @@
  *
  * Wire it up from your own stylesheet, in this order:
  *
- *   @import 'tailwindcss';
  *   @import './tokens.css';
- *
- * Synthesised names deliberately follow Tailwind's own scale, so an entry here
- * may shadow a built-in: --color-blue-600 replaces Tailwind's blue-600 app-wide.
- * That is usually what you want. It also means forgetting the import above is
- * silent - the classes still resolve, to Tailwind's colours instead of yours.
- *
- * If the generated directory is gitignored, Tailwind will not scan it and none
- * of these classes reach your bundle - the build still succeeds, it just has no
- * styles. Add a source line next to those imports, and note it must be an
- * explicit glob; a bare directory path does not override gitignore:
- *
- *   @source './generated/*.tsx';
  */
-@theme {
+:root {
   /* Colours */
   --color-blue-200: #e2e8f0;
   --color-blue-600: #2563eb;

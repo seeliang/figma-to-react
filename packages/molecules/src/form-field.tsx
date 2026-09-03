@@ -1,3 +1,4 @@
+import './styles.css'
 import { InputFieldDefault } from '@ds/atoms'
 
 export type FormFieldProps = {
@@ -10,14 +11,11 @@ export function FormField({
   placeholderText = 'Placeholder text',
 }: FormFieldProps = {}) {
   return (
-    <div className="flex flex-col items-start gap-[6px] w-90">
-      <p
-        className="self-stretch w-full font-inter text-[13px] leading-[15.73px] font-medium text-slate-950"
-        data-figma-id="2:74"
-      >
+    <div className="f2r-ua3be5ofr6bgrakjzudl4l-2-73">
+      <p className="f2r-ua3be5ofr6bgrakjzudl4l-2-74" data-figma-id="2:74">
         {label}
       </p>
-      <div className="h-11" data-figma-id="2:75">
+      <div className="f2r-ua3be5ofr6bgrakjzudl4l-2-75" data-figma-id="2:75">
         <InputFieldDefault placeholderText={placeholderText} />
       </div>
     </div>
