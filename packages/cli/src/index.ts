@@ -1,15 +1,19 @@
 #!/usr/bin/env node
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import {
   FigmaClient,
   type Layer,
   type LayerAssignment,
+  type TokenManifest,
   assignLayers,
   auditDesign,
+  buildTokenManifest,
   collectTokens,
+  diffTokenManifests,
   emitThemeCss,
+  isEmptyDiff,
   normalize,
   parseFigmaTarget,
 } from '@figma-to-react/core'
@@ -93,6 +97,9 @@ withCommonOptions(
     }
     if (result.fontCss) planned.push(['fonts.css', result.fontCss])
     if (result.themeCss) planned.push(['tokens.css', result.themeCss])
+    if (result.tokenManifest) {
+      planned.push(['tokens.json', `${JSON.stringify(result.tokenManifest, null, 2)}\n`])
+    }
 
     if (opts.dryRun) {
       console.log(`\nWould write ${planned.length} file(s) to ${outDir}:`)
@@ -212,6 +219,48 @@ program
       reportDesign(findings)
     })
   })
+
+withCommonOptions(
+  program
+    .command('theme-diff')
+    .argument('<figma-url>', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
+    .description('what the theme would gain, lose or change if regenerated')
+    .requiredOption('-o, --out <dir>', 'directory holding the committed tokens.json'),
+).action(async (target: string, opts) => {
+  await withErrorHandling(async () => {
+    const path = join(resolve(opts.out), 'tokens.json')
+    let committed: TokenManifest
+    try {
+      committed = JSON.parse(await readFile(path, 'utf8')) as TokenManifest
+    } catch {
+      throw new Error(
+        `No tokens.json in ${opts.out}. Run gen first — there is nothing to diff against.`,
+      )
+    }
+
+    const { fileKey, nodeId } = parseFigmaTarget(target)
+    const doc = await fetchIr(target, requireToken(opts.token))
+    const fresh = buildTokenManifest(collectTokens(doc, { minUses: Number(opts.minUses) }), {
+      key: fileKey,
+      ...(nodeId ? { node: nodeId } : {}),
+    })
+
+    const diff = diffTokenManifests(committed, fresh)
+    if (isEmptyDiff(diff)) {
+      console.log(`\nTheme unchanged: ${committed.tokens.length} token(s) still match the design.`)
+      return
+    }
+
+    console.log('\nTheme changes if regenerated:\n')
+    for (const t of diff.added) console.log(`  + ${t.cssVar}: ${t.value}`)
+    for (const t of diff.removed) console.log(`  - ${t.cssVar}: ${t.value}`)
+    for (const { before, after } of diff.changed) {
+      console.log(`  ~ ${after.cssVar}: ${before.value} -> ${after.value}`)
+    }
+    // Versioning is NX and CI's job, so this reports the change and stops there.
+    console.log('\nRun `pnpm ds:theme` to apply.')
+  })
+})
 
 program
   .command('init')

@@ -26,7 +26,7 @@ front door; the work happens in the sub-skills below.
 | generating or regenerating components from Figma                        | `ds-generate`                                          |
 | "is this ready for dev?", design gaps, unbound colours, unsorted layers | `ds-design-review`                                     |
 | whether the code still matches Figma's geometry                         | `ds-fidelity` _(Phase 3)_                              |
-| colours, spacing, breakpoints, `tokens.css`                             | `ds-theme` _(Phase 2)_                                 |
+| colours, spacing, breakpoints, `tokens.css`, swatches, token naming     | `ds-theme`                                             |
 | one atomic layer specifically                                           | `ds-atoms`, `ds-molecules`, `ds-organisms` _(Phase 2)_ |
 
 If the request spans several, run `ds-design-review` first: an unbound colour or an unsorted
@@ -62,4 +62,5 @@ layer sorting. Read it rather than asking; if it is missing, `figma2react init` 
 
 - [references/cli.md](references/cli.md) — every command and flag, and what each writes
 - [references/atomic.md](references/atomic.md) — the three-layer model and its rules
+- [references/theme.md](references/theme.md) — the theme, and why Tailwind's palette is not a target
 - [references/gates.md](references/gates.md) — what each delivery gate requires

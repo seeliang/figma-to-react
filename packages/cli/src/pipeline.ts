@@ -1,6 +1,7 @@
 import {
   FigmaClient,
   auditDesign,
+  buildTokenManifest,
   collectTokens,
   emitFontCss,
   emitThemeCss,
@@ -8,9 +9,15 @@ import {
   parseFigmaTarget,
   resolveAssets,
 } from '@figma-to-react/core'
-import type { DesignFinding, IRDocument, Layer, TokenTable } from '@figma-to-react/core'
+import type {
+  DesignFinding,
+  IRDocument,
+  Layer,
+  TokenManifest,
+  TokenTable,
+} from '@figma-to-react/core'
 import { emit, formatAll } from '@figma-to-react/emit-react'
-import { emitStories, exportGeometry } from '@figma-to-react/emit-storybook'
+import { emitStories, emitThemeStory, exportGeometry } from '@figma-to-react/emit-storybook'
 import type { Geometry } from '@figma-to-react/emit-storybook'
 
 export interface RunOptions {
@@ -60,6 +67,13 @@ export interface RunResult {
   stories: Map<string, string>
   /** Figma geometry the stories measure against; only when stories are on. */
   geometry?: Geometry
+  /**
+   * The token table as data, written beside the CSS.
+   *
+   * The CSS is for browsers; this is for the generated theme story, the check
+   * that each token reached the bundle, and the diff between two generations.
+   */
+  tokenManifest?: TokenManifest
 }
 
 /**
@@ -74,9 +88,17 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const warnings: string[] = []
 
   options.onProgress?.(`Fetching ${nodeId ? `node ${nodeId}` : 'file'} from ${fileKey}`)
-  const entry = nodeId
-    ? (await client.getNodes(fileKey, [nodeId])).nodes[nodeId]
-    : await client.getFile(fileKey)
+  // `lastModified` lives on the response, not on the node — and it is what ties
+  // generated output to a state of the design file rather than to a clock.
+  let lastModified: string | undefined
+  let entry
+  if (nodeId) {
+    const response = await client.getNodes(fileKey, [nodeId])
+    lastModified = response.lastModified
+    entry = response.nodes[nodeId]
+  } else {
+    entry = await client.getFile(fileKey)
+  }
 
   if (!entry) {
     throw new Error(
@@ -123,6 +145,14 @@ export async function run(options: RunOptions): Promise<RunResult> {
     traceIds: options.traceIds ?? false,
   })
 
+  const tokenManifest = table
+    ? buildTokenManifest(table, {
+        key: fileKey,
+        ...(nodeId ? { node: nodeId } : {}),
+        ...(lastModified ? { lastModified } : {}),
+      })
+    : undefined
+
   const stories = new Map<string, string>()
   let geometry: Geometry | undefined
 
@@ -140,6 +170,12 @@ export async function run(options: RunOptions): Promise<RunResult> {
       fidelity: { threshold: options.fidelityThreshold ?? 4, helperPath: '../fidelity/assert.js' },
     })) {
       stories.set(s.file, s.source)
+    }
+    // The theme story is generated from the manifest, so the number of
+    // assertions is decided by the design rather than by whoever wrote a test.
+    if (tokenManifest && tokenManifest.tokens.length > 0) {
+      const theme = emitThemeStory(tokenManifest, { helperPath: '../theme/assert.js' })
+      stories.set(theme.file, theme.source)
     }
     options.onProgress?.(`Generated ${stories.size} story file(s)`)
   }
@@ -163,5 +199,6 @@ export async function run(options: RunOptions): Promise<RunResult> {
     design,
     stories,
     geometry,
+    tokenManifest,
   }
 }

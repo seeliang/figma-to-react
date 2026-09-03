@@ -72,11 +72,14 @@ describe('figma2react gen', () => {
     const out = await mkdtemp(join(tmpdir(), 'f2r-'))
     const { stdout } = await cli(['gen', 'TESTKEY:1-2', '--out', out])
 
+    // tokens.json is the same theme as data: the CSS is for browsers, this is
+    // for the generated theme story and the drift check.
     expect((await readdir(out)).sort()).toEqual([
       'button-primary.tsx',
       'card.tsx',
       'fonts.css',
       'tokens.css',
+      'tokens.json',
     ])
     expect(stdout).toContain('root component: <Card />')
   })
@@ -156,7 +159,9 @@ describe('figma2react gen --stories', () => {
     const files = await readdir(out)
     expect(files).toContain('button.stories.tsx')
     expect(files).toContain('figma-geometry.json')
-    expect(stdout).toContain('stories: 1 file(s)')
+    // One per variant set, plus the theme's own gallery-and-assertions story.
+    expect(files).toContain('theme.stories.tsx')
+    expect(stdout).toContain('stories: 2 file(s)')
   })
 
   it('points each story at its own Figma node', async () => {
@@ -190,6 +195,8 @@ describe('generated code compiles', () => {
 
     await mkdir(join(out, '..', 'fidelity'), { recursive: true })
     await writeFile(join(out, '..', 'fidelity', 'assert.d.ts'), FIDELITY_STUB)
+    await mkdir(join(out, '..', 'theme'), { recursive: true })
+    await writeFile(join(out, '..', 'theme', 'assert.d.ts'), THEME_STUB)
 
     await writeFile(
       join(out, 'tsconfig.json'),
@@ -243,6 +250,12 @@ const storybookTypes = fileURLToPath(
 const FIDELITY_STUB = `export declare function expectLayoutWithin(
   container: HTMLElement,
   thresholdPx: number,
+): Promise<void>
+`
+
+const THEME_STUB = `export declare function expectTokensRendered(
+  container: HTMLElement,
+  expected: readonly { cssVar: string; name: string; value: string; named: boolean; kind: string }[],
 ): Promise<void>
 `
 

@@ -13,9 +13,10 @@
     "format": "prettier --write .",
     "ds:init": "node scripts/ds.mjs init",
     "ds:gen": "node scripts/ds.mjs gen",
+    "ds:theme": "node scripts/ds.mjs theme",
     "ds:tokens": "node scripts/ds.mjs tokens",
     "ds:audit": "node scripts/ds.mjs audit",
-    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
+    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && node scripts/verify-tokens.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

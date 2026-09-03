@@ -537,7 +537,7 @@ audit, 24 new tests, and the `design-system` / `ds-generate` / `ds-design-review
 
 - **`scope-margin-leak` shipped as `scope-size-override`.** Figma has no margin, and the REST
   response carries no override list, so the padding-versus-margin rule is not directly observable.
-  What *is* observable is an instance resized away from its master — the same violation, the
+  What _is_ observable is an instance resized away from its master — the same violation, the
   parent reaching inside the child — so the check is named for what it detects rather than for the
   rule it stands in for.
 - **The recorded fixture had to be re-recorded.** It was gone, exactly as this plan predicted, and
@@ -552,7 +552,6 @@ audit, 24 new tests, and the `design-system` / `ds-generate` / `ds-design-review
 - **`examples/public/figma-geometry.json` is stale** — it predates the hover variants and is not
   written by `gen`. Only `fidelity.html` reads it; the Storybook fidelity tests use the copy in
   `examples/src/design-system/`.
-
 
 _Make the CLI drivable by intent, and get the components sorted._
 

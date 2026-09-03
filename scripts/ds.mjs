@@ -35,9 +35,11 @@ const CLI = join(ROOT, 'packages/cli/dist/index.js')
 const CONFIG = join(ROOT, 'design-system.json')
 const RECORDED = 'packages/core/test/fixtures/design-system.json'
 
-const COMMANDS = new Set(['init', 'gen', 'tokens', 'audit', 'diff-tokens'])
+const COMMANDS = new Set(['init', 'gen', 'theme', 'tokens', 'audit', 'diff-tokens'])
 /** Offline is the default for everything that only reads. */
 const READ_ONLY = new Set(['audit', 'diff-tokens'])
+/** `theme` only reaches the network when it is generating. */
+const themeWrites = () => !has('--audit') && !has('--diff')
 
 const argv = process.argv.slice(2)
 const command = argv[0]
@@ -54,7 +56,7 @@ const valueOf = (name) => {
   return i === -1 ? undefined : flags[i + 1]
 }
 const passthrough = () => {
-  const drop = new Set(['--live', '--offline', '--diff', '--layer'])
+  const drop = new Set(['--live', '--offline', '--diff', '--audit', '--layer'])
   const out = []
   for (let i = 0; i < flags.length; i++) {
     if (flags[i] === '--layer') {
@@ -66,7 +68,9 @@ const passthrough = () => {
   return out
 }
 
-const live = has('--live') || (!has('--offline') && !READ_ONLY.has(command))
+const live =
+  has('--live') ||
+  (!has('--offline') && !READ_ONLY.has(command) && (command !== 'theme' || themeWrites()))
 const config = await loadConfig()
 
 await loadEnv()
@@ -116,30 +120,43 @@ function buildArgs() {
       const out = command === 'diff-tokens' ? ['-o', join(ROOT, '.ds-tokens-next.css')] : []
       return ['tokens', target, '--min-uses', String(config.gen?.minUses ?? 3), ...out, ...rest]
     }
+    case 'theme': {
+      requireTarget()
+      // Stage 0 — is the design ready to generate a theme from?
+      if (has('--audit')) return ['audit', target, ...rest]
+      // Stage 3 — what changed against the committed manifest.
+      if (has('--diff')) return ['theme-diff', target, '-o', resolve(ROOT, config.out), ...rest]
+      // Stage 1 — generate. The theme comes out of `gen` rather than its own
+      // command because tokens.css, tokens.json and the theme story all fall
+      // out of one collection pass; running it twice could disagree with itself.
+      return buildGenArgs(rest)
+    }
     case 'gen': {
       requireTarget()
-      const g = config.gen ?? {}
-      const layer = valueOf('--layer')
-      const out = layer
-        ? join(config.out ?? 'src/design-system', layer)
-        : (config.out ?? 'src/design-system')
-      return [
-        'gen',
-        target,
-        '-o',
-        resolve(ROOT, out),
-        ...(g.traceIds === false ? [] : ['--trace-ids']),
-        ...(g.stories === false ? [] : ['--stories']),
-        '--fidelity-threshold',
-        String(g.fidelityThreshold ?? 4),
-        '--min-uses',
-        String(g.minUses ?? 3),
-        ...rest,
-      ]
+      return buildGenArgs(rest)
     }
     default:
       return [command, ...rest]
   }
+}
+
+function buildGenArgs(rest) {
+  const g = config.gen ?? {}
+  const layer = valueOf('--layer')
+  const base = config.out ?? 'src/design-system'
+  return [
+    'gen',
+    target,
+    '-o',
+    resolve(ROOT, layer ? join(base, layer) : base),
+    ...(g.traceIds === false ? [] : ['--trace-ids']),
+    ...(g.stories === false ? [] : ['--stories']),
+    '--fidelity-threshold',
+    String(g.fidelityThreshold ?? 4),
+    '--min-uses',
+    String(g.minUses ?? 3),
+    ...rest,
+  ]
 }
 
 function requireTarget() {

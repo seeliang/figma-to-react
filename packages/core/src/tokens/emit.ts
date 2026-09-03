@@ -2,7 +2,7 @@ import type { FontUsage, Token, TokenTable } from './collect.js'
 import type { TokenKind } from './types.js'
 
 /** Tailwind v4 namespaces each theme key by what utilities it feeds. */
-const NAMESPACE: Record<TokenKind, string> = {
+export const NAMESPACE: Record<TokenKind, string> = {
   color: '--color',
   spacing: '--spacing',
   radius: '--radius',

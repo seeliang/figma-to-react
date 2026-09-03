@@ -50,10 +50,17 @@ if (!cssFile) {
   console.error(`No stylesheet in ${DIST} — run the example build first.`)
   process.exit(1)
 }
-const css = (await Promise.all(stylesheets.map((f) => readFile(join(DIST, f), 'utf8')))).join('\n')
+const raw = (await Promise.all(stylesheets.map((f) => readFile(join(DIST, f), 'utf8')))).join('\n')
 
-// Tailwind escapes the punctuation in arbitrary values, so compare on the part
-// before the first bracket — enough to prove a rule was generated at all.
+// Tailwind escapes CSS-significant punctuation in selectors, so `border-black/10`
+// is written `.border-black\/10` and `text-[14px]` as `.text-\[14px\]`. Dropping
+// the backslashes lets a plain substring test match either. Without this the
+// check reports missing rules for classes that are present, which is worse than
+// no check: it trains you to ignore it.
+const css = raw.replaceAll('\\', '')
+
+// Compare on the part before the first bracket — enough to prove a rule was
+// generated at all.
 const missing = [...used].filter((cls) => !css.includes(cls.split('[')[0]))
 
 if (missing.length > 0) {

@@ -5,6 +5,7 @@ import type { FileNodesResponse } from '../src/figma/types.js'
 import { normalize } from '../src/ir/normalize.js'
 import { collectTokens, nameColor, slugify } from '../src/tokens/collect.js'
 import { emitFontCss, emitThemeCss, googleFontsUrl } from '../src/tokens/emit.js'
+import { buildTokenManifest, diffTokenManifests, isEmptyDiff } from '../src/tokens/manifest.js'
 
 function docFor(file: string, nodeId: string) {
   const response: FileNodesResponse = JSON.parse(
@@ -214,5 +215,55 @@ describe('emitThemeCss', () => {
   it('explains itself when a file carries no tokens at all', () => {
     const table = collectTokens(docFor('legacy', '2:1'))
     expect(emitThemeCss(table)).toContain('No design tokens found')
+  })
+})
+
+/**
+ * What the naming actually promises.
+ *
+ * Not "the name agrees with Tailwind" — this design system is hand-tailored and
+ * Tailwind's ramp is not the target. What it does promise is that the same
+ * colour always produces the same name, and that two colours never end up
+ * sharing one, because a collision silently merges two design decisions.
+ */
+describe('token naming: stable and unique', () => {
+  const source = { key: 'uA3bE5ofr6BgRakJzudL4L', node: '2:77' }
+  const manifest = () => buildTokenManifest(collectTokens(docFor('design-system', '2:77')), source)
+
+  it('produces identical output for identical input', () => {
+    expect(diffTokenManifests(manifest(), manifest())).toSatisfy(isEmptyDiff)
+  })
+
+  it('gives every token a distinct custom property', () => {
+    const vars = manifest().tokens.map((t) => t.cssVar)
+    expect(new Set(vars).size).toBe(vars.length)
+  })
+
+  it('never emits two different values under one name', () => {
+    const byVar = new Map<string, string>()
+    for (const t of manifest().tokens) {
+      expect(byVar.get(t.cssVar) ?? t.value).toBe(t.value)
+      byVar.set(t.cssVar, t.value)
+    }
+  })
+
+  it('counts each kind, so a generated test can assert the number', () => {
+    expect(manifest().counts).toEqual({ color: 7, fontFamily: 1 })
+  })
+
+  it('marks a token as named only when a Figma Style supplied the name', () => {
+    // Every colour in this file is unbound, so every name is derived. That is
+    // the design issue the theme flow exists to surface, asserted rather than
+    // assumed.
+    expect(manifest().tokens.every((t) => !t.named)).toBe(true)
+  })
+
+  it('reports a changed value as changed, not as add plus remove', () => {
+    const before = manifest()
+    const after = structuredClone(before)
+    after.tokens[0]!.value = '#000000'
+    const diff = diffTokenManifests(before, after)
+    expect(diff.changed).toHaveLength(1)
+    expect([diff.added, diff.removed]).toEqual([[], []])
   })
 })
