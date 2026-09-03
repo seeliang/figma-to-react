@@ -2,13 +2,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
   rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
 />
 
 <style>
-  /* Neutral surround, on purpose: it is how you look at colour, and this page
-     is mostly about looking at colour. The specimen chips carry the only
-     saturated hues; the page itself stays out of their way. */
+  /* Neutral surround, on purpose: it is how you look at colour, and the only
+     saturated hues on this page belong to the design system, not to the page. */
   :root {
     --ground: #e7e4de;
     --surface: #f5f3ef;
@@ -18,8 +17,6 @@
     --rule: #cfcac2;
     --accent: #00596b;
     --accent-soft: #d7e7ea;
-    --flag: #8c4a12;
-    --flag-soft: #f0e2d4;
 
     --display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
     --body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
@@ -36,8 +33,6 @@
       --rule: #383530;
       --accent: #6fc9dd;
       --accent-soft: #17343b;
-      --flag: #e0a367;
-      --flag-soft: #33251a;
     }
   }
 
@@ -50,8 +45,6 @@
     --rule: #383530;
     --accent: #6fc9dd;
     --accent-soft: #17343b;
-    --flag: #e0a367;
-    --flag-soft: #33251a;
   }
 
   * {
@@ -69,16 +62,9 @@
   }
 
   .page {
-    max-width: 62rem;
+    max-width: 54rem;
     margin: 0 auto;
-    padding: 4rem 1.5rem 6rem;
-  }
-
-  /* --- masthead --------------------------------------------------------- */
-
-  .masthead {
-    border-bottom: 2px solid var(--ink);
-    padding-bottom: 1.75rem;
+    padding: 4rem 1.5rem 5rem;
   }
 
   .eyebrow {
@@ -93,8 +79,8 @@
   h1 {
     font-family: var(--display);
     font-weight: 700;
-    font-size: clamp(2.4rem, 7vw, 4rem);
-    line-height: 1.02;
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    line-height: 1.03;
     letter-spacing: -0.028em;
     margin: 0;
     text-wrap: balance;
@@ -102,164 +88,46 @@
 
   .standfirst {
     max-width: 34rem;
-    margin: 1.25rem 0 0;
-    font-size: 1.12rem;
+    margin: 1.2rem 0 0;
+    font-size: 1.1rem;
     color: var(--muted);
   }
-
-  /* --- readout strip ---------------------------------------------------- */
-
-  .readout {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-    gap: 1px;
-    background: var(--rule);
-    border: 1px solid var(--rule);
-    margin: 2.5rem 0 3.5rem;
-  }
-
-  .readout div {
-    background: var(--surface);
-    padding: 1rem 1.1rem;
-  }
-
-  .readout dt {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .readout dd {
-    margin: 0.35rem 0 0;
-    font-family: var(--display);
-    font-weight: 600;
-    font-size: 1.6rem;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-  }
-
-  .readout dd small {
-    display: block;
-    font-family: var(--body);
-    font-weight: 400;
-    font-size: 0.82rem;
-    letter-spacing: 0;
-    color: var(--muted);
-    margin-top: 0.15rem;
-  }
-
-  /* --- structure -------------------------------------------------------- */
 
   h2 {
     font-family: var(--display);
     font-weight: 600;
-    font-size: 1.65rem;
+    font-size: 1.4rem;
     letter-spacing: -0.02em;
-    margin: 3.5rem 0 1rem;
-    text-wrap: balance;
+    margin: 3rem 0 0.75rem;
   }
 
-  h3 {
-    font-family: var(--display);
-    font-weight: 600;
-    font-size: 1.08rem;
-    letter-spacing: -0.01em;
-    margin: 2rem 0 0.6rem;
-  }
-
-  p,
-  li {
-    max-width: 40rem;
-  }
   p {
     margin: 0 0 1rem;
-  }
-
-  a {
-    color: var(--accent);
-    text-underline-offset: 0.18em;
-  }
-  a:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-    border-radius: 2px;
+    max-width: 40rem;
   }
 
   code {
     font-family: var(--mono);
-    font-size: 0.88em;
+    font-size: 0.86em;
     background: var(--sunken);
     padding: 0.1em 0.34em;
     border-radius: 3px;
+    white-space: nowrap;
   }
 
-  /* --- numbered steps --------------------------------------------------- */
-
-  /* The order is load-bearing here — you cannot wire a theme you have not
-     generated — so the numbering encodes a real sequence, not decoration. */
-  .step {
-    display: grid;
-    grid-template-columns: 3.25rem 1fr;
-    gap: 0 1.25rem;
-    border-top: 1px solid var(--rule);
-    padding: 2rem 0 0.5rem;
-  }
-
-  .step-n {
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: var(--accent);
-    letter-spacing: 0.06em;
-    padding-top: 0.45rem;
-  }
-
-  .step h3 {
-    margin-top: 0;
-  }
-  .step > div > :last-child {
-    margin-bottom: 0;
-  }
-
-  pre {
-    background: var(--sunken);
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    padding: 1rem 1.1rem;
-    overflow-x: auto;
-    font-family: var(--mono);
-    font-size: 0.83rem;
-    line-height: 1.65;
-    margin: 1rem 0;
-  }
-
-  pre code {
-    background: none;
-    padding: 0;
-    font-size: inherit;
-  }
-  .c {
-    color: var(--muted);
-    font-style: italic;
-  }
-  .k {
-    color: var(--accent);
-  }
-
-  /* --- derivation table ------------------------------------------------- */
+  /* --- the flow, which is the point of the page ------------------------- */
 
   .scroller {
     overflow-x: auto;
-    margin: 1.25rem 0 0.5rem;
+    margin: 2.5rem 0 3rem;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
   }
 
   table {
     border-collapse: collapse;
     width: 100%;
-    min-width: 38rem;
-    font-size: 0.92rem;
+    min-width: 34rem;
   }
 
   th {
@@ -268,486 +136,261 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--muted);
-    text-align: right;
-    font-weight: 400;
-    padding: 0 0.7rem 0.6rem;
-    border-bottom: 1px solid var(--ink);
-  }
-
-  th:first-child,
-  th:nth-child(2) {
     text-align: left;
+    font-weight: 400;
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
   }
 
   td {
-    padding: 0.5rem 0.7rem;
+    padding: 0.7rem 0.8rem;
     border-bottom: 1px solid var(--rule);
-    text-align: right;
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  td:first-child,
-  td:nth-child(2) {
-    text-align: left;
-  }
-  td.name {
-    color: var(--accent);
-  }
-
-  .chip {
-    display: inline-block;
-    width: 2.2rem;
-    height: 1.3rem;
-    border-radius: 2px;
-    border: 1px solid var(--rule);
-    vertical-align: -0.25rem;
-  }
-
-  /* --- callouts --------------------------------------------------------- */
-
-  .note {
-    border-left: 3px solid var(--accent);
-    background: var(--accent-soft);
-    padding: 0.9rem 1.1rem;
-    margin: 1.5rem 0;
+    vertical-align: baseline;
     font-size: 0.95rem;
   }
 
-  .note > :last-child {
-    margin-bottom: 0;
+  tr:last-child td {
+    border-bottom: none;
   }
-  .note strong {
+
+  .n {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    width: 2.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stage {
     font-family: var(--display);
     font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
   }
 
-  .gap {
-    border-left: 3px solid var(--flag);
-    background: var(--flag-soft);
-    padding: 1rem 1.1rem;
-    margin: 1.25rem 0;
+  td.cmd code {
+    background: none;
+    padding: 0;
+    font-size: 0.83rem;
   }
 
-  .gap > :last-child {
-    margin-bottom: 0;
-  }
-
-  .gap h3 {
-    margin: 0 0 0.4rem;
-    font-size: 1rem;
-    color: var(--flag);
-  }
-
-  .gap .fix {
-    font-size: 0.9rem;
+  .release td {
     color: var(--muted);
+  }
+
+  .release .n {
+    color: var(--muted);
+  }
+
+  /* --- stage notes ------------------------------------------------------ */
+
+  .note-list {
+    display: grid;
+    gap: 1.4rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    max-width: 40rem;
+  }
+
+  .note-list li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0 0.8rem;
+  }
+
+  .note-list b {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    padding-top: 0.22rem;
+  }
+
+  .note-list h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .note-list p {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 0.9rem 1.1rem;
+    margin: 2.5rem 0 0;
+    font-size: 0.95rem;
+  }
+
+  .callout > :last-child {
     margin-bottom: 0;
   }
 
-  .gap .fix b {
-    color: var(--ink);
+  .callout strong {
     font-family: var(--display);
     font-weight: 600;
   }
 
   footer {
-    margin-top: 4rem;
-    padding-top: 1.5rem;
+    margin-top: 3.5rem;
+    padding-top: 1.4rem;
     border-top: 1px solid var(--rule);
     font-size: 0.86rem;
     color: var(--muted);
   }
 
   footer p {
-    max-width: 44rem;
-  }
-</style>
-<style>
-  /* --- stage spine ------------------------------------------------------- */
-
-  .stages {
-    margin: 1.5rem 0 0;
+    max-width: 42rem;
   }
 
-  .stages td:first-child,
-  .stages th:first-child {
-    text-align: left;
-  }
-
-  .stages td {
-    font-family: var(--body);
-    font-size: 0.9rem;
-    text-align: left;
-    vertical-align: top;
-  }
-
-  .stages td code {
-    white-space: nowrap;
-  }
-
-  .stage-n {
-    font-family: var(--mono);
+  a {
     color: var(--accent);
-    font-size: 0.75rem;
-    width: 2rem;
+    text-underline-offset: 0.18em;
   }
 
-  .out {
-    background: var(--sunken);
-    border-left: 3px solid var(--rule);
-    border-radius: 0 4px 4px 0;
-  }
-
-  .out b {
-    color: var(--flag);
-    font-weight: 400;
-  }
-
-  .lede {
-    font-family: var(--display);
-    font-weight: 600;
-    font-size: 1.02rem;
-    letter-spacing: -0.01em;
-    margin: 0 0 0.5rem;
+  a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 </style>
 
 <div class="page">
-  <header class="masthead">
-    <p class="eyebrow">figma-to-react · theme</p>
-    <h1>From Swatch to Token</h1>
-    <p class="standfirst">
-      What a developer runs at each stage of delivery to take colours out of Figma and into a theme
-      that is generated, tested, reviewed and signed off. Every command here has been run; the
-      outputs are real.
-    </p>
-  </header>
-
-  <dl class="readout">
-    <div>
-      <dt>Colour tokens</dt>
-      <dd>7<small>plus 1 typeface</small></dd>
-    </div>
-    <div>
-      <dt>Named by you</dt>
-      <dd>0<small>all 8 derived</small></dd>
-    </div>
-    <div>
-      <dt>Assertions</dt>
-      <dd>8<small>generated, not written</small></dd>
-    </div>
-    <div>
-      <dt>QA checks</dt>
-      <dd>3<small>browser, node, unit</small></dd>
-    </div>
-  </dl>
-
-  <h2>The flow</h2>
-
-  <p>
-    One command with modes, not five commands — the stages share the same config and the same
-    offline decision. <code>--audit</code> and <code>--diff</code> never touch the network.
+  <p class="eyebrow">figma-to-react · theme</p>
+  <h1>From Swatch to Token</h1>
+  <p class="standfirst">
+    Colours, typefaces and spacing, from a Figma file to a tested theme. One command with modes,
+    matched to the stages of delivery.
   </p>
 
   <div class="scroller">
-    <table class="stages">
+    <table>
       <thead>
         <tr>
           <th></th>
           <th>Stage</th>
           <th>Run</th>
-          <th>Passes when</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td class="stage-n">00</td>
-          <td>Design Ready</td>
-          <td><code>pnpm ds:theme --audit</code></td>
-          <td>colours carry names a designer chose</td>
+          <td class="n">00</td>
+          <td class="stage">Design Ready</td>
+          <td class="cmd"><code>pnpm ds:theme --audit</code></td>
         </tr>
         <tr>
-          <td class="stage-n">01</td>
-          <td>Generate</td>
-          <td><code>pnpm ds:theme</code></td>
-          <td>four files written from one pass</td>
+          <td class="n">01</td>
+          <td class="stage">Generate</td>
+          <td class="cmd"><code>pnpm ds:theme</code></td>
         </tr>
         <tr>
-          <td class="stage-n">02</td>
-          <td>Test</td>
-          <td><code>pnpm --filter figma-to-react-example test-storybook</code></td>
-          <td>every token has a swatch that paints its value</td>
+          <td class="n">02</td>
+          <td class="stage">Test</td>
+          <td class="cmd"><code>pnpm --filter figma-to-react-example test-storybook</code></td>
         </tr>
         <tr>
-          <td class="stage-n">03</td>
-          <td>Review</td>
-          <td><code>pnpm ds:theme --diff</code></td>
-          <td>the change is legible in a PR</td>
+          <td class="n">03</td>
+          <td class="stage">Review</td>
+          <td class="cmd"><code>pnpm ds:theme --diff</code></td>
         </tr>
         <tr>
-          <td class="stage-n">04</td>
-          <td>QA signoff</td>
-          <td><code>pnpm verify</code></td>
-          <td>all three checks green</td>
+          <td class="n">04</td>
+          <td class="stage">QA signoff</td>
+          <td class="cmd"><code>pnpm verify</code></td>
         </tr>
-        <tr>
-          <td class="stage-n">—</td>
-          <td>Release</td>
-          <td><em>NX + CI</em></td>
-          <td>versioning lives outside this repo</td>
+        <tr class="release">
+          <td class="n">—</td>
+          <td class="stage">Release</td>
+          <td class="cmd">NX and CI, outside this repo</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <div class="step">
-    <div class="step-n">00</div>
-    <div>
-      <h3>Design Ready — before you generate anything</h3>
-      <p class="lede">
-        Bind Colour Styles first, or you are versioning names that are about to change.
-      </p>
-      <pre><code>pnpm ds:theme --audit</code></pre>
-      <p>
-        Every colour in this file is currently unbound, so all eight names are derived from the
-        values themselves. That works, and it is deterministic — but a derived name describes a
-        colour, it cannot say what the colour is <em>for</em>.
-      </p>
-      <div class="scroller">
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Hex</th>
-              <th>Chroma</th>
-              <th>L*</th>
-              <th>Derived name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="chip" style="background: #2563eb"></span></td>
-              <td>#2563eb</td>
-              <td>0.776</td>
-              <td>46.1</td>
-              <td class="name">blue-600</td>
-            </tr>
-            <tr>
-              <td><span class="chip" style="background: #0f172a"></span></td>
-              <td>#0f172a</td>
-              <td>0.106</td>
-              <td>8.0</td>
-              <td class="name">slate-950</td>
-            </tr>
-            <tr>
-              <td><span class="chip" style="background: #64748b"></span></td>
-              <td>#64748b</td>
-              <td>0.153</td>
-              <td>48.3</td>
-              <td class="name">slate-600</td>
-            </tr>
-            <tr>
-              <td><span class="chip" style="background: #e2e8f0"></span></td>
-              <td>#e2e8f0</td>
-              <td>0.055</td>
-              <td>91.8</td>
-              <td class="name">blue-200</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p>
-        Chroma decides grey against hue, CIE L* places the step. Both are deliberate: HSL saturation
-        calls <code>#0f172a</code> a 47&#37;-saturated blue, which would stand a plain slate next to
-        a genuinely blue <code>blue-600</code>.
-      </p>
-      <div class="note">
+  <h2>What each one does</h2>
+
+  <ul class="note-list">
+    <li>
+      <b>00</b>
+      <div>
+        <h3>Design Ready</h3>
         <p>
-          <strong>These are not Tailwind names, and they are not meant to be.</strong> This design
-          system is hand-tailored. The names only resemble Tailwind's because they come off a
-          similar ramp; where they disagree, that is not a bug to fix by recalibrating. Bind a
-          Colour Style and the derived name is never used again — that is the whole of stage 0.
+          Asks whether the Figma file is ready to generate a theme from. Right now every colour is
+          unbound, so all eight token names are derived from the values rather than chosen by a
+          designer. Bind a Colour Style and the derived name is never used again — which is why
+          this stage comes first, and not after you have versioned those names.
         </p>
       </div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-n">01</div>
-    <div>
-      <h3>Generate</h3>
-      <pre><code>pnpm ds:theme                        <span class="c"># live, from the current Figma file</span>
-node scripts/ds.mjs theme --offline  <span class="c"># from the recording; spends no quota</span></code></pre>
-      <p>Four files, all out of one collection pass, so they cannot disagree with each other:</p>
-      <pre><code>tokens.css          <span class="c">the Tailwind @theme block, for browsers</span>
-tokens.json         <span class="c">the same tokens as data, for everything else</span>
-fonts.css           <span class="c">loads the typefaces the theme names</span>
-theme.stories.tsx   <span class="c">every token as a swatch, with its own assertions</span></code></pre>
-      <div class="note">
+    </li>
+    <li>
+      <b>01</b>
+      <div>
+        <h3>Generate</h3>
         <p>
-          <strong>Import order is load-bearing.</strong> <code>fonts.css</code> must come first — a
-          CSS <code>@import</code> is only valid ahead of every other rule. Put it anywhere else and
-          the bundler drops it silently; the page renders in the fallback typeface and looks fine to
-          whoever built it.
+          Writes four files from one pass: <code>tokens.css</code> for browsers,
+          <code>tokens.json</code> as data, <code>fonts.css</code> to load the typefaces, and
+          <code>theme.stories.tsx</code> — every token as a swatch. Add <code>--offline</code> to
+          work from the recorded response; the Figma quota is set by plan tier and runs out fast.
         </p>
       </div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-n">02</div>
-    <div>
-      <h3>Test — generated, so the design decides how many</h3>
-      <p class="lede">
-        Seven colours in Figma means seven checked values. An eighth is covered the moment it
-        exists.
-      </p>
-      <pre><code>pnpm --filter figma-to-react-example test-storybook</code></pre>
-      <p>
-        The play function checks the <strong>count first</strong>, then the values. A token with no
-        swatch is the failure a per-swatch loop skips over silently — and it is also the likeliest,
-        because it means the design gained something the page does not know about.
-      </p>
-      <p>Both failure modes, run against a deliberately broken build:</p>
-      <pre class="out"><code><b>1 token(s) do not paint their declared value:</b>
-  --color-blue-600  declared #2563eb  painted #ff0000
-Usually the theme was not imported, or a later @theme block redeclared the same property.
-
-<b>1 of 7 token(s) have no swatch in the DOM:</b>
-  --color-blue-200 (#e2e8f0)</code></pre>
-      <p>
-        <code>theme.stories.tsx</code> is overwritten on every run. Hand-written stories belong in a
-        <code>*.custom.stories.tsx</code>, which the generator never touches.
-      </p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-n">03</div>
-    <div>
-      <h3>Review</h3>
-      <pre><code>pnpm ds:theme --diff</code></pre>
-      <p>
-        Added, removed and changed, against the committed manifest. This is what goes in the PR
-        description.
-      </p>
-      <pre class="out"><code>Theme changes if regenerated:
-
-  - --color-ghost: #abcdef
-  ~ --color-blue-600: #123456 -> #2563eb
-
-Run `pnpm ds:theme` to apply.</code></pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-n">04</div>
-    <div>
-      <h3>QA signoff</h3>
-      <pre><code>pnpm verify</code></pre>
-      <p>Three checks, each living where it is cheapest rather than all in the browser:</p>
-      <div class="scroller">
-        <table class="stages">
-          <thead>
-            <tr>
-              <th>Check</th>
-              <th>Where</th>
-              <th>Catches</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>rendered vs declared</td>
-              <td><code>theme.stories.tsx</code></td>
-              <td>a token that never reached the bundle, or was overridden</td>
-            </tr>
-            <tr>
-              <td>committed vs Figma</td>
-              <td><code>verify-tokens.mjs</code></td>
-              <td>the design moved and nobody regenerated; hand-edited output</td>
-            </tr>
-            <tr>
-              <td>stable and unique</td>
-              <td><code>tokens.test.ts</code></td>
-              <td>a naming change that would silently rename every token</td>
-            </tr>
-          </tbody>
-        </table>
+    </li>
+    <li>
+      <b>02</b>
+      <div>
+        <h3>Test</h3>
+        <p>
+          The test is generated with the story, so the design decides how many assertions there
+          are: seven colours in Figma means seven checked values, and an eighth is covered the
+          moment it exists. It checks the count before any value — a token with no swatch at all is
+          the failure a per-swatch loop skips over silently.
+        </p>
       </div>
-      <p>
-        The first needs a real browser — jsdom will not resolve <code>var()</code>. The second needs
-        the recorded Figma response but no browser, so it runs in CI without Playwright. The third
-        is a pure function and costs nothing.
-      </p>
-      <p>
-        The third asserts what the naming actually promises: the same colour always yields the same
-        name, and two tokens never share one. Not that the name agrees with anybody else's palette.
-      </p>
-    </div>
-  </div>
+    </li>
+    <li>
+      <b>03</b>
+      <div>
+        <h3>Review</h3>
+        <p>
+          Prints what would be added, removed or changed against the committed tokens. Offline, so
+          checking costs nothing. This is what belongs in a pull request description.
+        </p>
+      </div>
+    </li>
+    <li>
+      <b>04</b>
+      <div>
+        <h3>QA signoff</h3>
+        <p>
+          Three checks, each where it is cheapest: the swatch paints its declared value (a real
+          browser), the committed tokens still match Figma (node, no browser), and the naming is
+          stable and collision-free (a pure function). Plus the build, the types and the component
+          fidelity.
+        </p>
+      </div>
+    </li>
+  </ul>
 
-  <h2>What the file is missing</h2>
-
-  <p>Design issues, each one action in Figma. None can be fixed in code.</p>
-
-  <div class="gap">
-    <h3>62 colours bound to no Style or Variable</h3>
+  <div class="callout">
     <p>
-      All eight token names are derived. This is stage 0, and it is the highest-value change
-      available.
-    </p>
-    <p class="fix">
-      <b>Fix</b> · Select the swatch in Figma and create a Colour Style. Style names come through on
-      every plan; Variable names need Enterprise.
-    </p>
-  </div>
-
-  <div class="gap">
-    <h3>No font sizes bound, so no <code>--text-*</code> entries</h3>
-    <p>
-      Eight distinct type combinations, none bound, so every size is emitted inline as
-      <code>text-[14px]</code>.
-    </p>
-    <p class="fix">
-      <b>Fix</b> · Bind font size to a Variable. A Text Style is not enough — the REST API exposes
-      only its colour per node.
-    </p>
-  </div>
-
-  <div class="gap">
-    <h3>No breakpoints anywhere</h3>
-    <p>
-      The theme has colours and spacing but nothing responsive, so no <code>sm:</code> or
-      <code>lg:</code> class is ever generated.
-    </p>
-    <p class="fix">
-      <b>Fix</b> · Add breakpoint variants — a Size or Breakpoint property with Mobile / Tablet /
-      Desktop — to the components that reflow.
-    </p>
-  </div>
-
-  <div class="gap">
-    <h3><code>--color-blue-600</code> is declared twice, at different values</h3>
-    <p>
-      The card fixture says <code>#2663eb</code>, the design system says <code>#2563eb</code>, and
-      the design system wins by import order. Two design files synthesising the same name for
-      different colours. <code>verify-tokens.mjs</code> now reports it by name instead of leaving it
-      silent.
-    </p>
-    <p class="fix">
-      <b>Fix</b> · Bind a Colour Style in at least one of them, or keep their themes out of the same
-      stylesheet.
+      <strong>The names are ours, not Tailwind's.</strong> This design system is hand-tailored.
+      Derived names resemble Tailwind's because they come off a similar ramp, but agreeing with it
+      is not a goal and is never asserted. A derived name describes a colour; it cannot say what
+      the colour is for. That is stage 00's job.
     </p>
   </div>
 
   <footer>
     <p>
-      Versioning is NX and CI's job — there is no semver, changelog or release command in this repo,
-      on purpose: two answers to one question is worse than none. Generated names are stable, so
-      <code>git diff</code> on the output is a signal about the design rather than noise about the
-      generator.
+      Deeper detail lives with the skills — <code>ds-theme</code> for the stages,
+      <code>references/theme.md</code> for naming and the known token collision. Versioning is
+      deliberately absent here: NX and CI own it, and two answers to one question is worse than
+      none.
     </p>
   </footer>
 </div>
