@@ -8,7 +8,7 @@ import {
   parseFigmaTarget,
   resolveAssets,
 } from '@figma-to-react/core'
-import type { DesignFinding, IRDocument, TokenTable } from '@figma-to-react/core'
+import type { DesignFinding, IRDocument, Layer, TokenTable } from '@figma-to-react/core'
 import { emit, formatAll } from '@figma-to-react/emit-react'
 import { emitStories, exportGeometry } from '@figma-to-react/emit-storybook'
 import type { Geometry } from '@figma-to-react/emit-storybook'
@@ -34,6 +34,11 @@ export interface RunOptions {
   stories?: boolean
   /** Max px a node may differ from Figma before a story's play function fails. */
   fidelityThreshold?: number
+  /** Atomic layer per component, for components Figma does not sort itself. */
+  layers?: Record<string, Layer>
+  /** Specific / private / public, per component name. */
+  ownership?: Record<string, string>
+  defaultOwnership?: string
   onProgress?: (message: string) => void
 }
 
@@ -87,7 +92,13 @@ export async function run(options: RunOptions): Promise<RunResult> {
     styles: entry.styles,
   })
 
-  const design = auditDesign({ document: entry.document, styles: entry.styles })
+  const design = auditDesign({
+    document: entry.document,
+    styles: entry.styles,
+    layers: options.layers,
+    ownership: options.ownership,
+    defaultOwnership: options.defaultOwnership,
+  })
 
   let table: TokenTable | undefined
   if (options.tokens) {

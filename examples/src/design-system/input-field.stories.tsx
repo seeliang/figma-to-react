@@ -11,6 +11,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { expectLayoutWithin } from '../fidelity/assert.js'
 import { InputFieldDefault } from './input-field-default.js'
+import { InputFieldHover } from './input-field-hover.js'
 import { InputFieldFocused } from './input-field-focused.js'
 import { InputFieldError } from './input-field-error.js'
 
@@ -34,6 +35,16 @@ export const Default: Story = {
   args: {
     placeholderText: 'Placeholder text',
   },
+  play: async ({ canvasElement }) => {
+    await expectLayoutWithin(canvasElement, 4)
+  },
+}
+
+export const Hover: Story = {
+  args: {
+    placeholderText: 'Placeholder text',
+  },
+  render: (args) => <InputFieldHover {...args} />,
   play: async ({ canvasElement }) => {
     await expectLayoutWithin(canvasElement, 4)
   },

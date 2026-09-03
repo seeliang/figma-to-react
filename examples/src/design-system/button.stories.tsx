@@ -10,13 +10,16 @@
 
 import type { Meta, StoryObj } from '@storybook/react'
 import { expectLayoutWithin } from '../fidelity/assert.js'
-import { ButtonPrimary } from './button-primary.js'
-import { ButtonSecondary } from './button-secondary.js'
-import { ButtonGhost } from './button-ghost.js'
+import { ButtonPrimaryDefault } from './button-primary-default.js'
+import { ButtonPrimaryHover } from './button-primary-hover.js'
+import { ButtonSecondaryDefault } from './button-secondary-default.js'
+import { ButtonSecondaryHover } from './button-secondary-hover.js'
+import { ButtonGhostDefault } from './button-ghost-default.js'
+import { ButtonGhostHover } from './button-ghost-hover.js'
 
 const meta = {
   title: 'Design System/Button',
-  component: ButtonPrimary,
+  component: ButtonPrimaryDefault,
   tags: ['autodocs'],
   parameters: {
     design: {
@@ -24,13 +27,13 @@ const meta = {
       url: 'https://www.figma.com/design/uA3bE5ofr6BgRakJzudL4L/component?node-id=2-66',
     },
   },
-} satisfies Meta<typeof ButtonPrimary>
+} satisfies Meta<typeof ButtonPrimaryDefault>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
-export const Primary: Story = {
+export const PrimaryDefault: Story = {
   args: {
     buttonLabel: 'Button Label',
   },
@@ -39,21 +42,51 @@ export const Primary: Story = {
   },
 }
 
-export const Secondary: Story = {
+export const PrimaryHover: Story = {
   args: {
     buttonLabel: 'Button Label',
   },
-  render: (args) => <ButtonSecondary {...args} />,
+  render: (args) => <ButtonPrimaryHover {...args} />,
   play: async ({ canvasElement }) => {
     await expectLayoutWithin(canvasElement, 4)
   },
 }
 
-export const Ghost: Story = {
+export const SecondaryDefault: Story = {
   args: {
     buttonLabel: 'Button Label',
   },
-  render: (args) => <ButtonGhost {...args} />,
+  render: (args) => <ButtonSecondaryDefault {...args} />,
+  play: async ({ canvasElement }) => {
+    await expectLayoutWithin(canvasElement, 4)
+  },
+}
+
+export const SecondaryHover: Story = {
+  args: {
+    buttonLabel: 'Button Label',
+  },
+  render: (args) => <ButtonSecondaryHover {...args} />,
+  play: async ({ canvasElement }) => {
+    await expectLayoutWithin(canvasElement, 4)
+  },
+}
+
+export const GhostDefault: Story = {
+  args: {
+    buttonLabel: 'Button Label',
+  },
+  render: (args) => <ButtonGhostDefault {...args} />,
+  play: async ({ canvasElement }) => {
+    await expectLayoutWithin(canvasElement, 4)
+  },
+}
+
+export const GhostHover: Story = {
+  args: {
+    buttonLabel: 'Button Label',
+  },
+  render: (args) => <ButtonGhostHover {...args} />,
   play: async ({ canvasElement }) => {
     await expectLayoutWithin(canvasElement, 4)
   },

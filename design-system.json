@@ -1,0 +1,29 @@
+{
+  "version": "0.1.0",
+  "file": {
+    "key": "uA3bE5ofr6BgRakJzudL4L",
+    "node": "2:77",
+    "name": "📐 Design System"
+  },
+  "out": "examples/src/design-system",
+  "gen": {
+    "traceIds": true,
+    "stories": true,
+    "fidelityThreshold": 4,
+    "minUses": 3,
+    "layout": "flat"
+  },
+  "atomic": {
+    "layers": {
+      "Input Field": "atom",
+      "Button": "atom",
+      "Form Field": "molecule"
+    },
+    "ownership": {
+      "default": "public"
+    }
+  },
+  "offline": {
+    "fixture": "packages/core/test/fixtures/design-system.json"
+  }
+}

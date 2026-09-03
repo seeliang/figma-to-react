@@ -1,8 +1,8 @@
-export type ButtonGhostProps = {
+export type ButtonGhostDefaultProps = {
   buttonLabel?: string
 }
 
-export function ButtonGhost({ buttonLabel = 'Button Label' }: ButtonGhostProps = {}) {
+export function ButtonGhostDefault({ buttonLabel = 'Button Label' }: ButtonGhostDefaultProps = {}) {
   return (
     <button
       type="button"

@@ -11,6 +11,10 @@
     "test": "vitest run",
     "typecheck": "tsc -b packages/core packages/emit-react packages/emit-storybook packages/cli",
     "format": "prettier --write .",
+    "ds:init": "node scripts/ds.mjs init",
+    "ds:gen": "node scripts/ds.mjs gen",
+    "ds:tokens": "node scripts/ds.mjs tokens",
+    "ds:audit": "node scripts/ds.mjs audit",
     "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
   },
   "devDependencies": {

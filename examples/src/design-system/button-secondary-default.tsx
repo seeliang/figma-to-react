@@ -1,8 +1,10 @@
-export type ButtonSecondaryProps = {
+export type ButtonSecondaryDefaultProps = {
   buttonLabel?: string
 }
 
-export function ButtonSecondary({ buttonLabel = 'Button Label' }: ButtonSecondaryProps = {}) {
+export function ButtonSecondaryDefault({
+  buttonLabel = 'Button Label',
+}: ButtonSecondaryDefaultProps = {}) {
   return (
     <button
       type="button"

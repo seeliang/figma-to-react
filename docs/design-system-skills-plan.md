@@ -19,16 +19,16 @@ needs is computed, not memorised.
 
 ### Decisions taken
 
-| | |
-|---|---|
-| Context lives in | **`design-system.json` at the repo root** — file key, node id, out dir, gen flags, offline fixture. Read by scripts, never restated in prose |
-| Skills are | **Thin over scripts.** `scripts/ds.mjs` and npm scripts hold the logic; SKILL.md holds routing, judgement, and reporting rules only |
-| Slash command | **`user-invocable: true` on the router skill.** This *is* the slash command — see the note below |
-| Sub-skills | Ten, `ds-` prefixed so they group in the `/` list; each usable on its own or via the router. Four of them are one-per-layer: theme, atoms, molecules, organisms |
-| Sequencing | **Three phases — Runnable, Layered, Gated.** Each ends with something that works on its own |
-| Atomic model | **Three layers — Atoms, Molecules, Organisms — with Theme separate**, per your own write-up. The CLI suggests the layer with its evidence; a human confirms it; the code then verifies it |
-| Entry point | **`figma2react init`** asks for the generate area and writes `design-system.json`. Nothing assumes a file key it was not given |
-| Version record | **`docs/design-system-versions.md`**, appended per generation — Figma file version, layer counts, audit and fidelity results, what changed |
+|                  |                                                                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context lives in | **`design-system.json` at the repo root** — file key, node id, out dir, gen flags, offline fixture. Read by scripts, never restated in prose                                              |
+| Skills are       | **Thin over scripts.** `scripts/ds.mjs` and npm scripts hold the logic; SKILL.md holds routing, judgement, and reporting rules only                                                       |
+| Slash command    | **`user-invocable: true` on the router skill.** This _is_ the slash command — see the note below                                                                                          |
+| Sub-skills       | Ten, `ds-` prefixed so they group in the `/` list; each usable on its own or via the router. Four of them are one-per-layer: theme, atoms, molecules, organisms                           |
+| Sequencing       | **Three phases — Runnable, Layered, Gated.** Each ends with something that works on its own                                                                                               |
+| Atomic model     | **Three layers — Atoms, Molecules, Organisms — with Theme separate**, per your own write-up. The CLI suggests the layer with its evidence; a human confirms it; the code then verifies it |
+| Entry point      | **`figma2react init`** asks for the generate area and writes `design-system.json`. Nothing assumes a file key it was not given                                                            |
+| Version record   | **`docs/design-system-versions.md`**, appended per generation — Figma file version, layer counts, audit and fidelity results, what changed                                                |
 
 **Note on the slash command.** You picked "skill + thin slash command". A separate
 `.claude/commands/design-system.md` is not needed: `commands/*.md` is the legacy layout, and
@@ -43,30 +43,30 @@ separate command file anyway, say so and it's a five-line addition.
 Five of the eight jobs have no tooling behind them today. A skill that says "check accessibility"
 with nothing to run is prose that will drift; each of these gets a real script first.
 
-| Job | Today | Added |
-|---|---|---|
-| Generate | ✅ `figma2react gen` | config-driven wrapper, auto `.env` load, offline default |
-| Design issues | ✅ `auditDesign` (`packages/core/src/audit.ts`), printed by `gen` | `--audit-only` + `--json` so review doesn't regenerate |
-| **Atomic layers** | ❌ nothing; output is one flat directory | layer resolution + 9 checks; `--layout atomic` output tree |
-| Fidelity | ✅ `test-storybook` (57 nodes within 4px) | nothing new |
-| Token refresh | ✅ `figma2react tokens` | diff against the committed `tokens.css` |
-| **Accessibility** | ❌ nothing | `@storybook/addon-a11y` + axe in play functions; **plus three new audit checks** (below) |
-| **E2E** | ⚠️ CLI-only (`packages/cli/test/e2e.test.ts` vs a fixture server) | Playwright spec against the Vite app; `playwright` is already a dep |
-| **Coverage** | ❌ no provider | `@vitest/coverage-v8` + thresholds |
-| **Security** | ❌ nothing | `pnpm audit` + `scripts/scan-secrets.mjs` |
+| Job               | Today                                                             | Added                                                                                    |
+| ----------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Generate          | ✅ `figma2react gen`                                              | config-driven wrapper, auto `.env` load, offline default                                 |
+| Design issues     | ✅ `auditDesign` (`packages/core/src/audit.ts`), printed by `gen` | `--audit-only` + `--json` so review doesn't regenerate                                   |
+| **Atomic layers** | ❌ nothing; output is one flat directory                          | layer resolution + 9 checks; `--layout atomic` output tree                               |
+| Fidelity          | ✅ `test-storybook` (57 nodes within 4px)                         | nothing new                                                                              |
+| Token refresh     | ✅ `figma2react tokens`                                           | diff against the committed `tokens.css`                                                  |
+| **Accessibility** | ❌ nothing                                                        | `@storybook/addon-a11y` + axe in play functions; **plus three new audit checks** (below) |
+| **E2E**           | ⚠️ CLI-only (`packages/cli/test/e2e.test.ts` vs a fixture server) | Playwright spec against the Vite app; `playwright` is already a dep                      |
+| **Coverage**      | ❌ no provider                                                    | `@vitest/coverage-v8` + thresholds                                                       |
+| **Security**      | ❌ nothing                                                        | `pnpm audit` + `scripts/scan-secrets.mjs`                                                |
 
 ### Accessibility belongs in the audit, not only in the tests
 
 Figma carries no alt text, no labels, no roles, no focus order. So a11y failures on generated
 components are overwhelmingly **design issues**, and three of them are computable from the Figma
-data *before* any code is generated — which puts them at the Developer Ready gate rather than at
+data _before_ any code is generated — which puts them at the Developer Ready gate rather than at
 QA. Add to `packages/core/src/audit.ts`, following the existing `DesignFinding` shape:
 
-| `code` | severity | fires when | fix |
-|---|---|---|---|
-| `low-contrast` | `high` | a TEXT node's fill vs its nearest opaque ancestor background is below WCAG AA (4.5:1, or 3:1 at ≥18.66px/bold) | Adjust the colour pair in Figma; name which two Styles |
-| `unlabelled-input` | `high` | a node the semantic mapper will emit as `<input>` has no sibling TEXT layer to become a `<label>` | Add a visible label layer, or a layer named `aria-label: …` |
-| `icon-only-no-name` | `medium` | a node mapping to `<button>`/`<a>` whose only child is a vector | Rename the layer to its purpose — the layer name becomes the accessible name |
+| `code`              | severity | fires when                                                                                                     | fix                                                                          |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `low-contrast`      | `high`   | a TEXT node's fill vs its nearest opaque ancestor background is below WCAG AA (4.5:1, or 3:1 at ≥18.66px/bold) | Adjust the colour pair in Figma; name which two Styles                       |
+| `unlabelled-input`  | `high`   | a node the semantic mapper will emit as `<input>` has no sibling TEXT layer to become a `<label>`              | Add a visible label layer, or a layer named `aria-label: …`                  |
+| `icon-only-no-name` | `medium` | a node mapping to `<button>`/`<a>` whose only child is a vector                                                | Rename the layer to its purpose — the layer name becomes the accessible name |
 
 Contrast maths reuses `lightness()` (CIE L\*) already in `packages/core/src/tokens/collect.ts`;
 WCAG needs relative luminance, which is a sibling function on the same sRGB decode, not a new
@@ -105,23 +105,23 @@ unclassified, and the fix is a Figma restructure — three sections, or `atom/` 
 Once a layer is declared, structure and scope can be checked against it. Added to
 `packages/core/src/audit.ts` alongside the a11y checks:
 
-| `code` | severity | rule from the article | fires when |
-|---|---|---|---|
-| `layer-unclassified` | `high` | sorting is the critical part | no section, prefix, or override gives a layer |
-| `layer-dependency-violation` | `high` | "Atoms can NOT include any other components"; molecules include only molecules and atoms | the import graph points upward — an atom includes anything, a molecule includes an organism |
-| `scope-margin-leak` | `high` | "padding of components is in the scope, but the margin set shall be controlled by its parent" | a component's own root carries margin or absolute placement |
-| `mixed-scope` | `high` | the `organism-a__element` inside `molecule-0` mistake | a layer inside component B is named for component A's namespace |
-| `atom-multi-element` | `medium` | "one element (HTML tag), no internal functions" | a declared atom emits more than one element |
-| `organism-not-full-width` | `medium` | "always consumes the full width of the device" | a declared organism neither spans the frame nor is `layoutSizingHorizontal: FILL` |
-| `molecule-full-width` | `medium` | molecules are "NOT consuming the full width (edge to edge)" | a declared molecule does span edge to edge — likely an organism |
-| `unowned-component` | `low` | Specific / Private / Public ownership | no ownership declared for the component |
-| `no-breakpoints` | `low` | Theme = colours, spacing, **breakpoints** | the theme has colours and spacing but no breakpoint set |
+| `code`                       | severity | rule from the article                                                                         | fires when                                                                                  |
+| ---------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `layer-unclassified`         | `high`   | sorting is the critical part                                                                  | no section, prefix, or override gives a layer                                               |
+| `layer-dependency-violation` | `high`   | "Atoms can NOT include any other components"; molecules include only molecules and atoms      | the import graph points upward — an atom includes anything, a molecule includes an organism |
+| `scope-margin-leak`          | `high`   | "padding of components is in the scope, but the margin set shall be controlled by its parent" | a component's own root carries margin or absolute placement                                 |
+| `mixed-scope`                | `high`   | the `organism-a__element` inside `molecule-0` mistake                                         | a layer inside component B is named for component A's namespace                             |
+| `atom-multi-element`         | `medium` | "one element (HTML tag), no internal functions"                                               | a declared atom emits more than one element                                                 |
+| `organism-not-full-width`    | `medium` | "always consumes the full width of the device"                                                | a declared organism neither spans the frame nor is `layoutSizingHorizontal: FILL`           |
+| `molecule-full-width`        | `medium` | molecules are "NOT consuming the full width (edge to edge)"                                   | a declared molecule does span edge to edge — likely an organism                             |
+| `unowned-component`          | `low`    | Specific / Private / Public ownership                                                         | no ownership declared for the component                                                     |
+| `no-breakpoints`             | `low`    | Theme = colours, spacing, **breakpoints**                                                     | the theme has colours and spacing but no breakpoint set                                     |
 
 Two of these fall out of work already done rather than needing new machinery:
 
 - **`scope-margin-leak`** is the `placementClasses` wrapper in `packages/emit-react/src/emit.ts`
   restated as a rule. That wrapper exists precisely so a component's placement lives on something
-  the *parent* renders; anything that leaks inside the component root is the margin-vs-padding
+  the _parent_ renders; anything that leaks inside the component root is the margin-vs-padding
   violation the article describes.
 - **`layer-dependency-violation`** needs no new analysis — `ComponentEntry` plus the nested-instance
   tracking in `emit.ts` already give the full import graph.
@@ -184,19 +184,19 @@ layer gets recorded without a human looking at it, and it has to be typed.
 
 ### The CLI suggests the layer — it does not decide it
 
-Earlier this plan said the tool must never infer a layer. That stands for *recording* one, but
+Earlier this plan said the tool must never infer a layer. That stands for _recording_ one, but
 being silent is unhelpful: nobody wants to sort thirty components from a blank sheet. So the CLI
 proposes, and a person confirms. This is the article's "developers and designers shall work
 closely and shall figure out how components should be used" with the tool doing the legwork.
 
 Signals, all already in the IR:
 
-| Signal | Source |
-|---|---|
-| element count | number of HTML elements the emitter produces |
-| includes other components | the `ComponentEntry` import graph |
-| width vs the frame | `absoluteBoundingBox.width` against the root frame, or `layoutSizingHorizontal: FILL` |
-| has behaviour | `COMPONENT_SET` with state variants |
+| Signal                    | Source                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| element count             | number of HTML elements the emitter produces                                          |
+| includes other components | the `ComponentEntry` import graph                                                     |
+| width vs the frame        | `absoluteBoundingBox.width` against the root frame, or `layoutSizingHorizontal: FILL` |
+| has behaviour             | `COMPONENT_SET` with state variants                                                   |
 
 Suggestion rules, straight off the article's checklist:
 
@@ -224,20 +224,20 @@ tells you what to sort things as, not merely that they are unsorted.
 ## Version record
 
 `docs/design-system-versions.md`, appended by `ds:gen` on every successful non-dry run. The
-question it answers is the one the Release Ready gate actually asks: *which version of the Figma
-file is this build made from, and what moved since the last one?*
+question it answers is the one the Release Ready gate actually asks: _which version of the Figma
+file is this build made from, and what moved since the last one?_
 
 ```markdown
 ## 0.4.0 — 2026-09-03
 
-| | |
-|---|---|
-| Figma file | design-system-sample `uA3bE5ofr6BgRakJzudL4L` |
-| Figma modified | 2026-09-01T04:12:33Z |
-| Node | 2-77 |
-| Generated | 9 components — 4 atoms, 4 molecules, 1 organism |
-| Audit | 0 high · 2 medium · 1 low |
-| Fidelity | 57/57 within 4px, worst 2.3px |
+|                |                                                 |
+| -------------- | ----------------------------------------------- |
+| Figma file     | design-system-sample `uA3bE5ofr6BgRakJzudL4L`   |
+| Figma modified | 2026-09-01T04:12:33Z                            |
+| Node           | 2-77                                            |
+| Generated      | 9 components — 4 atoms, 4 molecules, 1 organism |
+| Audit          | 0 high · 2 medium · 1 low                       |
+| Fidelity       | 57/57 within 4px, worst 2.3px                   |
 
 **Changed** — `input-field-error` border `#dc2626` → `#b91c1c`; new `ButtonDanger` (atom).
 ```
@@ -311,7 +311,13 @@ README.md                               + a Skills section linking to docs/deliv
   "version": "0.4.0",
   "file": { "key": "uA3bE5ofr6BgRakJzudL4L", "node": "2-77", "name": "design-system-sample" },
   "out": "examples/src/design-system",
-  "gen": { "traceIds": true, "stories": true, "fidelityThreshold": 4, "minUses": 3, "layout": "flat" },
+  "gen": {
+    "traceIds": true,
+    "stories": true,
+    "fidelityThreshold": 4,
+    "minUses": 3,
+    "layout": "flat"
+  },
   "atomic": {
     "layers": { "ButtonPrimary": "atom", "InputFieldDefault": "atom", "FormField": "molecule" },
     "ownership": { "default": "public", "FormField": "private" }
@@ -337,7 +343,7 @@ change reviewable as a small diff instead of a whole-tree rewrite.
 Three things it fixes that are currently manual:
 
 - **Loads `.env`.** Nothing in the codebase reads it today (no `dotenv` dependency) — `node
-  --env-file=.env` when the file exists.
+--env-file=.env` when the file exists.
 - **`--offline` points `FIGMA_API_BASE` at a local fixture server**, the mechanism
   `packages/cli/test/e2e.test.ts:53` already uses. **Offline is the default** for `audit` and
   `diff-tokens`; `--live` opts in to spending quota.
@@ -366,15 +372,15 @@ Each SKILL.md follows the on-disk convention: two-key frontmatter (`name`, `desc
 
 ### Cross-cutting
 
-| Skill | Runs | Reports |
-|---|---|---|
-| `design-system` | nothing directly | routes; `AskUserQuestion` when the job is ambiguous |
-| `ds-generate` | `pnpm ds:init` then `pnpm ds:gen` | on a fresh repo, asks for the generate area and confirms each suggested layer; then files written, version bump, warnings, and hands off to `ds-design-review` |
-| `ds-design-review` | `pnpm ds:audit --json` | a layer table (atom/molecule/organism, ownership, unclassified) then findings as **Figma actions**, never code changes |
-| `ds-fidelity` | `pnpm --filter figma-to-react-example test-storybook` | per-node px deltas, worst first |
-| `ds-a11y` | `pnpm a11y` | axe violations split into *fixable in code* vs *design issue* |
-| `ds-test` | `pnpm test`, `pnpm e2e`, `pnpm coverage` | failures with output; uncovered files against the threshold |
-| `ds-security` | `pnpm security` | advisories by severity; secret hits with the file, never the value |
+| Skill              | Runs                                                  | Reports                                                                                                                                                        |
+| ------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `design-system`    | nothing directly                                      | routes; `AskUserQuestion` when the job is ambiguous                                                                                                            |
+| `ds-generate`      | `pnpm ds:init` then `pnpm ds:gen`                     | on a fresh repo, asks for the generate area and confirms each suggested layer; then files written, version bump, warnings, and hands off to `ds-design-review` |
+| `ds-design-review` | `pnpm ds:audit --json`                                | a layer table (atom/molecule/organism, ownership, unclassified) then findings as **Figma actions**, never code changes                                         |
+| `ds-fidelity`      | `pnpm --filter figma-to-react-example test-storybook` | per-node px deltas, worst first                                                                                                                                |
+| `ds-a11y`          | `pnpm a11y`                                           | axe violations split into _fixable in code_ vs _design issue_                                                                                                  |
+| `ds-test`          | `pnpm test`, `pnpm e2e`, `pnpm coverage`              | failures with output; uncovered files against the threshold                                                                                                    |
+| `ds-security`      | `pnpm security`                                       | advisories by severity; secret hits with the file, never the value                                                                                             |
 
 ### One per layer
 
@@ -384,14 +390,14 @@ layer → regenerate just that layer → check the layer's own rules → report 
 actions.** Scoping generation to one layer is what makes an edit reviewable; regenerating
 everything to change one atom buries the change.
 
-| Skill | Scope | The rules it enforces |
-|---|---|---|
-| `ds-theme` | `theme/` — colours, spacing, breakpoints | every colour bound to a Style or Variable; font sizes bound; **a breakpoint set exists**; no synthesised names left where a real one is available |
-| `ds-atoms` | `atoms/` | one element; no nested components; no internal functions; used only by molecules and organisms — an atom nobody consumes is dead weight and gets flagged |
-| `ds-molecules` | `molecules/` | more than one element; **not** edge to edge; includes only molecules and atoms; padding inside scope, margin left to the parent |
-| `ds-organisms` | `organisms/` | spans the full width; sits at root level as a direct child of the page; may include anything below it |
+| Skill          | Scope                                    | The rules it enforces                                                                                                                                    |
+| -------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ds-theme`     | `theme/` — colours, spacing, breakpoints | every colour bound to a Style or Variable; font sizes bound; **a breakpoint set exists**; no synthesised names left where a real one is available        |
+| `ds-atoms`     | `atoms/`                                 | one element; no nested components; no internal functions; used only by molecules and organisms — an atom nobody consumes is dead weight and gets flagged |
+| `ds-molecules` | `molecules/`                             | more than one element; **not** edge to edge; includes only molecules and atoms; padding inside scope, margin left to the parent                          |
+| `ds-organisms` | `organisms/`                             | spans the full width; sits at root level as a direct child of the page; may include anything below it                                                    |
 
-`ds-theme` replaces the earlier `ds-tokens` — the Theme *is* the token layer in this model, and
+`ds-theme` replaces the earlier `ds-tokens` — the Theme _is_ the token layer in this model, and
 two skills for one thing is how they drift apart. It is the one to run first: colours and spacing
 are what every other layer resolves against, so an unbound colour shows up as noise in all three
 component skills until the theme is fixed.
@@ -408,8 +414,8 @@ conversation the article says to have, available per component instead of only a
 
 ## `docs/delivery-gates.md` — the user doc
 
-A committed, human-facing doc (not skill prose) answering two questions: *which command do I run
-at which stage*, and *how do I get the commands*. `references/gates.md` in the router skill is a
+A committed, human-facing doc (not skill prose) answering two questions: _which command do I run
+at which stage_, and _how do I get the commands_. `references/gates.md` in the router skill is a
 one-line link to it, so there is one copy.
 
 ### Section 1 — Loading the commands
@@ -427,23 +433,23 @@ the working directory. No install step, no settings edit. The doc states:
 
 ### Section 2 — Stage → command
 
-| Stage | Gate it feeds | Skill | Script | Automatable |
-|---|---|---|---|---|
-| Setup (once) | — | `/ds-generate` | `pnpm ds:init` | ❌ the generate area and layer sorting are human answers |
-| Design in Figma | Developer Ready | `/ds-design-review` | `pnpm ds:audit` | ✅ needs a live Figma call |
-| Refinement | Developer Ready | `/design-system` (routes) | — | ❌ acceptance criteria are human |
-| Build | Dev Complete | `/ds-generate` | `pnpm ds:gen` | ✅ |
-| Build | Dev Complete | `/ds-theme` | `pnpm ds:tokens --diff` | ✅ |
-| Build | Dev Complete | `/ds-atoms` `/ds-molecules` `/ds-organisms` | `pnpm ds:gen --layer <name>` | ✅ |
-| Code review | Dev Complete | `/ds-test` | `pnpm test && pnpm coverage` | ✅ |
-| QA | QA Signoff | `/ds-fidelity` | `pnpm --filter figma-to-react-example test-storybook` | ✅ |
-| QA | QA Signoff | `/ds-a11y` | `pnpm a11y` | ✅ violations; ❌ triage is human |
-| QA | QA Signoff | `/ds-test` | `pnpm e2e` | ✅ |
-| Design QA | QA Signoff | — | Storybook design panel, side by side | ❌ visual judgement |
-| UAT | Release Ready | — | — | ❌ |
-| Release prep | Release Ready | `/ds-security` | `pnpm security` | ✅ |
-| Release prep | Release Ready | — | `pnpm verify` | ✅ |
-| Release prep | Release Ready | — | `docs/design-system-versions.md` — read the latest entry | ✅ written by `ds:gen` |
+| Stage           | Gate it feeds   | Skill                                       | Script                                                   | Automatable                                              |
+| --------------- | --------------- | ------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| Setup (once)    | —               | `/ds-generate`                              | `pnpm ds:init`                                           | ❌ the generate area and layer sorting are human answers |
+| Design in Figma | Developer Ready | `/ds-design-review`                         | `pnpm ds:audit`                                          | ✅ needs a live Figma call                               |
+| Refinement      | Developer Ready | `/design-system` (routes)                   | —                                                        | ❌ acceptance criteria are human                         |
+| Build           | Dev Complete    | `/ds-generate`                              | `pnpm ds:gen`                                            | ✅                                                       |
+| Build           | Dev Complete    | `/ds-theme`                                 | `pnpm ds:tokens --diff`                                  | ✅                                                       |
+| Build           | Dev Complete    | `/ds-atoms` `/ds-molecules` `/ds-organisms` | `pnpm ds:gen --layer <name>`                             | ✅                                                       |
+| Code review     | Dev Complete    | `/ds-test`                                  | `pnpm test && pnpm coverage`                             | ✅                                                       |
+| QA              | QA Signoff      | `/ds-fidelity`                              | `pnpm --filter figma-to-react-example test-storybook`    | ✅                                                       |
+| QA              | QA Signoff      | `/ds-a11y`                                  | `pnpm a11y`                                              | ✅ violations; ❌ triage is human                        |
+| QA              | QA Signoff      | `/ds-test`                                  | `pnpm e2e`                                               | ✅                                                       |
+| Design QA       | QA Signoff      | —                                           | Storybook design panel, side by side                     | ❌ visual judgement                                      |
+| UAT             | Release Ready   | —                                           | —                                                        | ❌                                                       |
+| Release prep    | Release Ready   | `/ds-security`                              | `pnpm security`                                          | ✅                                                       |
+| Release prep    | Release Ready   | —                                           | `pnpm verify`                                            | ✅                                                       |
+| Release prep    | Release Ready   | —                                           | `docs/design-system-versions.md` — read the latest entry | ✅ written by `ds:gen`                                   |
 
 ### Section 3 — Gate criteria
 
@@ -451,7 +457,7 @@ What must be true to pass each gate, stated so it can fail:
 
 - **Developer Ready** — zero `high` audit findings; every component sorted into a layer, with
   ownership declared; the `design-system.json` node points at a frame with Auto Layout; every
-  variant set has the interaction states it needs. Layer sorting sits at *this* gate deliberately:
+  variant set has the interaction states it needs. Layer sorting sits at _this_ gate deliberately:
   the article's whole point is that sorting after development is what causes the refactor.
 - **Dev Complete** — `pnpm verify` green; `git diff --exit-code examples/src/design-system` clean,
   which is the real assertion that committed code matches the current Figma file.
@@ -520,9 +526,35 @@ touching the Starter-tier quota — do this first in Phase 1, before anything de
 Each phase ends with something usable on its own. If the work stops after any of them, what
 exists still works — nothing is left half-wired.
 
-### Phase 1 — Runnable
+### Phase 1 — Runnable ✅ built
 
-*Make the CLI drivable by intent, and get the components sorted.*
+**Delivered:** `design-system.json`, `scripts/ds.mjs`, `figma2react init` and `figma2react audit`,
+`packages/core/src/atomic.ts` with layer resolution and suggestions, nine layering checks in the
+audit, 24 new tests, and the `design-system` / `ds-generate` / `ds-design-review` skills.
+`pnpm verify` green: 165 unit tests, 111 generated classes resolve, 11/11 stories within 4px.
+
+**Where it diverged from this plan, and why:**
+
+- **`scope-margin-leak` shipped as `scope-size-override`.** Figma has no margin, and the REST
+  response carries no override list, so the padding-versus-margin rule is not directly observable.
+  What *is* observable is an instance resized away from its master — the same violation, the
+  parent reaching inside the child — so the check is named for what it detects rather than for the
+  rule it stands in for.
+- **The recorded fixture had to be re-recorded.** It was gone, exactly as this plan predicted, and
+  is now committed at `packages/core/test/fixtures/design-system.json` (386KB, 111 nodes).
+- **`gen` defaults to live, not offline.** Generating from a stale recording produces code that
+  does not match the file. `audit` and `diff-tokens` default to offline as planned.
+- **The Figma file has changed.** It now has Hover variants for Button and Input Field, so
+  `no-interactive-states` no longer fires and four new components are generated. The design issue
+  the audit raised was acted on.
+- **New known gap: `gen` never deletes.** The variant rename left three orphaned files that still
+  compiled and were still imported by the hand-maintained gallery. Worth a `--prune` flag.
+- **`examples/public/figma-geometry.json` is stale** — it predates the hover variants and is not
+  written by `gen`. Only `fidelity.html` reads it; the Storybook fidelity tests use the copy in
+  `examples/src/design-system/`.
+
+
+_Make the CLI drivable by intent, and get the components sorted._
 
 1. Commit the offline fixture to `packages/core/test/fixtures/design-system.json`. Everything
    downstream depends on being able to run without spending the Starter-tier quota, so this is
@@ -546,7 +578,7 @@ currently unclassified, and colours are unbound. That output is the point of the
 
 ### Phase 2 — Layered
 
-*Put the atomic structure into the code, and record what was generated.*
+_Put the atomic structure into the code, and record what was generated._
 
 7. `--layout atomic` in the emitter, then migrate `examples/src/design-system/` to
    `atoms/ molecules/ organisms/ theme/`. Follow through to `styles.css`, the `@source` globs,
@@ -564,7 +596,7 @@ a record naming the Figma version it came from.
 
 ### Phase 3 — Gated
 
-*Give every delivery gate a command, and let CI run them.*
+_Give every delivery gate a command, and let CI run them._
 
 11. `packages/core/src/contrast.ts` + the three a11y audit checks, with fixture tests.
 12. Missing tooling: `@storybook/addon-a11y`, `@vitest/coverage-v8`,
@@ -612,8 +644,8 @@ px deltas, axe violations and token diff.
    new entry names the changed token, suggests a patch bump, and carries the Figma `lastModified`
    from the response rather than the wall clock.
 10. **The doc is true.** Run every `pnpm` command in the `docs/delivery-gates.md` table, in order,
-   from a clean checkout. Any that does not exist or does not pass is a bug in the doc, not a
-   caveat to add to it.
+    from a clean checkout. Any that does not exist or does not pass is a bug in the doc, not a
+    caveat to add to it.
 
 ## Out of scope
 

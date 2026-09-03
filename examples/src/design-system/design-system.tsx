@@ -1,17 +1,24 @@
-import { ButtonGhost } from './button-ghost.js'
-import { ButtonPrimary } from './button-primary.js'
-import { ButtonSecondary } from './button-secondary.js'
+import { ButtonGhostDefault } from './button-ghost-default.js'
+import { ButtonGhostHover } from './button-ghost-hover.js'
+import { ButtonPrimaryDefault } from './button-primary-default.js'
+import { ButtonPrimaryHover } from './button-primary-hover.js'
+import { ButtonSecondaryDefault } from './button-secondary-default.js'
+import { ButtonSecondaryHover } from './button-secondary-hover.js'
 import { FormField } from './form-field.js'
 import { InputFieldDefault } from './input-field-default.js'
 import { InputFieldError } from './input-field-error.js'
 import { InputFieldFocused } from './input-field-focused.js'
+import { InputFieldHover } from './input-field-hover.js'
 
 export function DesignSystem() {
   return (
-    <div className="relative w-[1763px] h-[751px] bg-[#444444] border border-[rgba(255,255,255,0.1)]">
-      <div className="flex items-start gap-6 absolute left-[40px] top-[60px] w-fit h-fit p-6 bg-neutral-50 rounded-xl overflow-hidden">
+    <div className="relative w-[1546px] h-[1850px] bg-[#444444] border border-[rgba(255,255,255,0.1)]">
+      <div className="flex items-start gap-6 absolute left-[40px] top-[80px] w-fit h-fit p-6 bg-neutral-50 rounded-xl overflow-hidden">
         <div className="h-11" data-figma-id="2:59">
           <InputFieldDefault placeholderText="Placeholder text" />
+        </div>
+        <div className="h-11" data-figma-id="16:3">
+          <InputFieldHover placeholderText="Placeholder text" />
         </div>
         <div className="h-11" data-figma-id="2:61">
           <InputFieldFocused inputValue="Input value" />
@@ -20,21 +27,30 @@ export function DesignSystem() {
           <InputFieldError invalidInput="Invalid input" />
         </div>
       </div>
-      <div className="flex items-start gap-6 absolute left-[547px] top-[60px] w-fit h-fit p-6 bg-neutral-50 rounded-xl overflow-hidden">
+      <div className="flex flex-wrap items-start gap-6 gap-y-6 absolute left-[40px] top-[261px] w-[800px] h-fit p-6 bg-neutral-50 rounded-xl overflow-hidden">
         <div className="w-90 h-[46px]" data-figma-id="2:66">
-          <ButtonPrimary buttonLabel="Button Label" />
+          <ButtonPrimaryDefault buttonLabel="Button Label" />
+        </div>
+        <div className="w-90 h-[46px]" data-figma-id="16:5">
+          <ButtonPrimaryHover buttonLabel="Button Label" />
         </div>
         <div className="w-90 h-[46px]" data-figma-id="2:68">
-          <ButtonSecondary buttonLabel="Button Label" />
+          <ButtonSecondaryDefault buttonLabel="Button Label" />
+        </div>
+        <div className="w-90 h-[46px]" data-figma-id="16:7">
+          <ButtonSecondaryHover buttonLabel="Button Label" />
         </div>
         <div className="w-90 h-[46px]" data-figma-id="2:70">
-          <ButtonGhost buttonLabel="Button Label" />
+          <ButtonGhostDefault buttonLabel="Button Label" />
+        </div>
+        <div className="w-90 h-[46px]" data-figma-id="16:9">
+          <ButtonGhostHover buttonLabel="Button Label" />
         </div>
       </div>
-      <div className="absolute left-[40px] top-[192px] w-90 h-fit" data-figma-id="2:73">
+      <div className="absolute left-[40px] top-[584px] w-90 h-fit" data-figma-id="2:73">
         <FormField label="Label" placeholderText="Placeholder text" />
       </div>
-      <div className="flex flex-col items-start gap-4 absolute left-[40px] top-[260px] w-fit h-fit p-6 bg-white rounded-xl overflow-hidden">
+      <div className="flex flex-col items-start gap-4 absolute left-[40px] top-[1200px] w-fit h-fit p-6 bg-white rounded-xl overflow-hidden">
         <p
           className="w-max font-inter text-[16px] leading-[19.36px] font-semibold text-slate-950"
           data-figma-id="4:4"
@@ -231,7 +247,7 @@ export function DesignSystem() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-start gap-5 absolute left-[507px] top-[260px] w-[520px] h-fit p-6 bg-white rounded-xl overflow-hidden">
+      <div className="flex flex-col items-start gap-5 absolute left-[40px] top-[747px] w-[520px] h-fit p-6 bg-white rounded-xl overflow-hidden">
         <p
           className="w-max font-inter text-[16px] leading-[19.36px] font-semibold text-slate-950"
           data-figma-id="4:56"

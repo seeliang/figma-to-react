@@ -1,3 +1,10 @@
+import {
+  type Layer,
+  type LayerAssignment,
+  assignLayers,
+  components,
+  stripPrefix,
+} from './atomic.js'
 import type { FigmaNode, StyleMeta } from './figma/types.js'
 
 /**
@@ -30,9 +37,20 @@ export interface DesignFinding {
 export interface AuditInput {
   document: FigmaNode
   styles?: Record<string, StyleMeta>
+  /** Layer overrides from `design-system.json`, for what Figma cannot express. */
+  layers?: Record<string, Layer>
+  /** Specific / private / public, per component name. */
+  ownership?: Record<string, string>
+  /** Applied to components with no entry of their own. */
+  defaultOwnership?: string
 }
 
-export function auditDesign({ document }: AuditInput): DesignFinding[] {
+export function auditDesign({
+  document,
+  layers,
+  ownership,
+  defaultOwnership,
+}: AuditInput): DesignFinding[] {
   const nodes: FigmaNode[] = []
   const collect = (n: FigmaNode) => {
     if (n.visible === false) return
@@ -41,6 +59,8 @@ export function auditDesign({ document }: AuditInput): DesignFinding[] {
   }
   collect(document)
 
+  const assignments = assignLayers({ document, overrides: layers })
+
   const findings = [
     unboundColours(nodes),
     unboundFontSizes(nodes),
@@ -48,6 +68,16 @@ export function auditDesign({ document }: AuditInput): DesignFinding[] {
     inconsistentVariantSizes(nodes),
     missingInteractiveStates(nodes),
     autoNamedText(nodes),
+    // Atomic layering
+    unclassifiedLayers(assignments),
+    dependencyViolations(assignments),
+    scopeSizeOverrides(document, nodes),
+    mixedScope(document),
+    atomsWithManyElements(assignments),
+    organismsNotFullWidth(assignments),
+    moleculesFullWidth(assignments),
+    unownedComponents(assignments, ownership, defaultOwnership),
+    missingBreakpoints(nodes),
   ].filter((f): f is DesignFinding => f !== undefined)
 
   const rank: Record<Severity, number> = { high: 0, medium: 1, low: 2 }
@@ -164,6 +194,231 @@ function autoNamedText(nodes: FigmaNode[]): DesignFinding | undefined {
     examples: names(offenders),
   }
 }
+
+// --- atomic layering -------------------------------------------------------
+
+/**
+ * Sorting is the critical step, and the article's own retrospective is that
+ * getting it wrong cost days of refactoring. So an unsorted component is a
+ * high finding — but it carries the suggestion, because the useful output is
+ * "this looks like an atom", not "you have not sorted this".
+ */
+function unclassifiedLayers(all: LayerAssignment[]): DesignFinding | undefined {
+  const offenders = all.filter((a) => !a.layer)
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'layer-unclassified',
+    severity: 'high',
+    title: `${offenders.length} component${plural(offenders.length)} not sorted into an atomic layer, so the output cannot be split into atoms/, molecules/ and organisms/`,
+    fix:
+      'Group them in Figma under sections named Atoms, Molecules and Organisms, or prefix the layer names (atom/Button). Suggested: ' +
+      offenders
+        .map((a) => `${a.name} → ${a.suggested ?? 'ambiguous, ' + a.reason}`)
+        .slice(0, 4)
+        .join('; '),
+    count: offenders.length,
+    examples: offenders.map((a) => a.name).slice(0, 3),
+  }
+}
+
+/**
+ * "Organisms can include other organisms molecules atoms / Molecules can
+ * include other molecules atoms / Atoms can NOT include any other components."
+ * Only checks components whose layer is declared — an unsorted one is already
+ * reported above, and guessing its layer here would double-count a guess.
+ */
+function dependencyViolations(all: LayerAssignment[]): DesignFinding | undefined {
+  const rank: Record<Layer, number> = { atom: 0, molecule: 1, organism: 2 }
+  const byName = new Map(all.filter((a) => a.layer).map((a) => [stripPrefix(a.name), a]))
+
+  const offenders: string[] = []
+  for (const a of all) {
+    if (!a.layer) continue
+    for (const included of a.evidence.includes) {
+      const child = byName.get(stripPrefix(included))
+      if (!child?.layer) continue
+      const upward = rank[child.layer] >= rank[a.layer]
+      if (a.layer === 'atom' || upward) {
+        offenders.push(`${a.name} (${a.layer}) includes ${included} (${child.layer})`)
+      }
+    }
+  }
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'layer-dependency-violation',
+    severity: 'high',
+    title: `${offenders.length} component${plural(offenders.length)} including something at or above its own layer, so the layers cannot be packaged independently`,
+    fix: 'Atoms include nothing; molecules include only molecules and atoms. Either move the child down a layer in Figma, or promote the parent.',
+    count: offenders.length,
+    examples: offenders.slice(0, 3),
+  }
+}
+
+/**
+ * The scope rule: a component owns its padding, its parent owns the space
+ * around it. An instance resized away from its master is the parent reaching
+ * inside the child, which is what stops the child being reusable as a whole.
+ *
+ * Note: Figma has no margin, and the REST response carries no override list, so
+ * a resize is the part of the scope rule that is actually observable here.
+ */
+function scopeSizeOverrides(document: FigmaNode, nodes: FigmaNode[]): DesignFinding | undefined {
+  const masters = new Map<string, FigmaNode>()
+  const index = (n: FigmaNode) => {
+    if (n.type === 'COMPONENT') masters.set(n.id, n)
+    n.children?.forEach(index)
+  }
+  index(document)
+
+  const offenders: string[] = []
+  for (const n of nodes) {
+    if (n.type !== 'INSTANCE' || !n.componentId) continue
+    const master = masters.get(n.componentId)
+    const a = n.absoluteBoundingBox
+    const b = master?.absoluteBoundingBox
+    if (!a || !b) continue
+    if (
+      Math.round(a.width) !== Math.round(b.width) ||
+      Math.round(a.height) !== Math.round(b.height)
+    )
+      offenders.push(
+        `${n.name} is ${Math.round(a.width)}×${Math.round(a.height)}, its master is ${Math.round(b.width)}×${Math.round(b.height)}`,
+      )
+  }
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'scope-size-override',
+    severity: 'high',
+    title: `${offenders.length} instance${plural(offenders.length)} resized away from its master, so the parent is controlling space that belongs to the child`,
+    fix: 'Give the master a fill or fixed width so every instance matches, or add a size variant. A component that only fits after the parent resizes it cannot be reused as a whole.',
+    count: offenders.length,
+    examples: offenders.slice(0, 3),
+  }
+}
+
+/**
+ * The `<input class="organism-a__element">` inside `molecule-0` mistake: a
+ * layer wearing another component's namespace. Deliberately narrow — it only
+ * fires on the BEM-style `Name__part` and `Name/part` forms, so a file that
+ * does not use them simply never trips it.
+ */
+function mixedScope(document: FigmaNode): DesignFinding | undefined {
+  const owners = components(document).map((c) => stripPrefix(c.name))
+  const offenders: string[] = []
+
+  const walk = (n: FigmaNode, inside: string | undefined) => {
+    if (n.visible === false) return
+    const self = components(document).some((c) => c.id === n.id) ? stripPrefix(n.name) : inside
+    if (inside) {
+      for (const owner of owners) {
+        if (owner === inside) continue
+        const namespaced = new RegExp(`^${escapeRe(owner)}\\s*(__|/)`, 'i')
+        if (namespaced.test(n.name)) offenders.push(`${n.name} sits inside ${inside}`)
+      }
+    }
+    n.children?.forEach((c) => walk(c, self))
+  }
+  walk(document, undefined)
+
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'mixed-scope',
+    severity: 'high',
+    title: `${offenders.length} layer${plural(offenders.length)} named for a component it does not belong to, so the containing component cannot be consumed as a whole`,
+    fix: 'Either move the layer out into the component that names it, or rename it to its own component and drive the difference with a variant or a prop.',
+    count: offenders.length,
+    examples: offenders.slice(0, 3),
+  }
+}
+
+function atomsWithManyElements(all: LayerAssignment[]): DesignFinding | undefined {
+  const offenders = all.filter((a) => a.layer === 'atom' && a.evidence.elements > 1)
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'atom-multi-element',
+    severity: 'medium',
+    title: `${offenders.length} atom${plural(offenders.length)} rendering more than one element, which is a molecule by the structure checklist`,
+    fix: 'Move them to Molecules, or simplify them to a single element. An atom is one HTML tag with no internal functions.',
+    count: offenders.length,
+    examples: offenders.map((a) => `${a.name} (${a.evidence.elements} elements)`).slice(0, 3),
+  }
+}
+
+function organismsNotFullWidth(all: LayerAssignment[]): DesignFinding | undefined {
+  const offenders = all.filter((a) => a.layer === 'organism' && !a.evidence.fullWidth)
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'organism-not-full-width',
+    severity: 'medium',
+    title: `${offenders.length} organism${plural(offenders.length)} that does not span the frame, so it will not behave as a root-level band`,
+    fix: 'Set the frame to fill the width, or move it to Molecules. An organism always consumes the full width and sits as a direct child of the page.',
+    count: offenders.length,
+    examples: offenders
+      .map(
+        (a) =>
+          `${a.name} (${Math.round(a.evidence.width)}px of ${Math.round(a.evidence.frameWidth)}px)`,
+      )
+      .slice(0, 3),
+  }
+}
+
+function moleculesFullWidth(all: LayerAssignment[]): DesignFinding | undefined {
+  const offenders = all.filter((a) => a.layer === 'molecule' && a.evidence.fullWidth)
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'molecule-full-width',
+    severity: 'medium',
+    title: `${offenders.length} molecule${plural(offenders.length)} spanning the frame edge to edge, which is the organism test`,
+    fix: 'Move them to Organisms, or give them a width that is not the full frame. Molecules are explicitly not edge to edge.',
+    count: offenders.length,
+    examples: offenders.map((a) => a.name).slice(0, 3),
+  }
+}
+
+const OWNERSHIP = new Set(['specific', 'private', 'public'])
+
+function unownedComponents(
+  all: LayerAssignment[],
+  ownership: Record<string, string> | undefined,
+  fallback: string | undefined,
+): DesignFinding | undefined {
+  if (fallback && OWNERSHIP.has(fallback.toLowerCase())) return undefined
+  const offenders = all.filter((a) => {
+    const owner = ownership?.[a.name] ?? ownership?.[stripPrefix(a.name)]
+    return !owner || !OWNERSHIP.has(owner.toLowerCase())
+  })
+  if (offenders.length === 0) return undefined
+  return {
+    code: 'unowned-component',
+    severity: 'low',
+    title: `${offenders.length} component${plural(offenders.length)} with no ownership declared, so nobody can tell whether it is shared or one team's`,
+    fix: "Declare each as specific, private or public in design-system.json. Specific and private components stay in the owning team's repo; only public ones belong in the shared package.",
+    count: offenders.length,
+    examples: offenders.map((a) => a.name).slice(0, 3),
+  }
+}
+
+const BREAKPOINTISH = /\b(breakpoint|viewport|screen|device|mobile|tablet|desktop|sm|md|lg|xl)\b/i
+
+/**
+ * Theme is colours, spacing and breakpoints. The first two are collected
+ * already; nothing in the file describes the third, so the generator emits no
+ * responsive classes at all — every component is one fixed width.
+ */
+function missingBreakpoints(nodes: FigmaNode[]): DesignFinding | undefined {
+  if (nodes.some((n) => BREAKPOINTISH.test(n.name))) return undefined
+  return {
+    code: 'no-breakpoints',
+    severity: 'low',
+    title:
+      'No breakpoints anywhere in the file, so the theme has colours and spacing but nothing responsive, and every component is emitted at one fixed width',
+    fix: 'Add breakpoint variants (a Size or Breakpoint property with Mobile / Tablet / Desktop) to the components that reflow. Without them a responsive rule would be invented rather than generated.',
+    count: 1,
+    examples: [],
+  }
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 // ---------------------------------------------------------------------------
 

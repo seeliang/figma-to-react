@@ -1,10 +1,14 @@
-import { ButtonGhost } from './design-system/button-ghost.js'
-import { ButtonPrimary } from './design-system/button-primary.js'
-import { ButtonSecondary } from './design-system/button-secondary.js'
+import { ButtonGhostDefault } from './design-system/button-ghost-default.js'
+import { ButtonGhostHover } from './design-system/button-ghost-hover.js'
+import { ButtonPrimaryDefault } from './design-system/button-primary-default.js'
+import { ButtonPrimaryHover } from './design-system/button-primary-hover.js'
+import { ButtonSecondaryDefault } from './design-system/button-secondary-default.js'
+import { ButtonSecondaryHover } from './design-system/button-secondary-hover.js'
 import { FormField } from './design-system/form-field.js'
 import { InputFieldDefault } from './design-system/input-field-default.js'
 import { InputFieldError } from './design-system/input-field-error.js'
 import { InputFieldFocused } from './design-system/input-field-focused.js'
+import { InputFieldHover } from './design-system/input-field-hover.js'
 import { DesignSystem } from './design-system/design-system.js'
 import { Card } from './generated/card.js'
 
@@ -15,14 +19,26 @@ import { Card } from './generated/card.js'
 export function App() {
   return (
     <main className="min-h-screen bg-neutral-100 p-12 flex flex-col gap-12">
-      <Section title="Buttons — from design-system-sample">
-        <ButtonPrimary />
-        <ButtonSecondary />
-        <ButtonGhost />
+      <Section title="Buttons — default and hover, as separate components">
+        <ButtonPrimaryDefault />
+        <ButtonSecondaryDefault />
+        <ButtonGhostDefault />
+      </Section>
+
+      {/*
+        The hover variants render side by side rather than on :hover. Figma
+        models a state as another component, and folding two components into one
+        with a `hover:` prefix is a merge the generator does not yet do.
+      */}
+      <Section title="Buttons — hover variants, shown flat">
+        <ButtonPrimaryHover />
+        <ButtonSecondaryHover />
+        <ButtonGhostHover />
       </Section>
 
       <Section title="Input fields — each variant its own component">
         <InputFieldDefault />
+        <InputFieldHover />
         <InputFieldFocused />
         <InputFieldError />
       </Section>
