@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The skills in `tools/cli/skills/` document the CLI they ship beside. Prose
+ * The skills in `ai-plugin/cli/skills/` document the CLI they ship beside. Prose
  * drift is unassertable, but a skill naming a command or a flag that does not
  * exist is not — and that is the drift that actually breaks a reader, because
  * they paste it and it fails.
@@ -19,7 +19,7 @@ import { promisify } from 'node:util'
 
 const run = promisify(execFile)
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const PLUGIN = join(ROOT, 'tools/cli')
+const PLUGIN = join(ROOT, 'ai-plugin/cli')
 const CLI = join(PLUGIN, 'dist/index.js')
 const SKILLS = join(PLUGIN, 'skills')
 

@@ -9,7 +9,7 @@ implementation and tests close together.
   them.
 - A plugin keeps its instructions, executable code and distribution metadata in the same scope.
 - Consumer-installable code belongs in `packages/`; generator and repository tooling belongs in
-  `tools/`.
+  `ai-plugin/`.
 
 Prefer a shallow structure where ownership is obvious from the path. Do not create a new directory
 unless it establishes a useful boundary.
@@ -19,10 +19,10 @@ unless it establishes a useful boundary.
 NX and CI manage semantic versioning and releases. The workspace dependency graph must reflect the
 real dependency direction so chained versioning and affected detection are reliable.
 
-The Claude Code plugin is part of the `tools/cli` NX project, not a separate project. Its skills,
+The Claude Code plugin is part of the `ai-plugin/cli` NX project, not a separate project. Its skills,
 manifest and executable code ship in the same `@figma-to-react/cli` package, so they build, test,
 pack and release together. NX inputs for the CLI include the plugin files, and
-`.claude-plugin/plugin.json` must remain version-locked to `tools/cli/package.json`. Root
+`.claude-plugin/plugin.json` must remain version-locked to `ai-plugin/cli/package.json`. Root
 marketplace and settings files participate in CLI verification only when they affect the dogfooded
 plugin installation.
 

@@ -40,7 +40,7 @@ import { InputFieldDefault } from './input-field-default.js'
 ```
 
 It has to become `from '@ds/atoms'`. That is the single most substantial code change in this plan,
-and it lives in `tools/emit-react/src/emit.ts` where component imports are written.
+and it lives in `ai-plugin/emit-react/src/emit.ts` where component imports are written.
 
 Without it, everything else is cosmetic: the files move, the relative imports still reach across
 layer boundaries, and NX still sees one blob.
@@ -116,7 +116,7 @@ Worth knowing; not in this plan.
 ## Layout
 
 ```
-tools/                @figma-to-react/*  — never installed by a consumer
+ai-plugin/                @figma-to-react/*  — never installed by a consumer
   core/ emit-react/ emit-storybook/ cli/    the generator
   config/             shared Vite / Vitest / Storybook / TS presets
   testing/            the assertions generated stories import
@@ -152,8 +152,8 @@ Five things are hardcoded to the single-directory assumption:
 
 | Where                                                                             | What                                                             | Becomes                                                                                                              |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `tools/cli/src/pipeline.ts:170,177`                                               | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@figma-to-react/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
-| `tools/emit-react/src/emit.ts`                                                    | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                                |
+| `ai-plugin/cli/src/pipeline.ts:170,177`                                               | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@figma-to-react/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
+| `ai-plugin/emit-react/src/emit.ts`                                                    | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                                |
 | `scripts/ds.mjs:146-151`                                                          | `--layer` writes a **subdirectory** of one `out`                 | routes to that layer's package                                                                                       |
 | `design-system.json:8`                                                            | `"out": "examples/src/design-system"`                            | a map of layer → package src dir                                                                                     |
 | `scripts/verify-styles.mjs:15`, `verify-tokens.mjs:97`, root `package.json:12,19` | hardcoded `examples/` paths and a four-times-repeated `--filter` | derived from config; `verify` becomes a loop                                                                         |
@@ -162,7 +162,7 @@ Also: `examples/src/fidelity/assert.ts:1` imports `../design-system/figma-geomet
 reaching into generated output. Moving it to `@figma-to-react/testing` means the geometry has to be passed in
 rather than imported, or the helper is duplicated four times.
 
-And `tools/cli/test/e2e.test.ts:237-243` borrows React and Storybook type declarations out of
+And `ai-plugin/cli/test/e2e.test.ts:237-243` borrows React and Storybook type declarations out of
 `examples/node_modules`. That keeps working, but it now points at a package whose role has changed;
 point it at `@figma-to-react/config` instead.
 
@@ -172,12 +172,12 @@ point it at `@figma-to-react/config` instead.
 
 | Path                                          | Change                                                                           |
 | --------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tools/config/`                               | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
-| `tools/testing/`                              | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
+| `ai-plugin/config/`                               | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
+| `ai-plugin/testing/`                              | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
 | `packages/{theme,atoms,molecules,organisms}/` | new — `package.json`, thin configs, generated `src/`                             |
-| `tools/emit-react/src/emit.ts`                | cross-layer imports become package specifiers                                    |
-| `tools/cli/src/pipeline.ts`                   | per-layer routing; `helperPath` from options                                     |
-| `tools/cli/src/config.ts`                     | `out` as a layer map                                                             |
+| `ai-plugin/emit-react/src/emit.ts`                | cross-layer imports become package specifiers                                    |
+| `ai-plugin/cli/src/pipeline.ts`                   | per-layer routing; `helperPath` from options                                     |
+| `ai-plugin/cli/src/config.ts`                     | `out` as a layer map                                                             |
 | `scripts/ds.mjs`                              | `--layer` targets a package                                                      |
 | `scripts/verify-{styles,tokens}.mjs`          | walk the configured packages, not hardcoded dirs                                 |
 | `package.json`                                | `verify` loops over packages; `typecheck` uses a solution tsconfig               |

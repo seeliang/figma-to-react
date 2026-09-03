@@ -19,7 +19,7 @@ allowed-tools:
 # Verify
 
 The generator ships its own skills — `/design-system`, `/ds-generate`, `/ds-design-review`,
-`/ds-theme` — from the `figma2react` plugin in `tools/cli/skills/`. Those cover Figma, generation
+`/ds-theme` — from the `figma2react` plugin in `ai-plugin/cli/skills/`. Those cover Figma, generation
 and the theme, and they know nothing about this repository on purpose.
 
 **This skill is the other half: what this repo does with the output, and the facts only this repo
@@ -29,7 +29,7 @@ knows.**
 
 - **The Figma file is on the Starter tier.** One or two live calls exhaust the quota for hours, and
   the error names when it resets. This is why `--live` is a decision, not a habit.
-- **The recording is `tools/core/test/fixtures/design-system.json`**, named as `offline.fixture` in
+- **The recording is `ai-plugin/core/test/fixtures/design-system.json`**, named as `offline.fixture` in
   `design-system.json`. Everything offline serves from it.
 - **The example app is `figma-to-react-example`.** Its gallery (`examples/src/app.tsx`) is
   hand-maintained, so a variant renamed in Figma can leave it importing a file `gen` no longer

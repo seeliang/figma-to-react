@@ -1,4 +1,4 @@
-# Phase 2a — make `tools/cli` a Claude Code plugin: md and exec in one scope
+# Phase 2a — make `ai-plugin/cli` a Claude Code plugin: md and exec in one scope
 
 Runs before [Phase 2b](design-system-packages-plan.md), which resumes at its step 3 once this
 lands. Skills background: [design-system-skills-plan.md](design-system-skills-plan.md).
@@ -20,11 +20,11 @@ downstream.
 
 `ds.mjs` defends this in its header: those are *"facts about this repo rather than about the tool."*
 That argument protects `core` and `emit-*` — a library reaching for ambient files is hard to test.
-It does not reach `tools/cli`, which is a bin. A CLI that reads `.env` and defaults a read-only
+It does not reach `ai-plugin/cli`, which is a bin. A CLI that reads `.env` and defaults a read-only
 command to a recorded fixture is ordinary CLI behaviour, and any consumer on a metered Figma quota
 wants both.
 
-**Intended outcome:** `tools/cli` becomes a self-contained plugin — `skills/` (md) beside `src/`
+**Intended outcome:** `ai-plugin/cli` becomes a self-contained plugin — `skills/` (md) beside `src/`
 (exec) — that works as well in a consumer's repo as it does here, with the wrapper's behaviour
 folded into the tool and skill-to-CLI drift asserted rather than hoped for.
 
@@ -61,13 +61,13 @@ would be `cli`. So the manifest is required, only to set `"name": "figma2react"`
 
 Distribution, confirmed against the marketplace reference:
 
-- `.claude-plugin/marketplace.json` accepts `"source": "./tools/cli"`, resolved relative to the
+- `.claude-plugin/marketplace.json` accepts `"source": "./ai-plugin/cli"`, resolved relative to the
   marketplace root (the directory holding `.claude-plugin/`), and must start with `./`.
 - It also accepts `{"source": "npm", "package": "@figma-to-react/cli"}` — the consumer path.
 - `.claude/settings.json` takes `extraKnownMarketplaces` and `enabledPlugins`; the marketplace is
   added when the user trusts the project folder.
 
-So this repo dogfoods its own distribution: a root marketplace pointing at `./tools/cli`, enabled in
+So this repo dogfoods its own distribution: a root marketplace pointing at `./ai-plugin/cli`, enabled in
 committed project settings, no manual install step.
 
 ---
@@ -100,14 +100,14 @@ the backlog; do not ship a downstream skill that tells consumers to clean up aft
 
 ## What moves into the CLI
 
-All of `scripts/ds.mjs`, into `tools/cli/src/`. Guard: `.env` and filesystem discovery go in the bin
+All of `scripts/ds.mjs`, into `ai-plugin/cli/src/`. Guard: `.env` and filesystem discovery go in the bin
 entry (`index.ts`) or a new `env.ts`, never in `core` / `emit-*` — the purity argument still holds
 for the libraries.
 
 | From `ds.mjs`                                | Becomes                                                                                        |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `loadEnv()`                                  | `tools/cli/src/env.ts`, resolving `.env` beside the located `design-system.json`                |
-| `serveFixture()`                             | `tools/cli/src/offline.ts` — `tools/cli/test/e2e.test.ts` already serves this shape; share it   |
+| `loadEnv()`                                  | `ai-plugin/cli/src/env.ts`, resolving `.env` beside the located `design-system.json`                |
+| `serveFixture()`                             | `ai-plugin/cli/src/offline.ts` — `ai-plugin/cli/test/e2e.test.ts` already serves this shape; share it   |
 | `live` / `READ_ONLY` / `themeWrites()`       | a global `--offline` / `--live`; `audit` and `theme-diff` default offline, writers default live |
 | `targetOf(config)`                           | target argument becomes optional everywhere, falling back to config (`audit` already does)      |
 | `buildGenArgs()` (`traceIds`, `stories`, …)  | `gen` reads its defaults from `config.gen`; it already takes `--config`                         |
@@ -125,13 +125,13 @@ Phase 2b step 3 and stay out of scope here.
 
 | Path                                        | Change                                                                             |
 | ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `tools/cli/.claude-plugin/plugin.json`      | new — `name: figma2react`, `version` synced from `package.json`                      |
-| `tools/cli/skills/`                         | new — the four shipped skills + `design-system/references/{atomic,theme,cli}.md`     |
-| `tools/cli/src/{env,offline}.ts`            | new — `.env` loading, fixture server                                                 |
-| `tools/cli/src/index.ts`                    | global `--offline`/`--live`; optional targets; real `theme` command; `config.gen` defaults |
-| `tools/cli/package.json`                    | `files: ["dist", "skills", ".claude-plugin"]`                                        |
-| `tools/cli/test/e2e.test.ts`                | reuse `offline.ts`; cover offline-by-default and config-derived target               |
-| `.claude-plugin/marketplace.json`           | new — one entry, `"source": "./tools/cli"`                                           |
+| `ai-plugin/cli/.claude-plugin/plugin.json`      | new — `name: figma2react`, `version` synced from `package.json`                      |
+| `ai-plugin/cli/skills/`                         | new — the four shipped skills + `design-system/references/{atomic,theme,cli}.md`     |
+| `ai-plugin/cli/src/{env,offline}.ts`            | new — `.env` loading, fixture server                                                 |
+| `ai-plugin/cli/src/index.ts`                    | global `--offline`/`--live`; optional targets; real `theme` command; `config.gen` defaults |
+| `ai-plugin/cli/package.json`                    | `files: ["dist", "skills", ".claude-plugin"]`                                        |
+| `ai-plugin/cli/test/e2e.test.ts`                | reuse `offline.ts`; cover offline-by-default and config-derived target               |
+| `.claude-plugin/marketplace.json`           | new — one entry, `"source": "./ai-plugin/cli"`                                           |
 | `.claude/settings.json`                     | new — `extraKnownMarketplaces` (directory source) + `enabledPlugins`                 |
 | `.claude/skills/ds-verify/`                 | new — repo gates, Starter-tier fact, orphan note, `references/gates.md`              |
 | `.claude/skills/{design-system,ds-*}/`      | **deleted** — moved into the plugin                                                  |
@@ -144,7 +144,7 @@ Phase 2b step 3 and stay out of scope here.
 
 1. Fold `ds.mjs` into the CLI, `ds.mjs` still present and delegating. `pnpm verify` green.
 2. Repoint `ds:*` scripts at `figma2react`; delete `ds.mjs`. `pnpm verify` green.
-3. Move the skills into `tools/cli/skills/`, rewrite their commands and `allowed-tools`
+3. Move the skills into `ai-plugin/cli/skills/`, rewrite their commands and `allowed-tools`
    (`Bash(figma2react *)`), split out `ds-verify`.
 4. Add `plugin.json`, `marketplace.json`, `.claude/settings.json`. Confirm the skills load here.
 5. Add `verify-skills.mjs` to the chain.
@@ -175,11 +175,25 @@ the other.
    before trusting it.
 4. **The plugin loads here.** `/design-system`, `/ds-generate`, `/ds-design-review`, `/ds-theme`
    appear from the committed project settings, with no manual install.
-5. **The consumer path works.** `pnpm pack` `tools/cli` into a scratch dir, install it, add a
+5. **The consumer path works.** `pnpm pack` `ai-plugin/cli` into a scratch dir, install it, add a
    marketplace entry with the npm source, confirm the skills appear and `figma2react audit` runs
    against that repo's own `design-system.json`.
 6. **Nothing repo-specific shipped.** Grep the plugin for `pnpm `, `figma-to-react-example`,
    `scripts/`, `Starter` — all should be absent, all should be present in `ds-verify`.
+
+## The `tools/` → `ai-plugin/` rename
+
+The directory was renamed after this plan was written. Every functional reference had to move with
+it: `pnpm-workspace.yaml`, the root `build`/`typecheck` scripts, `vitest.config.ts`,
+`verify-skills.mjs`, `verify-tokens.mjs`, `design-system.json`'s `offline.fixture`, and the
+marketplace `source`.
+
+**`vitest.config.ts` was the one a path grep missed**, because its glob is brace-expanded —
+`{tools,packages}/*/test/**` contains no literal `tools/`. It failed open: no test files matched,
+so `vitest` exited 1 with "No test files found" rather than reporting a broken path.
+
+Nothing inside `ai-plugin/cli/skills/` needed touching, which is the point of the split — the
+shipped skills name no repository path at all, so a directory rename cannot reach them.
 
 ## What actually landed, and where it differs from the plan
 

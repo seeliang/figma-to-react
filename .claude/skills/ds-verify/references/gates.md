@@ -1,7 +1,7 @@
 # Delivery gates
 
 What must be true to pass each gate, stated so it can fail. The generator's own commands are
-documented in the `figma2react` plugin, at `tools/cli/skills/design-system/references/cli.md`.
+documented in the `figma2react` plugin, at `ai-plugin/cli/skills/design-system/references/cli.md`.
 
 > The full user-facing version, mapping every agile stage to a command, lands as
 > `docs/delivery-gates.md` in Phase 3. This is the criteria list the skills check against now.

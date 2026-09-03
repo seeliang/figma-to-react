@@ -1,8 +1,8 @@
-# tools/ builds the generator; packages/ is what the design system ships.
-# The npm scopes say the same thing — @figma-to-react/* against @ds/* — and the
-# directories now match, so "package" keeps its distribution meaning.
+# ai-plugin/ builds the generator and ships its Claude Code plugin; packages/ is
+# what the design system ships. The npm scopes say the same thing —
+# @figma-to-react/* against @ds/* — so "package" keeps its distribution meaning.
 packages:
-  - 'tools/*'
+  - 'ai-plugin/*'
   - 'packages/*'
   - 'examples'
 

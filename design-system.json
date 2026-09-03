@@ -24,6 +24,6 @@
     }
   },
   "offline": {
-    "fixture": "tools/core/test/fixtures/design-system.json"
+    "fixture": "ai-plugin/core/test/fixtures/design-system.json"
   }
 }

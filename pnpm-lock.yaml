@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@figma-to-react/cli':
         specifier: workspace:*
-        version: link:tools/cli
+        version: link:ai-plugin/cli
       '@types/node':
         specifier: ^22.10.2
         version: 22.20.1
@@ -24,6 +24,79 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)(lightningcss@1.32.0)
 
+  ai-plugin/cli:
+    dependencies:
+      '@figma-to-react/core':
+        specifier: workspace:*
+        version: link:../core
+      '@figma-to-react/emit-react':
+        specifier: workspace:*
+        version: link:../emit-react
+      '@figma-to-react/emit-storybook':
+        specifier: workspace:*
+        version: link:../emit-storybook
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+
+  ai-plugin/config:
+    dependencies:
+      '@storybook/addon-designs':
+        specifier: ^11.1.4
+        version: 11.1.4(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))
+      '@storybook/addon-vitest':
+        specifier: ^10.5.10
+        version: 10.5.10(@vitest/browser-playwright@4.1.11)(@vitest/browser@4.1.11(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))(vitest@4.1.11))(@vitest/runner@4.1.11)(react@19.2.8)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))(vitest@4.1.11)
+      '@storybook/react-vite':
+        specifier: ^10.5.10
+        version: 10.5.10(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(esbuild@0.25.12)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rollup@4.62.5)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))(typescript@5.9.3)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@tailwindcss/vite':
+        specifier: ^4.0.0
+        version: 4.3.3(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@vitest/browser-playwright':
+        specifier: ^4.0.0
+        version: 4.1.11(playwright@1.62.1)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))(vitest@4.1.11)
+      playwright:
+        specifier: ^1.49.0
+        version: 1.62.1
+      storybook:
+        specifier: ^10.5.10
+        version: 10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8)
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.3.3
+      vite:
+        specifier: ^6.0.7
+        version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^4.0.0
+        version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
+
+  ai-plugin/core: {}
+
+  ai-plugin/emit-react:
+    dependencies:
+      '@figma-to-react/core':
+        specifier: workspace:*
+        version: link:../core
+      prettier:
+        specifier: ^3.4.2
+        version: 3.9.6
+
+  ai-plugin/emit-storybook:
+    dependencies:
+      '@figma-to-react/core':
+        specifier: workspace:*
+        version: link:../core
+      '@figma-to-react/emit-react':
+        specifier: workspace:*
+        version: link:../emit-react
+
+  ai-plugin/testing: {}
+
   examples:
     dependencies:
       react:
@@ -35,10 +108,10 @@ importers:
     devDependencies:
       '@figma-to-react/config':
         specifier: workspace:*
-        version: link:../tools/config
+        version: link:../ai-plugin/config
       '@figma-to-react/testing':
         specifier: workspace:*
-        version: link:../tools/testing
+        version: link:../ai-plugin/testing
       '@storybook/addon-designs':
         specifier: ^11.1.4
         version: 11.1.4(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))
@@ -81,79 +154,6 @@ importers:
       vitest:
         specifier: ^4.0.0
         version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
-
-  tools/cli:
-    dependencies:
-      '@figma-to-react/core':
-        specifier: workspace:*
-        version: link:../core
-      '@figma-to-react/emit-react':
-        specifier: workspace:*
-        version: link:../emit-react
-      '@figma-to-react/emit-storybook':
-        specifier: workspace:*
-        version: link:../emit-storybook
-      commander:
-        specifier: ^12.1.0
-        version: 12.1.0
-
-  tools/config:
-    dependencies:
-      '@storybook/addon-designs':
-        specifier: ^11.1.4
-        version: 11.1.4(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))
-      '@storybook/addon-vitest':
-        specifier: ^10.5.10
-        version: 10.5.10(@vitest/browser-playwright@4.1.11)(@vitest/browser@4.1.11(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))(vitest@4.1.11))(@vitest/runner@4.1.11)(react@19.2.8)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))(vitest@4.1.11)
-      '@storybook/react-vite':
-        specifier: ^10.5.10
-        version: 10.5.10(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(esbuild@0.25.12)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rollup@4.62.5)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))(typescript@5.9.3)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
-      '@tailwindcss/vite':
-        specifier: ^4.0.0
-        version: 4.3.3(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
-      '@vitejs/plugin-react':
-        specifier: ^4.3.4
-        version: 4.7.0(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
-      '@vitest/browser-playwright':
-        specifier: ^4.0.0
-        version: 4.1.11(playwright@1.62.1)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))(vitest@4.1.11)
-      playwright:
-        specifier: ^1.49.0
-        version: 1.62.1
-      storybook:
-        specifier: ^10.5.10
-        version: 10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8)
-      tailwindcss:
-        specifier: ^4.0.0
-        version: 4.3.3
-      vite:
-        specifier: ^6.0.7
-        version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)
-      vitest:
-        specifier: ^4.0.0
-        version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
-
-  tools/core: {}
-
-  tools/emit-react:
-    dependencies:
-      '@figma-to-react/core':
-        specifier: workspace:*
-        version: link:../core
-      prettier:
-        specifier: ^3.4.2
-        version: 3.9.6
-
-  tools/emit-storybook:
-    dependencies:
-      '@figma-to-react/core':
-        specifier: workspace:*
-        version: link:../core
-      '@figma-to-react/emit-react':
-        specifier: workspace:*
-        version: link:../emit-react
-
-  tools/testing: {}
 
 packages:
 

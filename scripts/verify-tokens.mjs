@@ -27,7 +27,7 @@ import {
   isEmptyDiff,
   normalize,
   parseFigmaTarget,
-} from '../tools/core/dist/index.js'
+} from '../ai-plugin/core/dist/index.js'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 

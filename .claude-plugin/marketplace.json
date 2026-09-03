@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "figma2react",
-      "source": "./tools/cli",
+      "source": "./ai-plugin/cli",
       "description": "The generator's own skills, versioned with the CLI they document."
     }
   ],

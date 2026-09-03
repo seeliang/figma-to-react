@@ -10,12 +10,12 @@ functions already check in a real browser.
 Remove `examples/` entirely. Root Storybook becomes the sole interactive demonstration tool, while
 stories remain beside the components they document in `packages/`. Consumer-installable
 design-system layers belong in `packages/`; generator, shared configuration and test helpers belong
-in `tools/`. This creates the real dependency graph NX needs for versioning and affected detection.
+in `ai-plugin/`. This creates the real dependency graph NX needs for versioning and affected detection.
 
 ## Target layout
 
 ```
-tools/                              generator and repository tooling; never shipped to consumers
+ai-plugin/                              generator and repository tooling; never shipped to consumers
   core/  emit-react/  emit-storybook/  cli/
   config/                           shared Vite, Vitest, Storybook and TS presets
   testing/                          generated-story and fidelity assertions
@@ -54,7 +54,7 @@ dependency then fails package typechecking instead of merely raising an audit wa
   package geometry to the shared helper. No standalone report page is needed.
 - The card and button files under `examples/src/generated/` are only rendered by the Vite gallery.
   They are not imported by production code or tests, so remove them rather than moving them.
-- Keep source Figma fixtures used by generator tests in `tools/*/test/fixtures`; they do not need
+- Keep source Figma fixtures used by generator tests in `ai-plugin/*/test/fixtures`; they do not need
   an interactive gallery to remain covered.
 
 ## Migration plan
