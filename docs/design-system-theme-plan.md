@@ -16,13 +16,13 @@ Then rewrite `docs/theme-guide.html` as that flow rather than as the conceptual 
 
 ### Decisions taken
 
-| | |
-|---|---|
-| Stage 0 | **Bind Colour Styles first.** Generating, testing and versioning synthesised names locks in names that all change the moment a Style is bound |
-| QA | **Three checks, each where it is cheapest** — see the table below. Contrast ratios stay in Phase 3 with the rest of a11y |
-| Versioning | **Out of scope — NX and CI own it.** No semver, no changelog, no `--release` in this repo |
-| The test | **Generated, not hand-written.** `gen` writes the story *and* its assertions, so N colours in the design means N asserted in the test |
-| Naming | **This is a hand-tailored design system.** Tailwind's palette names are not the target and are not an oracle — see the correction below |
+|            |                                                                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stage 0    | **Bind Colour Styles first.** Generating, testing and versioning synthesised names locks in names that all change the moment a Style is bound |
+| QA         | **Three checks, each where it is cheapest** — see the table below. Contrast ratios stay in Phase 3 with the rest of a11y                      |
+| Versioning | **Out of scope — NX and CI own it.** No semver, no changelog, no `--release` in this repo                                                     |
+| The test   | **Generated, not hand-written.** `gen` writes the story _and_ its assertions, so N colours in the design means N asserted in the test         |
+| Naming     | **This is a hand-tailored design system.** Tailwind's palette names are not the target and are not an oracle — see the correction below       |
 
 ## A correction, and why it matters
 
@@ -36,7 +36,7 @@ generate churn in service of somebody else's vocabulary.
 
 What the disagreement actually shows is narrower and still worth saying: the synthesised names are
 a **fallback**, and a fallback is all they can be. `--color-slate-600` describes a colour; it does
-not say what the colour is *for*. The fix is not a better ramp, it is stage 0 — bind a Colour
+not say what the colour is _for_. The fix is not a better ramp, it is stage 0 — bind a Colour
 Style and the derived name is never used again.
 
 This goes into the project skill so no future session reaches for Tailwind-correctness as the
@@ -46,14 +46,14 @@ standard.
 
 ## The stages
 
-| # | Stage | Gate | Command | What has to be true |
-|---|---|---|---|---|
-| 0 | Design Ready | Developer Ready | `pnpm ds:theme --audit` | colours bound to Styles; the names come from the design system's own vocabulary |
-| 1 | Generate | — | `pnpm ds:theme` | `tokens.css`, `fonts.css`, `tokens.json`, `theme.stories.tsx` written |
-| 2 | Test | Dev Complete | `pnpm --filter figma-to-react-example test-storybook` | every token has a swatch, and every swatch renders its declared value |
-| 3 | Review | Dev Complete | `pnpm ds:theme --diff` | what changed since the last generation, as a diff a reviewer can read |
-| 4 | QA signoff | QA Signoff | `pnpm verify` | all three checks green |
-| — | Release | Release Ready | *(NX + CI)* | versioning and publishing live outside this repo |
+| #   | Stage        | Gate            | Command                                               | What has to be true                                                             |
+| --- | ------------ | --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 0   | Design Ready | Developer Ready | `pnpm ds:theme --audit`                               | colours bound to Styles; the names come from the design system's own vocabulary |
+| 1   | Generate     | —               | `pnpm ds:theme`                                       | `tokens.css`, `fonts.css`, `tokens.json`, `theme.stories.tsx` written           |
+| 2   | Test         | Dev Complete    | `pnpm --filter figma-to-react-example test-storybook` | every token has a swatch, and every swatch renders its declared value           |
+| 3   | Review       | Dev Complete    | `pnpm ds:theme --diff`                                | what changed since the last generation, as a diff a reviewer can read           |
+| 4   | QA signoff   | QA Signoff      | `pnpm verify`                                         | all three checks green                                                          |
+| —   | Release      | Release Ready   | _(NX + CI)_                                           | versioning and publishing live outside this repo                                |
 
 `ds:theme` is one command with modes rather than five commands, because the stages share the same
 config resolution and the same offline/live decision.
@@ -66,11 +66,11 @@ config resolution and the same offline/live decision.
 that want three different homes. Putting them all in the browser would be slow and would hide two
 of them behind Playwright.
 
-| Check | Question | Where | Why there |
-|---|---|---|---|
-| **Rendered vs declared** | does the swatch actually paint `#2563eb`? | Storybook play function | needs `getComputedStyle` in a real browser; jsdom will not resolve `var()` |
-| **Committed vs Figma** | does `tokens.json` still match the design file? | `scripts/verify-tokens.mjs` | needs the recorded fixture, not a browser — node, fast, runs in CI without Playwright |
-| **Stable and unique** | does the same hex always yield the same name, and do two colours never collide? | `packages/core/test/tokens.test.ts` | a pure function; no I/O at all |
+| Check                    | Question                                                                        | Where                               | Why there                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| **Rendered vs declared** | does the swatch actually paint `#2563eb`?                                       | Storybook play function             | needs `getComputedStyle` in a real browser; jsdom will not resolve `var()`            |
+| **Committed vs Figma**   | does `tokens.json` still match the design file?                                 | `scripts/verify-tokens.mjs`         | needs the recorded fixture, not a browser — node, fast, runs in CI without Playwright |
+| **Stable and unique**    | does the same hex always yield the same name, and do two colours never collide? | `packages/core/test/tokens.test.ts` | a pure function; no I/O at all                                                        |
 
 The third replaces the Tailwind oracle. It asserts what the generator actually promises —
 determinism and no collisions — rather than agreement with a palette this project does not use.
@@ -99,8 +99,11 @@ New output of `gen`, alongside `figma-geometry.json`, imported by the story the 
   "figma": { "key": "uA3bE5…", "node": "2:77", "lastModified": "2026-08-25T05:22:35Z" },
   "tokens": [
     {
-      "kind": "color", "name": "blue-600", "cssVar": "--color-blue-600",
-      "value": "#2563eb", "uses": 12,
+      "kind": "color",
+      "name": "blue-600",
+      "cssVar": "--color-blue-600",
+      "value": "#2563eb",
+      "uses": 12,
       "named": false,
       "sources": [{ "source": "style", "key": "S:abc…", "name": "Primary" }]
     }
@@ -122,8 +125,12 @@ even though the layer name does not).
 carrying what the assertion needs:
 
 ```tsx
-<div data-token="--color-blue-600" data-token-value="#2563eb" data-token-named="false"
-     style={{ background: 'var(--color-blue-600)' }} />
+<div
+  data-token="--color-blue-600"
+  data-token-value="#2563eb"
+  data-token-named="false"
+  style={{ background: 'var(--color-blue-600)' }}
+/>
 ```
 
 `parameters: { layout: 'fullscreen' }` locally — the global `preview.ts` sets `centered`, which is
@@ -153,7 +160,7 @@ is wrong: only one declaration survives (`--color-blue-600:#2563eb`), because Ta
 `@theme` blocks and the later import wins. The rendered-vs-declared check passes as-is.
 
 The collision is still real, just quieter than I said. `examples/src/generated/tokens.css` — the
-card fixture, a *different* design file — declares the same custom property at `#2663eb`, and the
+card fixture, a _different_ design file — declares the same custom property at `#2663eb`, and the
 card silently renders the design system's blue instead of its own. Two design files sharing one
 global namespace, resolved by import order.
 
@@ -196,26 +203,26 @@ ramp; Tailwind's palette is not an oracle.
 
 Same visual identity, restructured: the six stages as the spine, each with its command, its gate,
 and what fails if you skip it. The derivation table stays but is reframed — it shows what happens
-when *no* Style is bound, as the argument for stage 0, not as the main event.
+when _no_ Style is bound, as the argument for stage 0, not as the main event.
 
 ---
 
 ## Files
 
-| Path | Change |
-|---|---|
-| `packages/core/src/tokens/manifest.ts` | new — `TokenTable` → the `tokens.json` shape |
-| `packages/emit-storybook/src/theme.ts` | new — `emitThemeStories` |
-| `packages/cli/src/pipeline.ts` | return the table; write `tokens.json` and the theme story |
-| `packages/cli/src/index.ts` | `theme` subcommand: `--audit`, `--diff`, `--release` |
-| `scripts/ds.mjs` | `theme` command, offline-aware like the rest |
-| `scripts/verify-tokens.mjs` | new — committed vs Figma |
-| `examples/src/theme/assert.ts` | new — rendered vs declared |
-| `examples/src/styles.css` | resolve the `--color-blue-600` collision |
-| `packages/core/test/tokens.test.ts` | stability and uniqueness |
-| `docs/theme-guide.html` | rewritten as the stage flow, then republished to the same artifact URL |
-| `.claude/skills/ds-theme/SKILL.md` | new |
-| `.claude/skills/design-system/references/theme.md` | new — the hand-tailored naming note |
+| Path                                               | Change                                                                 |
+| -------------------------------------------------- | ---------------------------------------------------------------------- |
+| `packages/core/src/tokens/manifest.ts`             | new — `TokenTable` → the `tokens.json` shape                           |
+| `packages/emit-storybook/src/theme.ts`             | new — `emitThemeStories`                                               |
+| `packages/cli/src/pipeline.ts`                     | return the table; write `tokens.json` and the theme story              |
+| `packages/cli/src/index.ts`                        | `theme` subcommand: `--audit`, `--diff`, `--release`                   |
+| `scripts/ds.mjs`                                   | `theme` command, offline-aware like the rest                           |
+| `scripts/verify-tokens.mjs`                        | new — committed vs Figma                                               |
+| `examples/src/theme/assert.ts`                     | new — rendered vs declared                                             |
+| `examples/src/styles.css`                          | resolve the `--color-blue-600` collision                               |
+| `packages/core/test/tokens.test.ts`                | stability and uniqueness                                               |
+| `docs/theme-guide.html`                            | rewritten as the stage flow, then republished to the same artifact URL |
+| `.claude/skills/ds-theme/SKILL.md`                 | new                                                                    |
+| `.claude/skills/design-system/references/theme.md` | new — the hand-tailored naming note                                    |
 
 Also: save the hand-tailored naming decision to memory, so it survives past this session.
 

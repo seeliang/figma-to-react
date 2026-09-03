@@ -9,7 +9,7 @@
   "scripts": {
     "build": "pnpm -r --filter './packages/*' run build",
     "test": "vitest run",
-    "typecheck": "tsc -b packages/core packages/emit-react packages/emit-storybook packages/cli",
+    "typecheck": "tsc -b packages/core packages/emit-react packages/emit-storybook packages/cli packages/ds-config packages/ds-testing",
     "format": "prettier --write .",
     "ds:init": "node scripts/ds.mjs init",
     "ds:gen": "node scripts/ds.mjs gen",

@@ -1,9 +1,8 @@
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
+import { designSystemPlugins } from '@ds/config/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: designSystemPlugins(),
   build: {
     rollupOptions: {
       // `fidelity.html` mounts the generated root unscaled, for measuring it

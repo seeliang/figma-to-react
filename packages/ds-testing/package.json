@@ -1,0 +1,21 @@
+{
+  "name": "@ds/testing",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./fidelity": {
+      "types": "./dist/fidelity/assert.d.ts",
+      "default": "./dist/fidelity/assert.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/assert.d.ts",
+      "default": "./dist/theme/assert.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  }
+}

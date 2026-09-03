@@ -115,6 +115,23 @@
     white-space: nowrap;
   }
 
+  pre {
+    margin: 1rem 0 0;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    background: var(--sunken);
+    border-left: 3px solid var(--accent);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  pre code {
+    padding: 0;
+    background: none;
+    white-space: pre;
+  }
+
   /* --- the flow, which is the point of the page ------------------------- */
 
   .scroller {
@@ -321,10 +338,11 @@
       <div>
         <h3>Design Ready</h3>
         <p>
-          Asks whether the Figma file is ready to generate a theme from. Right now every colour is
-          unbound, so all eight token names are derived from the values rather than chosen by a
-          designer. Bind a Colour Style and the derived name is never used again — which is why this
-          stage comes first, and not after you have versioned those names.
+          Asks whether the Figma file is ready to generate a theme from. It checks that colours have
+          a Figma Colour Style or Variable, so the generated <code>--color-*</code> names come from
+          the design system rather than being derived from a hex value. It also checks font-size
+          variables for named <code>--text-*</code> entries, plus layout, component-state, ownership
+          and breakpoint readiness. Bind these before versioning their generated names.
         </p>
       </div>
     </li>
@@ -335,8 +353,11 @@
         <p>
           Writes four files from one pass: <code>tokens.css</code> for browsers,
           <code>tokens.json</code> as data, <code>fonts.css</code> to load the typefaces, and
-          <code>theme.stories.tsx</code> — every token as a swatch. Add <code>--offline</code> to
-          work from the recorded response; the Figma quota is set by plan tier and runs out fast.
+          <code>theme.stories.tsx</code> — every token as a swatch. It emits named variables for
+          colour, spacing, radius, font size, shadow and font family: <code>--color-*</code>,
+          <code>--spacing-*</code>, <code>--radius-*</code>, <code>--text-*</code>,
+          <code>--shadow-*</code> and <code>--font-*</code>. Add <code>--offline</code> to work from
+          the recorded response; the Figma quota is set by plan tier and runs out fast.
         </p>
       </div>
     </li>
@@ -375,6 +396,33 @@
       </div>
     </li>
   </ul>
+
+  <h2>Using generated variables</h2>
+  <p>
+    Names follow the Figma Style or Variable name. For example, a colour named “Surface” becomes
+    <code>--color-surface</code>; spacing, radius, type, shadow and font-family values follow the
+    same pattern.
+  </p>
+  <pre><code>/* tokens.css — generated from named Figma values */
+:root {
+  --color-surface: #ffffff;
+  --color-text-primary: #191817;
+  --spacing-4: 1rem;
+  --radius-card: 0.75rem;
+  --text-body: 1rem;
+  --shadow-raised: 0 4px 12px rgb(0 0 0 / 0.12);
+  --font-sans: Inter, sans-serif;
+}
+
+/* application CSS */
+.card {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-raised);
+  font: var(--text-body) / 1.5 var(--font-sans);
+}</code></pre>
 
   <div class="callout">
     <p>
