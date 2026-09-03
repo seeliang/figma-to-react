@@ -1,4 +1,4 @@
-import type { IRDocument, IRNode, TokenResolver } from '@figma-to-react/core'
+import type { IRDocument, IRNode, Layer, TokenResolver } from '@figma-to-react/core'
 import { noTokens } from '@figma-to-react/core'
 import { NameRegistry, toCamelCase, toFileName, toPascalCase } from './naming.js'
 import { semanticFor, textLeaves, textTagFor } from './semantics.js'
@@ -33,6 +33,21 @@ export interface EmitOptions {
    * announced as a button, which is a correctness problem, not a cosmetic one.
    */
   semantics?: boolean
+  /**
+   * Which atomic layer each component belongs to, and which package publishes
+   * that layer.
+   *
+   * When both are known and two components sit in different layers, the import
+   * between them is written as a package specifier rather than a relative path.
+   * That is what turns the layer rule from something the audit reports into
+   * something the compiler enforces: an atom cannot import a molecule, because
+   * the molecule package is not among its dependencies.
+   *
+   * Keyed by the component *set* name where there is one — `Button`, not
+   * `Button Primary Default` — because that is the unit a designer sorts.
+   */
+  layers?: Record<string, Layer>
+  layerPackages?: Partial<Record<Layer, string>>
 }
 
 export interface EmitResult {
@@ -62,6 +77,8 @@ export interface ComponentEntry {
   set?: string
   /** `Primary`, when the component belongs to a variant set. */
   variant?: string
+  /** The atomic layer this component was sorted into, when one is known. */
+  layer?: Layer
   /** Text props, with the copy the design supplies as each default. */
   props: { name: string; defaultValue: string }[]
 }
@@ -73,8 +90,8 @@ interface EmitState {
   semantics: boolean
   traceIds: boolean
   registry: NameRegistry
-  /** Component id to the name and file it was emitted as. */
-  emitted: Map<string, { name: string; file: string }>
+  /** Component id to the name, file and layer it was emitted as. */
+  emitted: Map<string, { name: string; file: string; layer?: Layer }>
   /** Files produced so far. */
   files: Map<string, string>
   /** Manifest entries, in emission order. */
@@ -84,6 +101,8 @@ interface EmitState {
   /** Component id whose definition file is currently being rendered, if any. */
   currentComponentId?: string
   splitComponents: boolean
+  layers: Record<string, Layer>
+  layerPackages: Partial<Record<Layer, string>>
 }
 
 export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
@@ -99,6 +118,8 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
     manifest: [],
     imports: new Set(),
     splitComponents: options.splitComponents ?? true,
+    layers: options.layers ?? {},
+    layerPackages: options.layerPackages ?? {},
   }
 
   // Components first: the root's own instances resolve to imports of these.
@@ -114,6 +135,33 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
   return { files: state.files, rootComponent: rootName, components: state.manifest }
 }
 
+/** The set name is the unit a designer sorts, so that is what the map is keyed by. */
+function layerOf(node: IRNode, state: EmitState): Layer | undefined {
+  const key = node.component?.set ?? node.component?.name ?? node.name
+  return state.layers[key] ?? state.layers[node.component?.name ?? '']
+}
+
+/**
+ * A package specifier across a layer boundary, a relative path within one.
+ *
+ * Falling back to the relative path whenever either layer is unknown keeps the
+ * output working on a flat, unsorted design system — which is what every file
+ * looks like before anybody has done the sorting.
+ */
+function specifierFor(
+  target: { name: string; file: string; layer?: Layer },
+  state: EmitState,
+): string {
+  const here = state.currentComponentId
+    ? state.emitted.get(state.currentComponentId)?.layer
+    : undefined
+  if (target.layer && here && target.layer !== here) {
+    const pkg = state.layerPackages[target.layer]
+    if (pkg) return pkg
+  }
+  return `./${target.file.replace(/\.tsx$/, '.js')}`
+}
+
 function emitComponent(id: string, node: IRNode, state: EmitState): void {
   if (state.emitted.has(id)) return
   // The main component's name (`Button/Primary`) is more meaningful and more
@@ -122,7 +170,8 @@ function emitComponent(id: string, node: IRNode, state: EmitState): void {
   const file = toFileName(name)
   // Reserve the slot before rendering: a component that contains an instance of
   // itself would otherwise recurse forever.
-  state.emitted.set(id, { name, file })
+  const layer = layerOf(node, state)
+  state.emitted.set(id, { name, file, ...(layer ? { layer } : {}) })
   const previous = state.currentComponentId
   state.currentComponentId = id
   state.files.set(file, renderFile(name, node, state, { isComponentRoot: true }))
@@ -138,6 +187,7 @@ function emitComponent(id: string, node: IRNode, state: EmitState): void {
     file,
     ...(node.component?.set ? { set: node.component.set } : {}),
     ...(node.component?.variant ? { variant: node.component.variant } : {}),
+    ...(layer ? { layer } : {}),
     props:
       slots.length > state.maxTextSlots
         ? []
@@ -257,9 +307,7 @@ function renderNode(
     // the definition, so it must render its markup rather than import itself.
     const target = state.emitted.get(node.component.id)
     if (target && node.component.id !== state.currentComponentId) {
-      state.imports.add(
-        `import { ${target.name} } from './${target.file.replace(/\.tsx$/, '.js')}'`,
-      )
+      state.imports.add(`import { ${target.name} } from '${specifierFor(target, state)}'`)
       const tag = `<${target.name}${instanceProps(node, ctx)} />`
 
       // The tag itself takes no className, so anything that places it inside
