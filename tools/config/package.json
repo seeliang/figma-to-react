@@ -1,5 +1,5 @@
 {
-  "name": "@ds/config",
+  "name": "@figma-to-react/config",
   "version": "0.1.0",
   "type": "module",
   "exports": {

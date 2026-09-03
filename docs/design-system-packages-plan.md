@@ -17,7 +17,7 @@ rather than by an audit rule.
 | ----------- | -------------------------------------------------------------------------------------- |
 | Granularity | **One package per layer** — `@ds/theme`, `@ds/atoms`, `@ds/molecules`, `@ds/organisms` |
 | Storybook   | **One root Storybook**, globbing every package. See the trade-off below                |
-| Config      | **Shared preset** (`@ds/config`) with three-line files per package                     |
+| Config      | **Shared preset** (`@figma-to-react/config`) with three-line files per package         |
 | NX          | **Design for it now, add it last.** The split is the prerequisite — see why below      |
 
 ---
@@ -78,13 +78,13 @@ devDependency block) is four places for the same bug. This repo has already been
 one config silently differing from another — a missing Tailwind plugin in `vitest.config.ts` made
 every story fail by ~57px, and a misordered `@import` dropped the webfont silently.
 
-`@ds/config` exports the Vite, Vitest and Storybook presets; each package holds a three-line file
+`@figma-to-react/config` exports the Vite, Vitest and Storybook presets; each package holds a three-line file
 that spreads them. One fix, one place.
 
 **Found while building step 1:** the dependency list hoists less far than the config does. Storybook
 resolves addons _by name from the project root_, and its Vitest plugin injects
 `@storybook/addon-vitest/internal/*` into `optimizeDeps.include` — both look in the consuming
-package's `node_modules`, where a package that only exists in `@ds/config`'s tree is invisible.
+package's `node_modules`, where a package that only exists in `@figma-to-react/config`'s tree is invisible.
 So `@storybook/addon-designs`, `@storybook/addon-vitest`, `@vitest/browser-playwright` and
 `playwright` have to stay declared per package. Only what the preset code _imports directly_
 (`@tailwindcss/vite`, `@vitejs/plugin-react`) actually moves. The shared config is still the win —
@@ -116,11 +116,11 @@ Worth knowing; not in this plan.
 ## Layout
 
 ```
-tools/                @figma-to-react/*  — the generator, a separate product
-  core/ emit-react/ emit-storybook/ cli/
-packages/             @ds/*  — the design system, what actually ships
-  config/             shared Vite / Vitest / Storybook / TS presets (private)
-  testing/            fidelity + token assert helpers
+tools/                @figma-to-react/*  — never installed by a consumer
+  core/ emit-react/ emit-storybook/ cli/    the generator
+  config/             shared Vite / Vitest / Storybook / TS presets
+  testing/            the assertions generated stories import
+packages/             @ds/*  — what the design system ships
   theme/              tokens.css · fonts.css · tokens.json · theme.stories.tsx
   atoms/              Button, Input Field          → depends on theme
   molecules/          Form Field                   → depends on theme, atoms
@@ -138,6 +138,11 @@ makes the `ds-` prefix redundant: `packages/atoms` is `@ds/atoms`.
 
 Done before the layer packages landed rather than after, while it cost seven files and a lockfile.
 
+**The rule is one line: if a consumer would install it, it belongs in `packages/`.** Applying it
+honestly moved the build presets and the test assertions out too — neither is imported by a single
+component, and both were configured as publishable by mistake. `packages/` is empty until the layer
+packages land, which is the accurate state: nothing ships yet.
+
 `@ds/organisms` is generated empty — the file has no full-width component. Creating it anyway keeps
 the graph complete and means the first organism needs no new package.
 
@@ -145,21 +150,21 @@ the graph complete and means the first organism needs no new package.
 
 Five things are hardcoded to the single-directory assumption:
 
-| Where                                                                             | What                                                             | Becomes                                                                                                  |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `tools/cli/src/pipeline.ts:170,177`                                               | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@ds/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
-| `tools/emit-react/src/emit.ts`                                                    | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                    |
-| `scripts/ds.mjs:146-151`                                                          | `--layer` writes a **subdirectory** of one `out`                 | routes to that layer's package                                                                           |
-| `design-system.json:8`                                                            | `"out": "examples/src/design-system"`                            | a map of layer → package src dir                                                                         |
-| `scripts/verify-styles.mjs:15`, `verify-tokens.mjs:97`, root `package.json:12,19` | hardcoded `examples/` paths and a four-times-repeated `--filter` | derived from config; `verify` becomes a loop                                                             |
+| Where                                                                             | What                                                             | Becomes                                                                                                              |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `tools/cli/src/pipeline.ts:170,177`                                               | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@figma-to-react/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
+| `tools/emit-react/src/emit.ts`                                                    | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                                |
+| `scripts/ds.mjs:146-151`                                                          | `--layer` writes a **subdirectory** of one `out`                 | routes to that layer's package                                                                                       |
+| `design-system.json:8`                                                            | `"out": "examples/src/design-system"`                            | a map of layer → package src dir                                                                                     |
+| `scripts/verify-styles.mjs:15`, `verify-tokens.mjs:97`, root `package.json:12,19` | hardcoded `examples/` paths and a four-times-repeated `--filter` | derived from config; `verify` becomes a loop                                                                         |
 
 Also: `examples/src/fidelity/assert.ts:1` imports `../design-system/figma-geometry.json` — a helper
-reaching into generated output. Moving it to `@ds/testing` means the geometry has to be passed in
+reaching into generated output. Moving it to `@figma-to-react/testing` means the geometry has to be passed in
 rather than imported, or the helper is duplicated four times.
 
 And `tools/cli/test/e2e.test.ts:237-243` borrows React and Storybook type declarations out of
 `examples/node_modules`. That keeps working, but it now points at a package whose role has changed;
-point it at `@ds/config` instead.
+point it at `@figma-to-react/config` instead.
 
 ---
 
@@ -167,8 +172,8 @@ point it at `@ds/config` instead.
 
 | Path                                          | Change                                                                           |
 | --------------------------------------------- | -------------------------------------------------------------------------------- |
-| `packages/config/`                            | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
-| `packages/testing/`                           | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
+| `tools/config/`                               | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
+| `tools/testing/`                              | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
 | `packages/{theme,atoms,molecules,organisms}/` | new — `package.json`, thin configs, generated `src/`                             |
 | `tools/emit-react/src/emit.ts`                | cross-layer imports become package specifiers                                    |
 | `tools/cli/src/pipeline.ts`                   | per-layer routing; `helperPath` from options                                     |
@@ -181,7 +186,7 @@ point it at `@ds/config` instead.
 
 ## Build order
 
-1. `@ds/config` and `@ds/testing`. Nothing generated yet — prove the presets work by pointing the
+1. `@figma-to-react/config` and `@figma-to-react/testing`. Nothing generated yet — prove the presets work by pointing the
    existing `examples/` at them and confirming `pnpm verify` is still green.
 2. Package specifiers for cross-layer imports in `emit-react`, with snapshot tests. This is the
    change that makes the boundary real; do it before anything moves.

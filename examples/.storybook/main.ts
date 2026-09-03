@@ -1,4 +1,4 @@
-import { storybookConfig } from '@ds/config/storybook'
+import { storybookConfig } from '@figma-to-react/config/storybook'
 
 /**
  * Stories live beside the components they document, because both are generated

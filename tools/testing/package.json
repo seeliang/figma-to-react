@@ -1,5 +1,5 @@
 {
-  "name": "@ds/testing",
+  "name": "@figma-to-react/testing",
   "version": "0.1.0",
   "type": "module",
   "exports": {

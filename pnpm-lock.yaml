@@ -29,12 +29,12 @@ importers:
         specifier: ^19.0.0
         version: 19.2.8(react@19.2.8)
     devDependencies:
-      '@ds/config':
+      '@figma-to-react/config':
         specifier: workspace:*
-        version: link:../packages/config
-      '@ds/testing':
+        version: link:../tools/config
+      '@figma-to-react/testing':
         specifier: workspace:*
-        version: link:../packages/testing
+        version: link:../tools/testing
       '@storybook/addon-designs':
         specifier: ^11.1.4
         version: 11.1.4(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(storybook@10.5.10(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.8))
@@ -78,7 +78,22 @@ importers:
         specifier: ^4.0.0
         version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
 
-  packages/config:
+  tools/cli:
+    dependencies:
+      '@figma-to-react/core':
+        specifier: workspace:*
+        version: link:../core
+      '@figma-to-react/emit-react':
+        specifier: workspace:*
+        version: link:../emit-react
+      '@figma-to-react/emit-storybook':
+        specifier: workspace:*
+        version: link:../emit-storybook
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+
+  tools/config:
     dependencies:
       '@storybook/addon-designs':
         specifier: ^11.1.4
@@ -114,23 +129,6 @@ importers:
         specifier: ^4.0.0
         version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0))
 
-  packages/testing: {}
-
-  tools/cli:
-    dependencies:
-      '@figma-to-react/core':
-        specifier: workspace:*
-        version: link:../core
-      '@figma-to-react/emit-react':
-        specifier: workspace:*
-        version: link:../emit-react
-      '@figma-to-react/emit-storybook':
-        specifier: workspace:*
-        version: link:../emit-storybook
-      commander:
-        specifier: ^12.1.0
-        version: 12.1.0
-
   tools/core: {}
 
   tools/emit-react:
@@ -150,6 +148,8 @@ importers:
       '@figma-to-react/emit-react':
         specifier: workspace:*
         version: link:../emit-react
+
+  tools/testing: {}
 
 packages:
   '@adobe/css-tools@4.5.0':
