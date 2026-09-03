@@ -26,6 +26,8 @@ import {
   targetOf,
   writeConfig,
 } from './config.js'
+import { findConfig, loadEnv } from './env.js'
+import { fixturePath, isLive, serveFixture } from './offline.js'
 import { run } from './pipeline.js'
 
 const program = new Command()
@@ -34,6 +36,63 @@ program
   .name('figma2react')
   .description('Generate Tailwind-styled React components from a Figma frame')
   .version('0.1.0')
+  .option('--offline', 'serve the recorded response in design-system.json instead of calling Figma')
+  .option('--live', 'call the Figma REST API, spending quota')
+
+/**
+ * Where the config was actually found, so every command reads the same file and
+ * resolves relative paths against the same directory.
+ */
+let locatedConfig: string | undefined
+
+/**
+ * Everything ambient happens here, once, before any command body runs: find the
+ * config, load the token beside it, and decide whether this invocation is
+ * allowed to spend Figma quota. Commands stay pure functions of their options.
+ */
+program.hook('preAction', async (_root, action) => {
+  const opts = program.opts<{ offline?: boolean; live?: boolean }>()
+  const actionOpts = action.opts() as { config?: string; audit?: boolean; diff?: boolean }
+  locatedConfig = await findConfig(actionOpts.config)
+  await loadEnv(locatedConfig)
+
+  const live = isLive(action.name(), opts, actionOpts)
+  if (live) {
+    console.error('  live: this spends Figma REST quota')
+    return
+  }
+
+  const config = await readConfig(configFile())
+  const fixture = fixturePath(config, locatedConfig)
+  if (!fixture) {
+    throw new Error(
+      'Nothing to serve offline: no `offline.fixture` in the config.\n' +
+        'Record one with: figma2react inspect "<url>" --raw > <path>, then name it in the config.',
+    )
+  }
+  process.env.FIGMA_API_BASE = await serveFixture(fixture)
+  // The fixture server ignores the token, but `requireToken` still runs, and a
+  // missing token offline is not a real failure.
+  process.env.FIGMA_TOKEN ??= 'offline'
+  console.error(`  offline: serving ${relative(process.cwd(), fixture) || fixture}`)
+})
+
+/** The config path every command should read: the located one, or the flag. */
+const configFile = (explicit?: string): string => locatedConfig ?? explicit ?? CONFIG_FILE
+
+/**
+ * A target given on the command line always wins; otherwise it comes from the
+ * config, which is the whole reason the config exists.
+ */
+function resolveTarget(target: string | undefined, config: DesignSystemConfig | undefined): string {
+  const resolved = target ?? (config && targetOf(config))
+  if (!resolved) {
+    throw new Error(
+      `No Figma target. Pass one, or run \`figma2react init\` to write ${CONFIG_FILE}.`,
+    )
+  }
+  return resolved
+}
 
 const withCommonOptions = (cmd: Command) =>
   cmd
@@ -44,9 +103,9 @@ const withCommonOptions = (cmd: Command) =>
 withCommonOptions(
   program
     .command('gen')
-    .argument('<figma-url>', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
+    .argument('[figma-url]', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
     .description('generate React components')
-    .requiredOption('-o, --out <dir>', 'output directory')
+    .option('-o, --out <dir>', 'output directory')
     .option('--no-assets', 'skip downloading vectors and images')
     .option('--repeat-threshold <n>', 'identical siblings before collapsing into .map()', '3')
     .option('--no-semantics', 'emit plain divs instead of inferring <button>, <input> and <a>')
@@ -59,33 +118,86 @@ withCommonOptions(
       'max px a node may differ from Figma before a story fails',
       '4',
     )
+    .option('--layer <name>', 'generate into a subdirectory of out: atoms | molecules | organisms')
     .option('--dry-run', 'print what would be written without touching the filesystem')
     .option('--config <file>', 'design-system.json to read layers and ownership from', CONFIG_FILE),
-).action(async (target: string, opts) => {
-  await withErrorHandling(async () => {
+).action(async (target: string | undefined, opts, command: Command) => {
+  await withErrorHandling(() => runGen(target, opts, command))
+})
+
+interface GenOptions {
+  token?: string
+  out?: string
+  config?: string
+  tokens?: boolean
+  assets?: boolean
+  minUses: string
+  repeatThreshold: string
+  semantics?: boolean
+  traceIds?: boolean
+  fontImport?: boolean
+  stories?: boolean
+  fidelityThreshold: string
+  layer?: string
+  dryRun?: boolean
+  designNotes?: boolean
+}
+
+/**
+ * Shared by `gen` and `theme`: the theme falls out of the same collection pass
+ * that produces the components, so running it twice could disagree with itself.
+ */
+async function runGen(
+  target: string | undefined,
+  opts: GenOptions,
+  command: Command,
+): Promise<void> {
+  {
     // The layer sorting and ownership live in the config, so the design notes
     // `gen` prints match what `audit` prints. Two different answers to "is this
     // sorted?" from the same repo is worse than not asking.
-    const config = await readConfig(opts.config)
+    const config = await readConfig(configFile(opts.config))
+    const resolvedTarget = resolveTarget(target, config)
+    // The config's `gen` flags describe *its own* design system, not whatever
+    // file you happen to point the tool at. Pointing `gen` at a different
+    // target and silently inheriting another file's flags would be an ambush,
+    // so the defaults apply only when the config is describing this target.
+    const describesTarget = Boolean(config && targetOf(config) === resolvedTarget)
+    const gen = describesTarget ? (config?.gen ?? {}) : {}
+    // A flag the caller actually typed beats the config; an untouched flag sits
+    // at its commander default and lets the config speak.
+    const untouched = (name: string) => command.getOptionValueSource(name) === 'default'
+    const outDirName = opts.out ?? config?.out
+    if (!outDirName) {
+      throw new Error('No output directory. Pass --out, or set `out` in the config.')
+    }
     const result = await run({
-      target,
+      target: resolvedTarget,
       token: requireToken(opts.token),
       baseUrl: apiBase(),
       tokens: opts.tokens !== false,
       assets: opts.assets !== false,
-      minUses: Number(opts.minUses),
+      minUses:
+        untouched('minUses') && gen.minUses !== undefined ? gen.minUses : Number(opts.minUses),
       repeatThreshold: Number(opts.repeatThreshold),
       semantics: opts.semantics !== false,
-      traceIds: opts.traceIds === true,
+      traceIds: opts.traceIds === true || (describesTarget ? gen.traceIds !== false : false),
       fontImport: opts.fontImport !== false,
-      stories: opts.stories === true,
-      fidelityThreshold: Number(opts.fidelityThreshold),
+      stories: opts.stories === true || (describesTarget ? gen.stories !== false : false),
+      fidelityThreshold:
+        untouched('fidelityThreshold') && gen.fidelityThreshold !== undefined
+          ? gen.fidelityThreshold
+          : Number(opts.fidelityThreshold),
       layers: config?.atomic?.layers,
       ...ownership(config),
       onProgress: progress,
     })
 
-    const outDir = resolve(opts.out)
+    // `--layer` writes a subdirectory of `out`. Phase 2b turns `out` into a map
+    // of layer to package; until then a subdirectory keeps a one-layer change
+    // reviewable on its own, which is the point of the flag.
+    const base = locatedConfig && !opts.out ? join(dirname(locatedConfig), outDirName) : outDirName
+    const outDir = resolve(opts.layer ? join(base, opts.layer) : base)
     const planned: [string, string | Uint8Array][] = [
       ...result.files.entries(),
       ...[...result.assets.entries()].map(
@@ -135,18 +247,20 @@ withCommonOptions(
     }
 
     if (opts.designNotes !== false) reportDesign(result.design)
-  })
-})
+  }
+}
 
 withCommonOptions(
   program
     .command('tokens')
-    .argument('<figma-url>', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
+    .argument('[figma-url]', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
     .description('extract design tokens as a Tailwind v4 @theme block')
-    .option('-o, --out <file>', 'write to a file instead of stdout'),
-).action(async (target: string, opts) => {
+    .option('-o, --out <file>', 'write to a file instead of stdout')
+    .option('--config <file>', 'design-system.json to read the target from', CONFIG_FILE),
+).action(async (target: string | undefined, opts) => {
   await withErrorHandling(async () => {
-    const doc = await fetchIr(target, requireToken(opts.token))
+    const config = await readConfig(configFile(opts.config))
+    const doc = await fetchIr(resolveTarget(target, config), requireToken(opts.token))
     const table = collectTokens(doc, { minUses: Number(opts.minUses) })
     const css = emitThemeCss(table)
 
@@ -194,16 +308,18 @@ program
   .option('--json', 'emit the findings as JSON')
   .option('--config <file>', 'design-system.json to read layers and ownership from', CONFIG_FILE)
   .action(async (target: string | undefined, opts) => {
-    await withErrorHandling(async () => {
-      const config = await readConfig(opts.config)
-      const resolved = target ?? (config && targetOf(config))
-      if (!resolved) {
-        throw new Error(
-          `No Figma target. Pass one, or run \`figma2react init\` to write ${opts.config}.`,
-        )
-      }
+    await withErrorHandling(() => runAudit(target, opts))
+  })
 
-      const entry = await fetchEntry(resolved, requireToken(opts.token))
+/** Shared by `audit` and `theme --audit` — the Design Ready gate. */
+async function runAudit(
+  target: string | undefined,
+  opts: { token?: string; config?: string; json?: boolean },
+): Promise<void> {
+  {
+    {
+      const config = await readConfig(configFile(opts.config))
+      const entry = await fetchEntry(resolveTarget(target, config), requireToken(opts.token))
       const findings = auditDesign({
         document: entry.document,
         styles: entry.styles,
@@ -217,29 +333,48 @@ program
       }
       reportLayers(assignLayers({ document: entry.document, overrides: config?.atomic?.layers }))
       reportDesign(findings)
-    })
-  })
+    }
+  }
+}
 
 withCommonOptions(
   program
     .command('theme-diff')
-    .argument('<figma-url>', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
+    .argument('[figma-url]', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
     .description('what the theme would gain, lose or change if regenerated')
-    .requiredOption('-o, --out <dir>', 'directory holding the committed tokens.json'),
-).action(async (target: string, opts) => {
-  await withErrorHandling(async () => {
-    const path = join(resolve(opts.out), 'tokens.json')
+    .option('-o, --out <dir>', 'directory holding the committed tokens.json')
+    .option('--config <file>', 'design-system.json to read the target and out dir from', CONFIG_FILE),
+).action(async (target: string | undefined, opts) => {
+  await withErrorHandling(() => runThemeDiff(target, opts))
+})
+
+/** Shared by `theme-diff` and `theme --diff` — what belongs in a PR description. */
+async function runThemeDiff(
+  target: string | undefined,
+  opts: { token?: string; config?: string; out?: string; minUses: string },
+): Promise<void> {
+  {
+    const config = await readConfig(configFile(opts.config))
+    const outDirName = opts.out ?? config?.out
+    if (!outDirName) {
+      throw new Error('No output directory. Pass --out, or set `out` in the config.')
+    }
+    const outDir = resolve(
+      locatedConfig && !opts.out ? join(dirname(locatedConfig), outDirName) : outDirName,
+    )
+    const path = join(outDir, 'tokens.json')
     let committed: TokenManifest
     try {
       committed = JSON.parse(await readFile(path, 'utf8')) as TokenManifest
     } catch {
       throw new Error(
-        `No tokens.json in ${opts.out}. Run gen first — there is nothing to diff against.`,
+        `No tokens.json in ${outDirName}. Run gen first — there is nothing to diff against.`,
       )
     }
 
-    const { fileKey, nodeId } = parseFigmaTarget(target)
-    const doc = await fetchIr(target, requireToken(opts.token))
+    const resolved = resolveTarget(target, config)
+    const { fileKey, nodeId } = parseFigmaTarget(resolved)
+    const doc = await fetchIr(resolved, requireToken(opts.token))
     const fresh = buildTokenManifest(collectTokens(doc, { minUses: Number(opts.minUses) }), {
       key: fileKey,
       ...(nodeId ? { node: nodeId } : {}),
@@ -258,7 +393,41 @@ withCommonOptions(
       console.log(`  ~ ${after.cssVar}: ${before.value} -> ${after.value}`)
     }
     // Versioning is NX and CI's job, so this reports the change and stops there.
-    console.log('\nRun `pnpm ds:theme` to apply.')
+    console.log('\nRun `figma2react theme` to apply.')
+  }
+}
+
+/**
+ * The theme has one command with modes rather than four commands, because the
+ * question people actually arrive with is which *stage* they are at, not which
+ * verb to type. `tokens.css`, `tokens.json` and the theme story all fall out of
+ * one collection pass, so stage 1 is `gen` — same code, named for the stage.
+ */
+withCommonOptions(
+  program
+    .command('theme')
+    .argument('[figma-url]', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
+    .description('generate the theme; --audit for readiness, --diff for what would change')
+    .option('--audit', 'stage 0: is the design file ready to generate a theme from?')
+    .option('--diff', 'stage 3: what the theme would gain, lose or change')
+    .option('--json', 'with --audit, emit the findings as JSON')
+    .option('-o, --out <dir>', 'output directory')
+    .option('--no-assets', 'skip downloading vectors and images')
+    .option('--repeat-threshold <n>', 'identical siblings before collapsing into .map()', '3')
+    .option('--no-semantics', 'emit plain divs instead of inferring <button>, <input> and <a>')
+    .option('--no-design-notes', 'skip the report of gaps in the Figma file itself')
+    .option('--trace-ids', 'emit data-figma-id on every element, for measuring layout fidelity')
+    .option('--no-font-import', 'skip the Google Fonts @import for the typefaces in use')
+    .option('--stories', 'generate Storybook stories and the geometry their fidelity check needs')
+    .option('--fidelity-threshold <px>', 'max px a node may differ from Figma before a story fails', '4')
+    .option('--layer <name>', 'generate into a subdirectory of out: atoms | molecules | organisms')
+    .option('--dry-run', 'print what would be written without touching the filesystem')
+    .option('--config <file>', 'design-system.json to read layers and ownership from', CONFIG_FILE),
+).action(async (target: string | undefined, opts, command: Command) => {
+  await withErrorHandling(async () => {
+    if (opts.audit) return runAudit(target, opts)
+    if (opts.diff) return runThemeDiff(target, opts)
+    return runGen(target, opts, command)
   })
 })
 
@@ -458,4 +627,9 @@ async function withErrorHandling(fn: () => Promise<void>): Promise<void> {
   }
 }
 
-program.parseAsync(process.argv)
+// The preAction hook can fail (no fixture to serve, unreadable config), and a
+// rejected parseAsync would otherwise surface as an unhandled rejection.
+program.parseAsync(process.argv).catch((err) => {
+  console.error(`\nerror: ${err instanceof Error ? err.message : String(err)}`)
+  process.exitCode = 1
+})

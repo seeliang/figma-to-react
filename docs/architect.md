@@ -1,7 +1,30 @@
-# separation of concern
+# Architecture
 
-Do one thing and do it right. Following this, ideally we shall have flat structure. exsample would be we have storybook folder at root and import stories.tsx from design system folder, so the stories lives next to code
+## Separation of concerns
 
-# distribution
+Each part of the repository should have one clear responsibility and keep its documentation,
+implementation and tests close together.
 
-we use NX and CI to do semantic version control, and take the advantage of chained versioning from nx
+- Stories live beside the components they document; a single root Storybook discovers and presents
+  them.
+- A plugin keeps its instructions, executable code and distribution metadata in the same scope.
+- Consumer-installable code belongs in `packages/`; generator and repository tooling belongs in
+  `tools/`.
+
+Prefer a shallow structure where ownership is obvious from the path. Do not create a new directory
+unless it establishes a useful boundary.
+
+## Distribution
+
+NX and CI manage semantic versioning and releases. The workspace dependency graph must reflect the
+real dependency direction so chained versioning and affected detection are reliable.
+
+The Claude Code plugin is part of the `tools/cli` NX project, not a separate project. Its skills,
+manifest and executable code ship in the same `@figma-to-react/cli` package, so they build, test,
+pack and release together. NX inputs for the CLI include the plugin files, and
+`.claude-plugin/plugin.json` must remain version-locked to `tools/cli/package.json`. Root
+marketplace and settings files participate in CLI verification only when they affect the dogfooded
+plugin installation.
+
+For the Storybook-first examples migration, see
+[Examples restructure plan](examples-restructure-plan.md).

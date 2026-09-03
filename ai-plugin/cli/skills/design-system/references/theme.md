@@ -43,11 +43,16 @@ An app may import several `@theme` blocks and Tailwind resolves a repeated prope
 order. Two design files that both synthesise `--color-blue-600` therefore silently agree on one
 value, and the loser renders wrong with the build still green.
 
-This is live in `examples/`: the card fixture declares `#2663eb`, the design system `#2563eb`, and
-the design system wins. `scripts/verify-tokens.mjs` reports it by name. Fixing it properly means
-namespacing a whole theme through to class names — not done.
+It is a real hazard wherever two generated themes meet in one stylesheet — for instance a fixture
+app beside the design system, one declaring `#2663eb` and the other `#2563eb`. Whichever imports
+last wins, and nothing fails. Worth a repo-level check that reports duplicate `--*` declarations
+across the imported `@theme` blocks by name. Fixing it properly means namespacing a whole theme
+through to class names — not done.
+
+The permanent fix is upstream of the check: **one owner for the tokens.** A single `@theme` source
+that every consumer imports cannot collide with itself.
 
 ## Not versioned here
 
-**NX and CI own versioning.** No semver, no changelog, no release command in this repo. When asked
-about theme releases, say so rather than inventing a second answer.
+**Versioning belongs to the repository, not to this tool.** No semver, no changelog, no release
+command. When asked about theme releases, say so rather than inventing a second answer.

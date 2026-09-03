@@ -11,14 +11,15 @@
     "test": "vitest run",
     "typecheck": "tsc -b tools/core tools/emit-react tools/emit-storybook tools/cli tools/config tools/testing",
     "format": "prettier --write .",
-    "ds:init": "node scripts/ds.mjs init",
-    "ds:gen": "node scripts/ds.mjs gen",
-    "ds:theme": "node scripts/ds.mjs theme",
-    "ds:tokens": "node scripts/ds.mjs tokens",
-    "ds:audit": "node scripts/ds.mjs audit",
-    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && node scripts/verify-tokens.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
+    "ds:init": "figma2react init",
+    "ds:gen": "figma2react gen",
+    "ds:theme": "figma2react theme",
+    "ds:tokens": "figma2react tokens",
+    "ds:audit": "figma2react audit",
+    "verify": "pnpm build && pnpm typecheck && pnpm test && node scripts/verify-skills.mjs && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && node scripts/verify-tokens.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
   },
   "devDependencies": {
+    "@figma-to-react/cli": "workspace:*",
     "@types/node": "^22.10.2",
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",

@@ -1,10 +1,10 @@
 ---
 name: ds-design-review
-description: 'Reviews the Figma design file behind this repo and reports what is missing in the file itself — unbound colours, components not sorted into atomic layers, missing Auto Layout, absent interaction states — each with the Figma action that fixes it. This is the Developer Ready gate. Use when asked whether the design is ready for development, what the design file is missing, why token names look synthesised, or how components should be sorted into atoms, molecules and organisms.'
+description: 'Reviews the Figma design file behind the design system and reports what is missing in the file itself — unbound colours, components not sorted into atomic layers, missing Auto Layout, absent interaction states — each with the Figma action that fixes it. This is the Developer Ready gate. Use when asked whether the design is ready for development, what the design file is missing, why token names look synthesised, or how components should be sorted into atoms, molecules and organisms.'
 allowed-tools:
   - Read
-  - Bash(node scripts/ds.mjs *)
-  - Bash(pnpm ds:audit*)
+  - Bash(figma2react audit*)
+  - Bash(npx figma2react audit*)
   - Bash(cat design-system.json)
 ---
 
@@ -24,10 +24,11 @@ frame.
 1. **Run the audit.**
 
    ```
-   pnpm ds:audit
+   figma2react audit
    ```
 
-   Offline by default, against the recorded response — no quota spent. Add `--live` only when the
+   Takes the target from `design-system.json`, so no URL is needed. Offline by default, against
+   the recorded response — no quota spent. Add `--live` only when the
    question is specifically whether the _current_ file has changed, and say that you are doing it.
    Add `--json` when you need to reason over the findings rather than relay them.
 

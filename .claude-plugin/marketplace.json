@@ -1,0 +1,14 @@
+{
+  "name": "figma-to-react",
+  "owner": {
+    "name": "figma-to-react"
+  },
+  "plugins": [
+    {
+      "name": "figma2react",
+      "source": "./tools/cli",
+      "description": "The generator's own skills, versioned with the CLI they document."
+    }
+  ],
+  "description": "Skills for the figma2react generator, versioned and shipped with the CLI they document."
+}

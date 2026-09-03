@@ -1,7 +1,7 @@
 # Delivery gates
 
-What must be true to pass each gate, stated so it can fail. The commands are in
-[cli.md](cli.md).
+What must be true to pass each gate, stated so it can fail. The generator's own commands are
+documented in the `figma2react` plugin, at `tools/cli/skills/design-system/references/cli.md`.
 
 > The full user-facing version, mapping every agile stage to a command, lands as
 > `docs/delivery-gates.md` in Phase 3. This is the criteria list the skills check against now.
@@ -17,7 +17,7 @@ Before anyone writes code against the design.
 
 Sorting sits at _this_ gate deliberately. Sorting after development is what causes the refactor.
 
-**Check:** `pnpm ds:audit`
+**Check:** `figma2react audit` (offline by default)
 
 ## Dev Complete
 

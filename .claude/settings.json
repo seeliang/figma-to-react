@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "figma-to-react": {
+      "source": {
+        "source": "directory",
+        "path": "."
+      }
+    }
+  },
+  "enabledPlugins": {
+    "figma2react@figma-to-react": true
+  }
+}

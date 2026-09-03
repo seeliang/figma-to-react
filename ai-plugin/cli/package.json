@@ -6,7 +6,9 @@
     "figma2react": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    ".claude-plugin"
   ],
   "scripts": {
     "build": "tsc -b"

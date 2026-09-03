@@ -1,0 +1,16 @@
+{
+  "name": "figma2react",
+  "description": "Generate Tailwind-styled React components from a Figma frame, review the design file for gaps, and keep the theme's tokens honest.",
+  "version": "0.1.0",
+  "keywords": [
+    "figma",
+    "design-system",
+    "codegen",
+    "react",
+    "tailwind",
+    "atomic-design"
+  ],
+  "author": {
+    "name": "figma-to-react"
+  }
+}
