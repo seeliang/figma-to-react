@@ -1,5 +1,0 @@
-/* fonts.css first: a CSS @import is only valid ahead of every other rule. */
-@import './design-system/fonts.css';
-@import 'tailwindcss';
-@import './generated/tokens.css';
-@import './design-system/tokens.css';

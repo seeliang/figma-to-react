@@ -1,0 +1,9 @@
+{
+  "name": "@ds/organisms",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "files": ["src"],
+  "scripts": { "build": "tsc -b", "typecheck": "tsc -b --noEmit" },
+  "dependencies": { "@ds/theme": "workspace:*", "@ds/atoms": "workspace:*", "@ds/molecules": "workspace:*", "react": "^19.0.0" }
+}

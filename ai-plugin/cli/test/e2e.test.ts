@@ -193,10 +193,9 @@ describe('generated code compiles', () => {
     // and it has already caught args that a variant's component cannot accept.
     await cli(['gen', 'TESTKEY:1-2', '--out', out, '--min-uses', '2', '--stories', '--trace-ids'])
 
-    await mkdir(join(out, '..', 'fidelity'), { recursive: true })
-    await writeFile(join(out, '..', 'fidelity', 'assert.d.ts'), FIDELITY_STUB)
-    await mkdir(join(out, '..', 'theme'), { recursive: true })
-    await writeFile(join(out, '..', 'theme', 'assert.d.ts'), THEME_STUB)
+    await writeFile(join(out, 'fidelity.d.ts'), FIDELITY_STUB)
+    const themeStub = join(out, 'theme.d.ts')
+    await writeFile(themeStub, THEME_STUB)
 
     await writeFile(
       join(out, 'tsconfig.json'),
@@ -219,6 +218,7 @@ describe('generated code compiles', () => {
             react: [reactTypes],
             'react/jsx-runtime': [jsxRuntimeTypes],
             '@storybook/react': [storybookTypes],
+            '@figma-to-react/testing/theme': [themeStub],
           },
         },
         include: ['*.tsx'],
@@ -234,18 +234,18 @@ describe('generated code compiles', () => {
 })
 
 const reactTypes = fileURLToPath(
-  new URL('../../../examples/node_modules/@types/react/index.d.ts', import.meta.url),
+  new URL('../../../node_modules/@types/react/index.d.ts', import.meta.url),
 )
 const jsxRuntimeTypes = fileURLToPath(
-  new URL('../../../examples/node_modules/@types/react/jsx-runtime.d.ts', import.meta.url),
+  new URL('../../../node_modules/@types/react/jsx-runtime.d.ts', import.meta.url),
 )
 const storybookTypes = fileURLToPath(
-  new URL('../../../examples/node_modules/@storybook/react/dist/index.d.ts', import.meta.url),
+  new URL('../../../node_modules/@storybook/react/dist/index.d.ts', import.meta.url),
 )
 /**
- * Stories import the fidelity helper from the consuming app, one level above
- * the generated directory. `paths` cannot redirect a relative specifier, so the
- * gate writes a declaration where the import actually points.
+ * Stories import a generated wrapper beside their components. The standalone
+ * generator deliberately does not add that workspace-only wrapper, so this
+ * compilation gate supplies its declaration.
  */
 const FIDELITY_STUB = `export declare function expectLayoutWithin(
   container: HTMLElement,

@@ -26,7 +26,7 @@ const SKILLS = join(PLUGIN, 'skills')
 /** Facts about the repository that must never ship inside the plugin. */
 const REPO_ONLY = [
   ['pnpm ', 'a command only this workspace has'],
-  ['figma-to-react-example', 'the example app, which consumers do not have'],
+  ['examples/', 'a retired repository-only demo path'],
   ['scripts/', 'a path only this repository has'],
   ['Starter', 'this file’s Figma plan tier'],
 ]

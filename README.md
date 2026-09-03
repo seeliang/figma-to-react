@@ -108,8 +108,8 @@ Older files that predate `layoutSizingHorizontal` fall back to `layoutGrow`, `la
 ## Storybook
 
 ```bash
-figma2react gen '<url>' --out src/design-system --stories --trace-ids
-pnpm --filter figma-to-react-example storybook
+pnpm ds:gen
+pnpm storybook
 ```
 
 `--stories` writes one CSF 3 story file per **variant set** — `Button/Primary`,
@@ -150,7 +150,7 @@ play: async ({ canvasElement }) => {
 }
 ```
 
-`pnpm --filter figma-to-react-example test-storybook` runs every story in a real
+`pnpm test-storybook` runs every story in a real
 browser through `@storybook/addon-vitest` and fails when any node drifts past
 the threshold. Layout drift stops being something to notice and becomes
 something that breaks the build.
@@ -162,9 +162,9 @@ CLI says so, and the assertion refuses rather than passing vacuously.
 
 Comparing generated output against the Figma frame by eye catches bugs, but only
 the ones big enough to notice. To measure it instead, generate with
-`--trace-ids` — every element then carries `data-figma-id` — and open
-`examples/fidelity.html`, which mounts the root unscaled and diffs every node's
-`getBoundingClientRect()` against the `absoluteBoundingBox` Figma reported.
+`--trace-ids` — every element then carries `data-figma-id`. The generated
+Storybook play functions compare each component with the Figma geometry in a
+real browser, so fidelity is a test rather than a separate report page.
 
 ```
 57 nodes compared

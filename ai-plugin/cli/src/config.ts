@@ -3,6 +3,9 @@ import { dirname, resolve } from 'node:path'
 import { mkdir } from 'node:fs/promises'
 import type { Layer } from '@figma-to-react/core'
 
+export type OutputLayer = Layer | 'theme'
+export type OutputDirectories = Partial<Record<OutputLayer, string>>
+
 /**
  * `design-system.json` — the one place this repo's design-system context lives:
  * which Figma file, which frame, where the output goes, and how the components
@@ -13,7 +16,8 @@ export interface DesignSystemConfig {
   /** Bumped per generation; see docs/design-system-versions.md. */
   version?: string
   file: { key: string; node?: string; name?: string }
-  out?: string
+  /** Legacy single output, or one consumer package source directory per layer. */
+  out?: string | OutputDirectories
   gen?: {
     traceIds?: boolean
     stories?: boolean
@@ -51,6 +55,15 @@ export async function writeConfig(config: DesignSystemConfig, path = CONFIG_FILE
 /** The target string `gen`, `tokens` and `audit` accept, rebuilt from config. */
 export const targetOf = (c: DesignSystemConfig): string =>
   c.file.node ? `${c.file.key}:${c.file.node}` : c.file.key
+
+export function outputDirectory(
+  config: DesignSystemConfig | undefined,
+  layer?: OutputLayer,
+): string | undefined {
+  if (!config?.out) return undefined
+  if (typeof config.out === 'string') return config.out
+  return layer ? config.out[layer] : undefined
+}
 
 /** Ownership with `default` split out, which is how the audit wants it. */
 export function ownership(c: DesignSystemConfig | undefined): {

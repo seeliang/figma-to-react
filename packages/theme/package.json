@@ -1,0 +1,19 @@
+{
+  "name": "@ds/theme",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./fonts.css": "./src/fonts.css",
+    "./tokens.json": "./src/tokens.json",
+    "./figma-geometry.json": "./src/figma-geometry.json"
+  },
+  "files": ["src"],
+  "scripts": { "build": "tsc -b", "typecheck": "tsc -b --noEmit" },
+  "devDependencies": {
+    "@figma-to-react/testing": "workspace:*",
+    "@storybook/react": "^10.5.10",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0"
+  }
+}

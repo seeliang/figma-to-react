@@ -32,7 +32,7 @@ import {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 const config = JSON.parse(await readFile(join(ROOT, 'design-system.json'), 'utf8'))
-const outDir = join(ROOT, config.out)
+const outDir = join(ROOT, config.out.theme)
 
 let failed = false
 await checkDrift()
@@ -94,7 +94,7 @@ async function collectFromFixture() {
  * property declared twice at different values.
  */
 async function checkCollisions() {
-  const stylesheet = join(ROOT, 'examples/src/styles.css')
+  const stylesheet = join(ROOT, '.storybook/styles.css')
   const css = await readFile(stylesheet, 'utf8')
 
   const declarations = new Map() // property -> [{ file, value }]

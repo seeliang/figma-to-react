@@ -9,20 +9,41 @@
   "scripts": {
     "build": "pnpm -r --filter './ai-plugin/*' --filter './packages/*' run build",
     "test": "vitest run",
-    "typecheck": "tsc -b ai-plugin/core ai-plugin/emit-react ai-plugin/emit-storybook ai-plugin/cli ai-plugin/config ai-plugin/testing",
+    "typecheck": "tsc -b ai-plugin/core ai-plugin/emit-react ai-plugin/emit-storybook ai-plugin/cli ai-plugin/config ai-plugin/testing packages/theme packages/atoms packages/molecules packages/organisms",
     "format": "prettier --write .",
     "ds:init": "figma2react init",
-    "ds:gen": "figma2react gen",
+    "ds:gen": "figma2react --offline gen",
     "ds:theme": "figma2react theme",
     "ds:tokens": "figma2react tokens",
     "ds:audit": "figma2react audit",
-    "verify": "pnpm build && pnpm typecheck && pnpm test && node scripts/verify-skills.mjs && pnpm --filter figma-to-react-example build && node scripts/verify-styles.mjs && node scripts/verify-tokens.mjs && pnpm --filter figma-to-react-example build-storybook && node scripts/verify-styles.mjs --dist examples/storybook-static/assets && pnpm --filter figma-to-react-example test-storybook"
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "test-storybook": "vitest --config vitest.storybook.config.ts run --project=storybook",
+    "verify": "pnpm build && pnpm typecheck && pnpm test && node scripts/verify-skills.mjs && pnpm build-storybook && node scripts/verify-styles.mjs --dist storybook-static/assets && node scripts/verify-tokens.mjs && pnpm test-storybook"
   },
   "devDependencies": {
     "@figma-to-react/cli": "workspace:*",
+    "@figma-to-react/config": "workspace:*",
+    "@figma-to-react/testing": "workspace:*",
+    "@storybook/addon-designs": "^11.1.4",
+    "@storybook/addon-vitest": "^10.5.10",
+    "@storybook/react": "^10.5.10",
+    "@storybook/react-vite": "^10.5.10",
+    "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.10.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/browser": "^4.0.0",
+    "@vitest/browser-playwright": "^4.0.0",
+    "playwright": "^1.49.0",
     "prettier": "^3.4.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "storybook": "^10.5.10",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vite": "^6.0.7",
+    "vitest": "^4.0.0"
   }
 }

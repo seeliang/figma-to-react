@@ -5,7 +5,12 @@
     "node": "2:77",
     "name": "\ud83d\udcd0 Design System"
   },
-  "out": "examples/src/design-system",
+  "out": {
+    "theme": "packages/theme/src",
+    "atom": "packages/atoms/src",
+    "molecule": "packages/molecules/src",
+    "organism": "packages/organisms/src"
+  },
   "gen": {
     "traceIds": true,
     "stories": true,

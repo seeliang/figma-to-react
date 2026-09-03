@@ -4,7 +4,6 @@
 packages:
   - 'ai-plugin/*'
   - 'packages/*'
-  - 'examples'
 
 onlyBuiltDependencies:
   - esbuild

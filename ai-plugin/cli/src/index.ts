@@ -21,6 +21,8 @@ import { Command } from 'commander'
 import {
   CONFIG_FILE,
   type DesignSystemConfig,
+  type OutputLayer,
+  outputDirectory,
   ownership,
   readConfig,
   targetOf,
@@ -118,7 +120,7 @@ withCommonOptions(
       'max px a node may differ from Figma before a story fails',
       '4',
     )
-    .option('--layer <name>', 'generate into a subdirectory of out: atoms | molecules | organisms')
+    .option('--layer <name>', 'generate one configured layer: theme | atom | molecule | organism')
     .option('--dry-run', 'print what would be written without touching the filesystem')
     .option('--config <file>', 'design-system.json to read layers and ownership from', CONFIG_FILE),
 ).action(async (target: string | undefined, opts, command: Command) => {
@@ -167,7 +169,14 @@ async function runGen(
     // A flag the caller actually typed beats the config; an untouched flag sits
     // at its commander default and lets the config speak.
     const untouched = (name: string) => command.getOptionValueSource(name) === 'default'
-    const outDirName = opts.out ?? config?.out
+    const requestedLayer = opts.layer as OutputLayer | undefined
+    if (config?.out && typeof config.out !== 'string' && !requestedLayer && !opts.out) {
+      for (const layer of ['theme', 'atom', 'molecule', 'organism'] as const) {
+        if (config.out[layer]) await runGen(target, { ...opts, layer }, command)
+      }
+      return
+    }
+    const outDirName = opts.out ?? outputDirectory(config, requestedLayer)
     if (!outDirName) {
       throw new Error('No output directory. Pass --out, or set `out` in the config.')
     }
@@ -189,28 +198,61 @@ async function runGen(
           ? gen.fidelityThreshold
           : Number(opts.fidelityThreshold),
       layers: config?.atomic?.layers,
+      layerPackages: { atom: '@ds/atoms', molecule: '@ds/molecules', organism: '@ds/organisms' },
       ...ownership(config),
       onProgress: progress,
     })
 
-    // `--layer` writes a subdirectory of `out`. Phase 2b turns `out` into a map
-    // of layer to package; until then a subdirectory keeps a one-layer change
-    // reviewable on its own, which is the point of the flag.
     const base = locatedConfig && !opts.out ? join(dirname(locatedConfig), outDirName) : outDirName
-    const outDir = resolve(opts.layer ? join(base, opts.layer) : base)
+    const outDir = resolve(base)
+    const selectedFiles = new Set(
+      result.components
+        .filter((component) => !requestedLayer || component.layer === requestedLayer)
+        .map((component) => component.file),
+    )
+    const selectedStories = new Set(
+      [...result.stories.entries()]
+        .filter(([file, source]) =>
+          !requestedLayer ||
+          requestedLayer === 'theme'
+            ? file === 'theme.stories.tsx'
+            : result.components
+                .filter((component) => component.layer === requestedLayer)
+                .some((component) => source.includes(`{ ${component.exportName} }`)),
+        )
+        .map(([file]) => file),
+    )
     const planned: [string, string | Uint8Array][] = [
-      ...result.files.entries(),
+      ...[...result.files.entries()].filter(
+        ([name]) => !requestedLayer || selectedFiles.has(name) || selectedStories.has(name),
+      ),
       ...[...result.assets.entries()].map(
         ([name, bytes]) => [join('assets', name), bytes] as [string, Uint8Array],
       ),
     ]
-    if (result.geometry) {
+    if (result.geometry && (!requestedLayer || requestedLayer === 'theme')) {
       planned.push(['figma-geometry.json', `${JSON.stringify(result.geometry, null, 2)}\n`])
     }
-    if (result.fontCss) planned.push(['fonts.css', result.fontCss])
-    if (result.themeCss) planned.push(['tokens.css', result.themeCss])
-    if (result.tokenManifest) {
+    if ((!requestedLayer || requestedLayer === 'theme') && result.fontCss)
+      planned.push(['fonts.css', result.fontCss])
+    if ((!requestedLayer || requestedLayer === 'theme') && result.themeCss)
+      planned.push(['tokens.css', result.themeCss])
+    if ((!requestedLayer || requestedLayer === 'theme') && result.tokenManifest) {
       planned.push(['tokens.json', `${JSON.stringify(result.tokenManifest, null, 2)}\n`])
+    }
+    if (
+      result.geometry &&
+      requestedLayer &&
+      requestedLayer !== 'theme' &&
+      selectedFiles.size > 0
+    ) {
+      planned.push([
+        'fidelity.ts',
+        "import { expectLayoutWithin as assertWithin } from '@figma-to-react/testing/fidelity'\n" +
+          "import geometry from '@ds/theme/figma-geometry.json' with { type: 'json' }\n\n" +
+          'export const expectLayoutWithin = (container: HTMLElement, thresholdPx: number) =>\n' +
+          '  assertWithin(container, thresholdPx, geometry)\n',
+      ])
     }
 
     if (opts.dryRun) {
@@ -355,7 +397,7 @@ async function runThemeDiff(
 ): Promise<void> {
   {
     const config = await readConfig(configFile(opts.config))
-    const outDirName = opts.out ?? config?.out
+    const outDirName = opts.out ?? outputDirectory(config, 'theme')
     if (!outDirName) {
       throw new Error('No output directory. Pass --out, or set `out` in the config.')
     }
@@ -487,7 +529,8 @@ program
 
         const owner = await ask('\nDefault ownership (specific/private/public)', 'public')
         const out =
-          opts.out ?? (await ask('Output directory', existing?.out ?? 'src/design-system'))
+          opts.out ??
+          (await ask('Output directory', outputDirectory(existing, 'atom') ?? 'packages/atoms/src'))
 
         const config: DesignSystemConfig = {
           version: existing?.version ?? '0.1.0',

@@ -1,0 +1,10 @@
+{
+  "name": "@ds/molecules",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "files": ["src"],
+  "scripts": { "build": "tsc -b", "typecheck": "tsc -b --noEmit" },
+  "dependencies": { "@ds/theme": "workspace:*", "@ds/atoms": "workspace:*", "@figma-to-react/testing": "workspace:*", "react": "^19.0.0" },
+  "devDependencies": { "@storybook/react": "^10.5.10", "@types/react": "^19.0.0" }
+}

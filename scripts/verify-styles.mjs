@@ -10,13 +10,14 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
-// Every directory figma2react writes into. A missing one is skipped, not fatal:
-// the design-system output needs a Figma token that CI may not have.
-const GENERATED = ['examples/src/generated', 'examples/src/design-system']
+// Component packages are the only generated UI source. Their paths come from
+// the repository layout rather than a demo app, so deleting a demo cannot
+// silently stop this check from scanning components.
+const GENERATED = ['packages/atoms/src', 'packages/molecules/src', 'packages/organisms/src']
 // Storybook produces its own bundle from the same sources, and a Tailwind
 // plugin missing from *its* config fails exactly as silently.
 const distFlag = process.argv.indexOf('--dist')
-const DIST = distFlag === -1 ? 'examples/dist/assets' : process.argv[distFlag + 1]
+const DIST = distFlag === -1 ? 'storybook-static/assets' : process.argv[distFlag + 1]
 
 const used = new Set()
 let scanned = 0
@@ -47,7 +48,7 @@ const stylesheets = (await readdir(DIST)).filter((f) => f.endsWith('.css'))
 // Storybook splits its bundle; a class may land in any of the sheets.
 const cssFile = stylesheets[0]
 if (!cssFile) {
-  console.error(`No stylesheet in ${DIST} — run the example build first.`)
+  console.error(`No stylesheet in ${DIST} — run the Storybook build first.`)
   process.exit(1)
 }
 const raw = (await Promise.all(stylesheets.map((f) => readFile(join(DIST, f), 'utf8')))).join('\n')

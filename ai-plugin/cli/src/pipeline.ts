@@ -17,6 +17,7 @@ import type {
   TokenTable,
 } from '@figma-to-react/core'
 import { emit, formatAll } from '@figma-to-react/emit-react'
+import type { ComponentEntry } from '@figma-to-react/emit-react'
 import { emitStories, emitThemeStory, exportGeometry } from '@figma-to-react/emit-storybook'
 import type { Geometry } from '@figma-to-react/emit-storybook'
 
@@ -43,6 +44,8 @@ export interface RunOptions {
   fidelityThreshold?: number
   /** Atomic layer per component, for components Figma does not sort itself. */
   layers?: Record<string, Layer>
+  /** Package specifiers used for imports that cross a layer boundary. */
+  layerPackages?: Partial<Record<Layer, string>>
   /** Specific / private / public, per component name. */
   ownership?: Record<string, string>
   defaultOwnership?: string
@@ -53,6 +56,8 @@ export interface RunResult {
   doc: IRDocument
   table?: TokenTable
   rootComponent: string
+  /** Component manifest, used by the CLI to route files to layer packages. */
+  components: ComponentEntry[]
   /** Component sources, keyed by file name relative to the output dir. */
   files: Map<string, string>
   /** Binary assets, keyed by file name relative to `<out>/assets`. */
@@ -143,6 +148,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
     repeatThreshold: options.repeatThreshold ?? 3,
     semantics: options.semantics ?? true,
     traceIds: options.traceIds ?? false,
+    layers: options.layers,
+    layerPackages: options.layerPackages,
   })
 
   const tokenManifest = table
@@ -167,14 +174,14 @@ export async function run(options: RunOptions): Promise<RunResult> {
     }
     for (const s of emitStories(emitted.components, {
       fileKey,
-      fidelity: { threshold: options.fidelityThreshold ?? 4, helperPath: '../fidelity/assert.js' },
+      fidelity: { threshold: options.fidelityThreshold ?? 4, helperPath: './fidelity.js' },
     })) {
       stories.set(s.file, s.source)
     }
     // The theme story is generated from the manifest, so the number of
     // assertions is decided by the design rather than by whoever wrote a test.
     if (tokenManifest && tokenManifest.tokens.length > 0) {
-      const theme = emitThemeStory(tokenManifest, { helperPath: '../theme/assert.js' })
+      const theme = emitThemeStory(tokenManifest, { helperPath: '@figma-to-react/testing/theme' })
       stories.set(theme.file, theme.source)
     }
     options.onProgress?.(`Generated ${stories.size} story file(s)`)
@@ -188,6 +195,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     doc,
     table,
     rootComponent: emitted.rootComponent,
+    components: emitted.components,
     files,
     assets: assetResult.files,
     themeCss: table ? emitThemeCss(table) : undefined,
