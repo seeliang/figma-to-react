@@ -20,7 +20,7 @@ Style — bind one and the derived name is never used again. Not a better naming
 
 ## What the naming actually promises
 
-Three things, and these _are_ asserted (`packages/core/test/tokens.test.ts`):
+Three things, and these _are_ asserted (`tools/core/test/tokens.test.ts`):
 
 - the same colour always yields the same name, so `git diff` on the output is a signal about the
   design rather than noise about the generator

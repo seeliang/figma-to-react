@@ -27,7 +27,7 @@ import {
   isEmptyDiff,
   normalize,
   parseFigmaTarget,
-} from '../packages/core/dist/index.js'
+} from '../tools/core/dist/index.js'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 

@@ -31,9 +31,9 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const CLI = join(ROOT, 'packages/cli/dist/index.js')
+const CLI = join(ROOT, 'tools/cli/dist/index.js')
 const CONFIG = join(ROOT, 'design-system.json')
-const RECORDED = 'packages/core/test/fixtures/design-system.json'
+const RECORDED = 'tools/core/test/fixtures/design-system.json'
 
 const COMMANDS = new Set(['init', 'gen', 'theme', 'tokens', 'audit', 'diff-tokens'])
 /** Offline is the default for everything that only reads. */

@@ -66,11 +66,11 @@ config resolution and the same offline/live decision.
 that want three different homes. Putting them all in the browser would be slow and would hide two
 of them behind Playwright.
 
-| Check                    | Question                                                                        | Where                               | Why there                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| **Rendered vs declared** | does the swatch actually paint `#2563eb`?                                       | Storybook play function             | needs `getComputedStyle` in a real browser; jsdom will not resolve `var()`            |
-| **Committed vs Figma**   | does `tokens.json` still match the design file?                                 | `scripts/verify-tokens.mjs`         | needs the recorded fixture, not a browser — node, fast, runs in CI without Playwright |
-| **Stable and unique**    | does the same hex always yield the same name, and do two colours never collide? | `packages/core/test/tokens.test.ts` | a pure function; no I/O at all                                                        |
+| Check                    | Question                                                                        | Where                            | Why there                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
+| **Rendered vs declared** | does the swatch actually paint `#2563eb`?                                       | Storybook play function          | needs `getComputedStyle` in a real browser; jsdom will not resolve `var()`            |
+| **Committed vs Figma**   | does `tokens.json` still match the design file?                                 | `scripts/verify-tokens.mjs`      | needs the recorded fixture, not a browser — node, fast, runs in CI without Playwright |
+| **Stable and unique**    | does the same hex always yield the same name, and do two colours never collide? | `tools/core/test/tokens.test.ts` | a pure function; no I/O at all                                                        |
 
 The third replaces the Tailwind oracle. It asserts what the generator actually promises —
 determinism and no collisions — rather than agreement with a palette this project does not use.
@@ -112,10 +112,10 @@ New output of `gen`, alongside `figma-geometry.json`, imported by the story the 
 ```
 
 `named` is the stage-0 signal, derived from whether any `TokenRef` carries a `name`
-(`packages/core/src/ir/types.ts:23-27` — the Figma Style name does survive on `token.sources[].name`,
+(`tools/core/src/ir/types.ts:23-27` — the Figma Style name does survive on `token.sources[].name`,
 even though the layer name does not).
 
-### 2. `packages/emit-storybook/src/theme.ts`
+### 2. `tools/emit-storybook/src/theme.ts`
 
 `emitStories` cannot express this: it is typed against `ComponentEntry[]` and imports
 `./${entry.file}`, and a token gallery has no backing component file. A sibling emitter, not a
@@ -211,15 +211,15 @@ when _no_ Style is bound, as the argument for stage 0, not as the main event.
 
 | Path                                               | Change                                                                 |
 | -------------------------------------------------- | ---------------------------------------------------------------------- |
-| `packages/core/src/tokens/manifest.ts`             | new — `TokenTable` → the `tokens.json` shape                           |
-| `packages/emit-storybook/src/theme.ts`             | new — `emitThemeStories`                                               |
-| `packages/cli/src/pipeline.ts`                     | return the table; write `tokens.json` and the theme story              |
-| `packages/cli/src/index.ts`                        | `theme` subcommand: `--audit`, `--diff`, `--release`                   |
+| `tools/core/src/tokens/manifest.ts`                | new — `TokenTable` → the `tokens.json` shape                           |
+| `tools/emit-storybook/src/theme.ts`                | new — `emitThemeStories`                                               |
+| `tools/cli/src/pipeline.ts`                        | return the table; write `tokens.json` and the theme story              |
+| `tools/cli/src/index.ts`                           | `theme` subcommand: `--audit`, `--diff`, `--release`                   |
 | `scripts/ds.mjs`                                   | `theme` command, offline-aware like the rest                           |
 | `scripts/verify-tokens.mjs`                        | new — committed vs Figma                                               |
 | `examples/src/theme/assert.ts`                     | new — rendered vs declared                                             |
 | `examples/src/styles.css`                          | resolve the `--color-blue-600` collision                               |
-| `packages/core/test/tokens.test.ts`                | stability and uniqueness                                               |
+| `tools/core/test/tokens.test.ts`                   | stability and uniqueness                                               |
 | `docs/theme-guide.html`                            | rewritten as the stage flow, then republished to the same artifact URL |
 | `.claude/skills/ds-theme/SKILL.md`                 | new                                                                    |
 | `.claude/skills/design-system/references/theme.md` | new — the hand-tailored naming note                                    |
@@ -230,7 +230,7 @@ Also: save the hand-tailored naming decision to memory, so it survives past this
 
 1. `tokens.json` manifest + pipeline wiring. Everything else reads it.
 2. Fix the `--color-blue-600` collision. Do it before writing any check that would trip on it.
-3. `emitThemeStories` + snapshot tests, matching `packages/emit-storybook/test/stories.test.ts`.
+3. `emitThemeStories` + snapshot tests, matching `tools/emit-storybook/test/stories.test.ts`.
 4. The three checks, in their three homes.
 5. `theme` subcommand with `--audit` and `--diff`.
 6. `ds-theme` skill and `references/theme.md`.

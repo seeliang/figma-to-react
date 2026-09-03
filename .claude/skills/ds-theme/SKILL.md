@@ -78,11 +78,11 @@ Never hand-edit `theme.stories.tsx`. It is overwritten every run.
 
 `pnpm verify` runs three checks in three places, deliberately:
 
-| Check                | Where                               | Catches                                                     |
-| -------------------- | ----------------------------------- | ----------------------------------------------------------- |
-| rendered vs declared | the story's play function           | a token that never reached the bundle, or was overridden    |
-| committed vs Figma   | `scripts/verify-tokens.mjs`         | the design moved and nobody regenerated; hand-edited output |
-| stable and unique    | `packages/core/test/tokens.test.ts` | a naming change that would silently rename tokens           |
+| Check                | Where                            | Catches                                                     |
+| -------------------- | -------------------------------- | ----------------------------------------------------------- |
+| rendered vs declared | the story's play function        | a token that never reached the bundle, or was overridden    |
+| committed vs Figma   | `scripts/verify-tokens.mjs`      | the design moved and nobody regenerated; hand-edited output |
+| stable and unique    | `tools/core/test/tokens.test.ts` | a naming change that would silently rename tokens           |
 
 `verify-tokens.mjs` also reports properties declared twice at different values across the imported
 `@theme` blocks. There is one live today — see the reference.

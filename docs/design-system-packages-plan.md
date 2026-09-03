@@ -40,7 +40,7 @@ import { InputFieldDefault } from './input-field-default.js'
 ```
 
 It has to become `from '@ds/atoms'`. That is the single most substantial code change in this plan,
-and it lives in `packages/emit-react/src/emit.ts` where component imports are written.
+and it lives in `tools/emit-react/src/emit.ts` where component imports are written.
 
 Without it, everything else is cosmetic: the files move, the relative imports still reach across
 layer boundaries, and NX still sees one blob.
@@ -92,7 +92,7 @@ it is the plugin _wiring_ that has bitten this repo, not the dependency list.
 
 ### 5. Regeneration becomes assertable per package
 
-`git diff --exit-code packages/ds-atoms/src` after `pnpm ds:gen --layer atoms` is the real
+`git diff --exit-code packages/atoms/src` after `pnpm ds:gen --layer atoms` is the real
 idempotence gate, and it becomes four independent gates instead of one. That is what "easily verify
 regenerate" means concretely.
 
@@ -116,19 +116,27 @@ Worth knowing; not in this plan.
 ## Layout
 
 ```
-packages/
-  core/ emit-react/ emit-storybook/ cli/        the tool, unchanged
-  ds-config/          shared Vite / Vitest / Storybook / TS presets
-  ds-testing/         fidelity + token assert helpers
-  ds-theme/           tokens.css · fonts.css · tokens.json · theme.stories.tsx
-  ds-atoms/           Button, Input Field          → depends on theme
-  ds-molecules/       Form Field                   → depends on theme, atoms
-  ds-organisms/       (empty today)                → depends on theme, atoms, molecules
+tools/                @figma-to-react/*  — the generator, a separate product
+  core/ emit-react/ emit-storybook/ cli/
+packages/             @ds/*  — the design system, what actually ships
+  config/             shared Vite / Vitest / Storybook / TS presets (private)
+  testing/            fidelity + token assert helpers
+  theme/              tokens.css · fonts.css · tokens.json · theme.stories.tsx
+  atoms/              Button, Input Field          → depends on theme
+  molecules/          Form Field                   → depends on theme, atoms
+  organisms/          (empty today)                → depends on theme, atoms, molecules
 examples/
-  .storybook/         one root Storybook, globbing ../packages/ds-*/src
+  .storybook/         one root Storybook, globbing ../packages/*/src
   src/                the gallery, importing from @ds/* by name
   fixtures/           the card fixture, moved out of src/generated
 ```
+
+**`packages/` now means what it means everywhere else: the things that ship.** It used to hold the
+compiler too, which made the word useless — the generator is a different product, with a different
+scope and its own release cadence. The directories mirror the npm scopes one to one, which also
+makes the `ds-` prefix redundant: `packages/atoms` is `@ds/atoms`.
+
+Done before the layer packages landed rather than after, while it cost seven files and a lockfile.
 
 `@ds/organisms` is generated empty — the file has no full-width component. Creating it anyway keeps
 the graph complete and means the first organism needs no new package.
@@ -139,8 +147,8 @@ Five things are hardcoded to the single-directory assumption:
 
 | Where                                                                             | What                                                             | Becomes                                                                                                  |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `packages/cli/src/pipeline.ts:170,177`                                            | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@ds/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
-| `packages/emit-react/src/emit.ts`                                                 | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                    |
+| `tools/cli/src/pipeline.ts:170,177`                                               | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@ds/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
+| `tools/emit-react/src/emit.ts`                                                    | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                    |
 | `scripts/ds.mjs:146-151`                                                          | `--layer` writes a **subdirectory** of one `out`                 | routes to that layer's package                                                                           |
 | `design-system.json:8`                                                            | `"out": "examples/src/design-system"`                            | a map of layer → package src dir                                                                         |
 | `scripts/verify-styles.mjs:15`, `verify-tokens.mjs:97`, root `package.json:12,19` | hardcoded `examples/` paths and a four-times-repeated `--filter` | derived from config; `verify` becomes a loop                                                             |
@@ -149,7 +157,7 @@ Also: `examples/src/fidelity/assert.ts:1` imports `../design-system/figma-geomet
 reaching into generated output. Moving it to `@ds/testing` means the geometry has to be passed in
 rather than imported, or the helper is duplicated four times.
 
-And `packages/cli/test/e2e.test.ts:237-243` borrows React and Storybook type declarations out of
+And `tools/cli/test/e2e.test.ts:237-243` borrows React and Storybook type declarations out of
 `examples/node_modules`. That keeps working, but it now points at a package whose role has changed;
 point it at `@ds/config` instead.
 
@@ -157,19 +165,19 @@ point it at `@ds/config` instead.
 
 ## Files
 
-| Path                                             | Change                                                                           |
-| ------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `packages/ds-config/`                            | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
-| `packages/ds-testing/`                           | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
-| `packages/ds-{theme,atoms,molecules,organisms}/` | new — `package.json`, thin configs, generated `src/`                             |
-| `packages/emit-react/src/emit.ts`                | cross-layer imports become package specifiers                                    |
-| `packages/cli/src/pipeline.ts`                   | per-layer routing; `helperPath` from options                                     |
-| `packages/cli/src/config.ts`                     | `out` as a layer map                                                             |
-| `scripts/ds.mjs`                                 | `--layer` targets a package                                                      |
-| `scripts/verify-{styles,tokens}.mjs`             | walk the configured packages, not hardcoded dirs                                 |
-| `package.json`                                   | `verify` loops over packages; `typecheck` uses a solution tsconfig               |
-| `pnpm-workspace.yaml`                            | unchanged — `packages/*` already covers the new packages                         |
-| `examples/`                                      | gallery imports `@ds/*`; card fixture moves to `examples/fixtures/`              |
+| Path                                          | Change                                                                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/config/`                            | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
+| `packages/testing/`                           | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
+| `packages/{theme,atoms,molecules,organisms}/` | new — `package.json`, thin configs, generated `src/`                             |
+| `tools/emit-react/src/emit.ts`                | cross-layer imports become package specifiers                                    |
+| `tools/cli/src/pipeline.ts`                   | per-layer routing; `helperPath` from options                                     |
+| `tools/cli/src/config.ts`                     | `out` as a layer map                                                             |
+| `scripts/ds.mjs`                              | `--layer` targets a package                                                      |
+| `scripts/verify-{styles,tokens}.mjs`          | walk the configured packages, not hardcoded dirs                                 |
+| `package.json`                                | `verify` loops over packages; `typecheck` uses a solution tsconfig               |
+| `pnpm-workspace.yaml`                         | unchanged — `packages/*` already covers the new packages                         |
+| `examples/`                                   | gallery imports `@ds/*`; card fixture moves to `examples/fixtures/`              |
 
 ## Build order
 
@@ -192,7 +200,7 @@ Steps 1–2 are safe on their own. Step 4 is the irreversible one.
 2. **The boundary holds.** Add an import of `@ds/molecules` to a file in `@ds/atoms` and confirm
    `tsc` fails. This is the whole point of the split; assert it rather than assume it.
 3. **Regeneration is byte-stable, per package.** `pnpm ds:gen` then
-   `git diff --exit-code packages/ds-*/src` — four gates, all clean.
+   `git diff --exit-code packages/*/src` — four gates, all clean.
 4. **One layer regenerates alone.** `pnpm ds:gen --layer atoms` touches only `ds-atoms`, confirmed
    by `git status`.
 5. **The collision is gone.** `verify-tokens.mjs` should report no duplicate declarations once the

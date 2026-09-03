@@ -244,15 +244,15 @@ Four stages, each a pure function, each independently testable:
 
 ```
 Figma URL
-  → fetch      packages/core/src/figma      → node JSON
-  → normalize  packages/core/src/ir         → IR
-  → tokens     packages/core/src/tokens     → @theme + a resolver
-  → emit       packages/emit-react          → TSX
+  → fetch      tools/core/src/figma      → node JSON
+  → normalize  tools/core/src/ir         → IR
+  → tokens     tools/core/src/tokens     → @theme + a resolver
+  → emit       tools/emit-react          → TSX
 ```
 
-The **IR** (`packages/core/src/ir/types.ts`) mentions no framework, no CSS and no Tailwind. An emitter for Vue or React Native is a new package consuming those types, not a rewrite.
+The **IR** (`tools/core/src/ir/types.ts`) mentions no framework, no CSS and no Tailwind. An emitter for Vue or React Native is a new package consuming those types, not a rewrite.
 
-Tests never touch the network. `packages/core/test/fixtures/` holds API-shaped responses; the CLI suite runs the real binary against a local fixture server.
+Tests never touch the network. `tools/core/test/fixtures/` holds API-shaped responses; the CLI suite runs the real binary against a local fixture server.
 
 Three gates beyond the unit tests, each of which has already caught a real bug:
 
@@ -266,10 +266,10 @@ There isn't one, and `gen` is fully deterministic. `emit()` takes an optional `r
 
 ### Fixtures
 
-`packages/core/test/fixtures/*.json` are hand-authored to the documented API shapes rather than recorded, since the repo has no token. Re-record them against a real file with:
+`tools/core/test/fixtures/*.json` are hand-authored to the documented API shapes rather than recorded, since the repo has no token. Re-record them against a real file with:
 
 ```bash
-figma2react inspect '<url>' --raw > packages/core/test/fixtures/card.json
+figma2react inspect '<url>' --raw > tools/core/test/fixtures/card.json
 ```
 
 ## Not in v1

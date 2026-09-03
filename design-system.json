@@ -3,7 +3,7 @@
   "file": {
     "key": "uA3bE5ofr6BgRakJzudL4L",
     "node": "2:77",
-    "name": "📐 Design System"
+    "name": "\ud83d\udcd0 Design System"
   },
   "out": "examples/src/design-system",
   "gen": {
@@ -24,6 +24,6 @@
     }
   },
   "offline": {
-    "fixture": "packages/core/test/fixtures/design-system.json"
+    "fixture": "tools/core/test/fixtures/design-system.json"
   }
 }

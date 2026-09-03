@@ -43,24 +43,24 @@ separate command file anyway, say so and it's a five-line addition.
 Five of the eight jobs have no tooling behind them today. A skill that says "check accessibility"
 with nothing to run is prose that will drift; each of these gets a real script first.
 
-| Job               | Today                                                             | Added                                                                                    |
-| ----------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Generate          | ✅ `figma2react gen`                                              | config-driven wrapper, auto `.env` load, offline default                                 |
-| Design issues     | ✅ `auditDesign` (`packages/core/src/audit.ts`), printed by `gen` | `--audit-only` + `--json` so review doesn't regenerate                                   |
-| **Atomic layers** | ❌ nothing; output is one flat directory                          | layer resolution + 9 checks; `--layout atomic` output tree                               |
-| Fidelity          | ✅ `test-storybook` (57 nodes within 4px)                         | nothing new                                                                              |
-| Token refresh     | ✅ `figma2react tokens`                                           | diff against the committed `tokens.css`                                                  |
-| **Accessibility** | ❌ nothing                                                        | `@storybook/addon-a11y` + axe in play functions; **plus three new audit checks** (below) |
-| **E2E**           | ⚠️ CLI-only (`packages/cli/test/e2e.test.ts` vs a fixture server) | Playwright spec against the Vite app; `playwright` is already a dep                      |
-| **Coverage**      | ❌ no provider                                                    | `@vitest/coverage-v8` + thresholds                                                       |
-| **Security**      | ❌ nothing                                                        | `pnpm audit` + `scripts/scan-secrets.mjs`                                                |
+| Job               | Today                                                          | Added                                                                                    |
+| ----------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Generate          | ✅ `figma2react gen`                                           | config-driven wrapper, auto `.env` load, offline default                                 |
+| Design issues     | ✅ `auditDesign` (`tools/core/src/audit.ts`), printed by `gen` | `--audit-only` + `--json` so review doesn't regenerate                                   |
+| **Atomic layers** | ❌ nothing; output is one flat directory                       | layer resolution + 9 checks; `--layout atomic` output tree                               |
+| Fidelity          | ✅ `test-storybook` (57 nodes within 4px)                      | nothing new                                                                              |
+| Token refresh     | ✅ `figma2react tokens`                                        | diff against the committed `tokens.css`                                                  |
+| **Accessibility** | ❌ nothing                                                     | `@storybook/addon-a11y` + axe in play functions; **plus three new audit checks** (below) |
+| **E2E**           | ⚠️ CLI-only (`tools/cli/test/e2e.test.ts` vs a fixture server) | Playwright spec against the Vite app; `playwright` is already a dep                      |
+| **Coverage**      | ❌ no provider                                                 | `@vitest/coverage-v8` + thresholds                                                       |
+| **Security**      | ❌ nothing                                                     | `pnpm audit` + `scripts/scan-secrets.mjs`                                                |
 
 ### Accessibility belongs in the audit, not only in the tests
 
 Figma carries no alt text, no labels, no roles, no focus order. So a11y failures on generated
 components are overwhelmingly **design issues**, and three of them are computable from the Figma
 data _before_ any code is generated — which puts them at the Developer Ready gate rather than at
-QA. Add to `packages/core/src/audit.ts`, following the existing `DesignFinding` shape:
+QA. Add to `tools/core/src/audit.ts`, following the existing `DesignFinding` shape:
 
 | `code`              | severity | fires when                                                                                                     | fix                                                                          |
 | ------------------- | -------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -68,7 +68,7 @@ QA. Add to `packages/core/src/audit.ts`, following the existing `DesignFinding` 
 | `unlabelled-input`  | `high`   | a node the semantic mapper will emit as `<input>` has no sibling TEXT layer to become a `<label>`              | Add a visible label layer, or a layer named `aria-label: …`                  |
 | `icon-only-no-name` | `medium` | a node mapping to `<button>`/`<a>` whose only child is a vector                                                | Rename the layer to its purpose — the layer name becomes the accessible name |
 
-Contrast maths reuses `lightness()` (CIE L\*) already in `packages/core/src/tokens/collect.ts`;
+Contrast maths reuses `lightness()` (CIE L\*) already in `tools/core/src/tokens/collect.ts`;
 WCAG needs relative luminance, which is a sibling function on the same sRGB decode, not a new
 dependency.
 
@@ -103,7 +103,7 @@ unclassified, and the fix is a Figma restructure — three sections, or `atom/` 
 ### What is then checkable
 
 Once a layer is declared, structure and scope can be checked against it. Added to
-`packages/core/src/audit.ts` alongside the a11y checks:
+`tools/core/src/audit.ts` alongside the a11y checks:
 
 | `code`                       | severity | rule from the article                                                                         | fires when                                                                                  |
 | ---------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -119,7 +119,7 @@ Once a layer is declared, structure and scope can be checked against it. Added t
 
 Two of these fall out of work already done rather than needing new machinery:
 
-- **`scope-margin-leak`** is the `placementClasses` wrapper in `packages/emit-react/src/emit.ts`
+- **`scope-margin-leak`** is the `placementClasses` wrapper in `tools/emit-react/src/emit.ts`
   restated as a rule. That wrapper exists precisely so a component's placement lives on something
   the _parent_ renders; anything that leaks inside the component root is the margin-vs-padding
   violation the article describes.
@@ -264,15 +264,15 @@ scripts/
   ds.mjs                                new — resolves config → figma2react; loads .env; --offline
   scan-secrets.mjs                      new — greps tracked files for figd_/ghp_/sk-/AWS keys
   verify-styles.mjs                     unchanged
-packages/core/src/audit.ts              + 3 a11y checks and 9 atomic-layer checks
-packages/core/src/contrast.ts           new — relative luminance + WCAG ratio
-packages/core/src/atomic.ts             new — layer resolution (section → prefix → override),
+tools/core/src/audit.ts              + 3 a11y checks and 9 atomic-layer checks
+tools/core/src/contrast.ts           new — relative luminance + WCAG ratio
+tools/core/src/atomic.ts             new — layer resolution (section → prefix → override),
                                               layer SUGGESTION from structure + width + graph,
                                               structure + scope + dependency-graph rules
-packages/emit-react/src/emit.ts         + layer on ComponentEntry; atomic output paths
-packages/cli/src/index.ts               + `audit` and `init` subcommands; gen gains
+tools/emit-react/src/emit.ts         + layer on ComponentEntry; atomic output paths
+tools/cli/src/index.ts               + `audit` and `init` subcommands; gen gains
                                           `--layout atomic` and `--record`
-packages/core/test/fixtures/
+tools/core/test/fixtures/
   design-system.json                    new — the recorded real-file response, committed
 examples/.storybook/main.ts             + '@storybook/addon-a11y'
 examples/e2e/gallery.spec.ts            new — Playwright spec
@@ -322,7 +322,7 @@ README.md                               + a Skills section linking to docs/deliv
     "layers": { "ButtonPrimary": "atom", "InputFieldDefault": "atom", "FormField": "molecule" },
     "ownership": { "default": "public", "FormField": "private" }
   },
-  "offline": { "fixture": "packages/core/test/fixtures/design-system.json" },
+  "offline": { "fixture": "tools/core/test/fixtures/design-system.json" },
   "conventions": {
     "colours": "Bind as Figma Colour Styles. Variable names need Enterprise; Style names ship on every plan.",
     "fontSizes": "Bind as Variables to get --text-* entries.",
@@ -345,12 +345,12 @@ Three things it fixes that are currently manual:
 - **Loads `.env`.** Nothing in the codebase reads it today (no `dotenv` dependency) — `node
 --env-file=.env` when the file exists.
 - **`--offline` points `FIGMA_API_BASE` at a local fixture server**, the mechanism
-  `packages/cli/test/e2e.test.ts:53` already uses. **Offline is the default** for `audit` and
+  `tools/cli/test/e2e.test.ts:53` already uses. **Offline is the default** for `audit` and
   `diff-tokens`; `--live` opts in to spending quota.
 - **Passes the real file key even offline**, so Storybook design-panel URLs stay valid. Getting
   this wrong is what produced the "file may not be publicly accessible" error before.
 
-### `packages/cli/src/index.ts` — `audit` subcommand
+### `tools/cli/src/index.ts` — `audit` subcommand
 
 `auditDesign` is already computed in `pipeline.ts:90` but only reachable by running `gen`.
 A review shouldn't have to rewrite the output directory. Add:
@@ -516,7 +516,7 @@ behaviour, and a good first test of `ds-security`.
 
 **The offline fixture is currently ephemeral.** The recorded real-file response lives in a
 scratch directory that will not survive. Committing it to
-`packages/core/test/fixtures/design-system.json` is what makes every skill runnable without
+`tools/core/test/fixtures/design-system.json` is what makes every skill runnable without
 touching the Starter-tier quota — do this first in Phase 1, before anything depends on it.
 
 ---
@@ -529,7 +529,7 @@ exists still works — nothing is left half-wired.
 ### Phase 1 — Runnable ✅ built
 
 **Delivered:** `design-system.json`, `scripts/ds.mjs`, `figma2react init` and `figma2react audit`,
-`packages/core/src/atomic.ts` with layer resolution and suggestions, nine layering checks in the
+`tools/core/src/atomic.ts` with layer resolution and suggestions, nine layering checks in the
 audit, 24 new tests, and the `design-system` / `ds-generate` / `ds-design-review` skills.
 `pnpm verify` green: 165 unit tests, 111 generated classes resolve, 11/11 stories within 4px.
 
@@ -541,7 +541,7 @@ audit, 24 new tests, and the `design-system` / `ds-generate` / `ds-design-review
   parent reaching inside the child — so the check is named for what it detects rather than for the
   rule it stands in for.
 - **The recorded fixture had to be re-recorded.** It was gone, exactly as this plan predicted, and
-  is now committed at `packages/core/test/fixtures/design-system.json` (386KB, 111 nodes).
+  is now committed at `tools/core/test/fixtures/design-system.json` (386KB, 111 nodes).
 - **`gen` defaults to live, not offline.** Generating from a stale recording produces code that
   does not match the file. `audit` and `diff-tokens` default to offline as planned.
 - **The Figma file has changed.** It now has Hover variants for Button and Input Field, so
@@ -555,13 +555,13 @@ audit, 24 new tests, and the `design-system` / `ds-generate` / `ds-design-review
 
 _Make the CLI drivable by intent, and get the components sorted._
 
-1. Commit the offline fixture to `packages/core/test/fixtures/design-system.json`. Everything
+1. Commit the offline fixture to `tools/core/test/fixtures/design-system.json`. Everything
    downstream depends on being able to run without spending the Starter-tier quota, so this is
    first.
 2. `scripts/ds.mjs` — `init`, `gen`, `tokens`, `audit`, `diff-tokens`. Loads `.env`, defaults to
    offline, passes the real file key even offline so design-panel URLs stay valid.
 3. `figma2react audit` subcommand with `--json`, reusing `reportDesign` for the human format.
-4. `packages/core/src/atomic.ts` — layer resolution (section → prefix → override → unclassified),
+4. `tools/core/src/atomic.ts` — layer resolution (section → prefix → override → unclassified),
    the layer-**suggestion** rules with their evidence, and the nine layering checks. Fixture tests
    for each, including the article's own mixed-scope shape.
 5. `figma2react init` — prompts for the generate area, confirms each suggested layer, writes
@@ -597,7 +597,7 @@ a record naming the Figma version it came from.
 
 _Give every delivery gate a command, and let CI run them._
 
-11. `packages/core/src/contrast.ts` + the three a11y audit checks, with fixture tests.
+11. `tools/core/src/contrast.ts` + the three a11y audit checks, with fixture tests.
 12. Missing tooling: `@storybook/addon-a11y`, `@vitest/coverage-v8`,
     `examples/e2e/gallery.spec.ts`, `scripts/scan-secrets.mjs`, and the npm scripts exposing them.
 13. The `ds-a11y`, `ds-test`, `ds-security` and `ds-fidelity` skills.
@@ -616,7 +616,7 @@ px deltas, axe violations and token diff.
 1. **Offline end-to-end.** `pnpm ds:gen` with no network reachable produces byte-identical output
    to what is committed in `examples/src/design-system/`. `git diff --exit-code` on that directory
    is the assertion.
-2. **Audit checks.** Unit tests in `packages/core/test/audit.test.ts` for each new code, using a
+2. **Audit checks.** Unit tests in `tools/core/test/audit.test.ts` for each new code, using a
    fixture with a known-failing contrast pair, an unlabelled input, an atom that includes another
    component, and the article's own `organism-a__element`-inside-`molecule-0` shape. Existing six
    checks must not change — the current findings on the real file are the regression baseline.

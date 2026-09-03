@@ -51,7 +51,7 @@ Keep the two causes apart when reporting:
 
 **2. Offline is the default; live spends a hard quota.** The Figma REST quota is set by plan
 tier, and this file is on Starter — exhausting it locks the API out for hours. Every command runs
-against the recorded response in `packages/core/test/fixtures/design-system.json` unless `--live`
+against the recorded response in `tools/core/test/fixtures/design-system.json` unless `--live`
 is passed. Only pass `--live` when the answer genuinely depends on the current state of the Figma
 file, and say so when you do.
 
