@@ -19,35 +19,60 @@ already both machine-readable and the artefact the designer actually works in.
 That makes our variant the stronger form. There is no second document to keep in sync with the
 first, and no prose-to-code ambiguity, because the spec is not prose.
 
-The cost is stated plainly in the next section but one: a Figma file can only express what Figma
-has a field for.
+The cost is stated plainly under [Where the spec runs out](#where-the-spec-runs-out): a Figma file
+can only express what Figma has a field for.
 
 ## Two specs, one discipline
 
 Appearance and behaviour are specified separately, and both are executable:
 
-| Spec              | Covers     | Generated from it                              |
-| ----------------- | ---------- | ---------------------------------------------- |
-| The Figma file    | appearance | components, `tokens.css`, token stories        |
-| BDD scenarios     | behaviour  | tests, coverage                                |
+| Spec           | Covers     | Generated from it                                            |
+| -------------- | ---------- | ------------------------------------------------------------ |
+| The Figma file | appearance | components, `tokens.css`, token stories, `figma-tokens.md`   |
+| BDD scenarios  | behaviour  | tests, coverage                                              |
 
 BDD is not a separate methodology bolted on. It is the same idea — an executable specification
 that the system continuously proves it satisfies — applied to behaviour rather than appearance.
 Read [develop.md](develop.md) and [QA.md](QA.md) as the behaviour half of this document.
 
-## Code is an artifact, not a source
+## Three kinds of file
 
-`gen` overwrites its output. Generated components, `tokens.css`, `tokens.json` and the token
-stories are replaceable, and nothing in them survives a regeneration.
+Every file here is one of three things. Confusing them is the failure this method exists to prevent,
+so it is worth being able to say which is which without thinking.
 
-The consequence is the rule that makes the whole method work:
+| Kind           | What it is                                    | Examples                                    | Editable            |
+| -------------- | --------------------------------------------- | ------------------------------------------- | ------------------- |
+| **Spec**       | the source of truth, authored by a person     | the Figma file; BDD scenarios               | **yes — only this** |
+| **Projection** | a readable rendering of what the spec says    | `figma-tokens.md`, `figma-tokens.json`      | no — regenerated    |
+| **Artifact**   | what was built from the spec                  | `tokens.css`, components, stories           | no — regenerated    |
+
+`gen` overwrites projections and artifacts alike; nothing in either survives a regeneration.
+
+**A projection is not a second spec.** It records what the design file *says*; the artifact records
+what was *generated from it*. Reading the two side by side is the review, and it needs no new
+tooling: `Error #ef4444` present in `figma-tokens.md` and absent from `tokens.json` is a finding
+visible in a diff.
+
+**Do not generate a document called a spec.** A file named `spec.md` reads as authoritative and
+invites editing — and once edited there are two specs that disagree, with the real one being the
+file nobody opened. The whole advantage of a design file as the spec is that there is no second
+document to keep in sync. Name a projection a projection.
 
 **Never fix a problem in generated output.** A fix belongs in the design file, or in the generator.
-Editing the artifact produces a change that the next generation silently deletes, and — worse — a
-green build that no longer reflects the design.
+Editing a projection or an artifact produces a change that the next generation silently deletes,
+and — worse — a green build that no longer reflects the design.
 
 The one caveat the tool has today: `gen` does not delete files it no longer generates, so a variant
 renamed in Figma leaves an orphan behind that still compiles. Check `git status` after generating.
+
+### Which stage writes
+
+**Gates read and report; they do not write.** `audit` is offline and free by default precisely so it
+can be run before every change — a command that writes has to go live and spend Figma quota, and a
+gate that mutates cannot be run speculatively.
+
+Projections and artifacts are both written on the **generate** path. A design-review command should
+produce a verdict and its findings, reading the projection rather than emitting one.
 
 ## What makes a spec authoritative
 
