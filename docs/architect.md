@@ -20,6 +20,51 @@ implementation and tests close together.
 Prefer a shallow structure where ownership is obvious from the path. Do not create a new directory
 unless it establishes a useful boundary.
 
+## Where files live
+
+Every path under `packages/` is one of the three kinds in
+[ai-solution.md](ai-solution.md), and which one it is must be readable from the name alone.
+
+```
+docs/                                  decisions — why, not how
+
+packages/theme/src/
+  color.feature                        SPEC       authored, beside what it tests
+  figma-tokens.md  figma-tokens.json   PROJECTION regenerated
+  tokens.css  tokens.json  fonts.css   ARTIFACT   regenerated
+  theme.stories.tsx                    ARTIFACT   regenerated
+
+packages/<component>/src/
+  <component>.feature                  SPEC       authored
+  <Component>.tsx  styles.css          ARTIFACT   regenerated
+  <Component>.stories.tsx              ARTIFACT   regenerated
+
+ai-plugin/cli/
+  .claude-plugin/plugin.json           version-locked to package.json
+  skills/
+    design-system/SKILL.md             router
+    ds-audit/SKILL.md                  gate
+    ds-theme/SKILL.md                  topic: theme
+    ds-generate/SKILL.md               generate
+    ds-verify/SKILL.md                 verify
+```
+
+Two rules keep the tree honest:
+
+- **`.feature` files are the only authored files under `packages/`.** Everything else there is
+  regenerated, so a hand edit anywhere else is a change the next `gen` deletes.
+- **Skills live in `ai-plugin/cli/skills/`, named by stage or topic — never by role.** The location
+  is what makes them ship and version with the CLI (see [Distribution](#distribution)); the naming
+  is because roles are responsibilities, not processes. A skill called `qa` re-encodes the role split
+  as an execution path, and people ask "why is this colour wrong", not "be the QA".
+
+There is no `specs/` directory and no file called `spec.md`. The requirements-design-tasks triple
+that mainstream spec-driven tooling authors in prose is the step this project skips, because the
+design file is already the specification — the reasoning is in
+[ai-solution.md](ai-solution.md).
+
+Directories appear when their first real file does. Do not scaffold them ahead of time.
+
 ## Configuration and styling scope
 
 Use native platform configuration and standard web primitives first: TypeScript project references,

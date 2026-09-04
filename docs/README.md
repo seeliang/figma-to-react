@@ -22,6 +22,10 @@ constitution ──▶ specify ──▶ gate ──▶ generate ──▶ verif
 | **Generate**     | spec → React, tokens, stories                           | [develop.md](develop.md)               |
 | **Verify**       | prove the artifact still matches the spec               | [QA.md](QA.md) · [design.md](design.md) |
 
+**What each stage must prove is in [gates.md](gates.md)** — every criterion stated so it can fail,
+with the check that proves it and whether that check exists yet. The role docs say who owns a stage;
+`gates.md` says when it is passed.
+
 ## Why two docs appear twice
 
 `design.md` and `QA.md` each own a stage at both ends, and that is the method working rather than

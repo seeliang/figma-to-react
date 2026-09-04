@@ -5,3 +5,5 @@
 
 ## Code 
 align implementation with BDD, add coverage. fix QA issues  
+
+Gate criteria for this stage: [gates.md](gates.md) — *Generate*.

@@ -42,11 +42,17 @@ so it is worth being able to say which is which without thinking.
 
 | Kind           | What it is                                    | Examples                                    | Editable            |
 | -------------- | --------------------------------------------- | ------------------------------------------- | ------------------- |
-| **Spec**       | the source of truth, authored by a person     | the Figma file; BDD scenarios               | **yes — only this** |
+| **Spec**       | the source of truth, authored by a person     | the Figma file; BDD scenarios (`*.feature`) | **yes — only this** |
 | **Projection** | a readable rendering of what the spec says    | `figma-tokens.md`, `figma-tokens.json`      | no — regenerated    |
 | **Artifact**   | what was built from the spec                  | `tokens.css`, components, stories           | no — regenerated    |
 
 `gen` overwrites projections and artifacts alike; nothing in either survives a regeneration.
+
+The Figma file lives in Figma; the other spec needs a path, so BDD scenarios are `*.feature` files
+sitting **beside the code they constrain** — `packages/theme/src/color.feature`, not a `specs/`
+directory off the root. That keeps a topic's specification, implementation and tests together, and
+it makes the rule visible in a directory listing: under `packages/`, `.feature` files are the only
+files a person writes. Everything else there is regenerated.
 
 **A projection is not a second spec.** It records what the design file *says*; the artifact records
 what was *generated from it*. Reading the two side by side is the review, and it needs no new
@@ -89,6 +95,9 @@ Three drift checks, each catching something the others cannot:
 
 These must run in CI, not by hand. A drift check that depends on someone remembering to run it is
 not a check.
+
+[gates.md](gates.md) enumerates every criterion each stage must prove, with the check behind it —
+and marks the ones that have no check yet, so a gate is never claimed on a criterion nobody can run.
 
 ## Where the spec runs out
 
