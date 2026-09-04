@@ -1,0 +1,141 @@
+# AI solution: spec-driven development
+
+## The decision
+
+This project uses **spec-driven development**. The Figma file is the specification; the React
+code is a generated, verifiable artifact.
+
+This is a named industry methodology, not a local invention. Its standard definition — *a precise,
+executable specification is the source of truth, and code is a generated, verifiable artifact* —
+describes what this repository already does. Naming it matters: it tells us which problems are
+already solved elsewhere, and which decisions below are forced rather than chosen.
+
+## Why the design file is the spec
+
+Mainstream spec-driven tooling has you *author* a specification in prose — requirements, then
+design, then tasks — which an agent turns into code. We skip that step, because the design file is
+already both machine-readable and the artefact the designer actually works in.
+
+That makes our variant the stronger form. There is no second document to keep in sync with the
+first, and no prose-to-code ambiguity, because the spec is not prose.
+
+The cost is stated plainly in the next section but one: a Figma file can only express what Figma
+has a field for.
+
+## Two specs, one discipline
+
+Appearance and behaviour are specified separately, and both are executable:
+
+| Spec              | Covers     | Generated from it                              |
+| ----------------- | ---------- | ---------------------------------------------- |
+| The Figma file    | appearance | components, `tokens.css`, token stories        |
+| BDD scenarios     | behaviour  | tests, coverage                                |
+
+BDD is not a separate methodology bolted on. It is the same idea — an executable specification
+that the system continuously proves it satisfies — applied to behaviour rather than appearance.
+Read [developer.md](developer.md) and [QA.md](QA.md) as the behaviour half of this document.
+
+## Code is an artifact, not a source
+
+`gen` overwrites its output. Generated components, `tokens.css`, `tokens.json` and the token
+stories are replaceable, and nothing in them survives a regeneration.
+
+The consequence is the rule that makes the whole method work:
+
+**Never fix a problem in generated output.** A fix belongs in the design file, or in the generator.
+Editing the artifact produces a change that the next generation silently deletes, and — worse — a
+green build that no longer reflects the design.
+
+The one caveat the tool has today: `gen` does not delete files it no longer generates, so a variant
+renamed in Figma leaves an orphan behind that still compiles. Check `git status` after generating.
+
+## What makes a spec authoritative
+
+A specification is only authoritative if the system continuously proves compliance. Without that,
+it is documentation, and documentation drifts.
+
+Three drift checks, each catching something the others cannot:
+
+| Check                              | Catches                                                    |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `git diff --exit-code packages/` after regenerating | committed code no longer matches the design file |
+| `theme --diff`                     | the theme moved and nobody regenerated; hand-edited tokens |
+| e2e against the design             | the built product drifted from the specified behaviour     |
+
+These must run in CI, not by hand. A drift check that depends on someone remembering to run it is
+not a check.
+
+## Where the spec runs out
+
+A Figma file can only carry what Figma has a field for. A colour bound to no Style has no name to
+generate from; a hover state nobody designed cannot be invented.
+
+So the spec needs a completeness check ahead of generation, and that is what `figma2react audit`
+is: **Developer Ready means the spec is complete enough to generate from.** It is the same gate
+every spec-driven workflow has, and it belongs before code is written, not after.
+
+This produces the second standing rule:
+
+**A gap in the design file is a Figma action, never a code patch.** Hard-coding a colour nobody
+chose does not fix an incomplete spec — it hides one, and it moves the source of truth out of the
+design file and into code where no designer will ever find it.
+
+See [desgin.md](desgin.md) for the audit stage in the designer's terms.
+
+## Why not multi-agent
+
+We considered a stage-based orchestrator spawning subagents per role. It is the wrong tool here,
+for reasons that are specific rather than aesthetic.
+
+Multi-agent systems earn their cost under three conditions: context pollution, genuine
+parallelisation, and specialisation. Working one topic at a time — colour, then typefaces, then
+spacing — fails all three:
+
+- **Nothing to parallelise.** One topic at a time is sequential by definition.
+- **No context pollution.** A whole topic's context is small and stays relevant for the whole task.
+- **Shared write state.** One colour change writes `tokens.css`, `tokens.json`, the token stories
+  and every component's `styles.css`. Work that writes shared state must stay in one agent.
+
+Current guidance is explicit that sequential phases of the same work are the wrong boundary to
+split on, and that coding workflows in particular are a poor fit because they share context. The
+cost is real: multi-agent runs use 3–10x the tokens of a single agent.
+
+So the stages are a **pipeline of commands**, not an agent boundary, and the roles in `docs/` are
+responsibilities, not processes.
+
+**Where subagents would be right:** read-only fan-out — a readiness sweep across every topic at
+once, or the same audit across several repositories. The rule is *fan out on reads, stay single on
+writes*, and today the write path is the whole job.
+
+## The constitution
+
+Spec-driven tooling keeps a "constitution": a small set of immutable principles that act as a
+persistent contract with the agent. [architect.md](architect.md) is ours.
+
+Its constraints should be enforced continuously rather than reviewed periodically — the industry
+has moved from architecture review gates to automated fitness functions, and every principle worth
+writing down should map to at least one check that can fail. `plugin.json` staying version-locked
+to `ai-plugin/cli/package.json` is the clearest example: a rule stated in prose today, and a
+five-line CI check tomorrow.
+
+There is no architecture *gate*. There are architecture *checks*, and they run on every change.
+
+## Open decision: token format
+
+`tokens.json` is a bespoke format. The W3C Design Tokens (DTCG) specification reached its first
+stable version — 2025.10, October 2025 — and is supported by Figma, Sketch, Framer, Penpot,
+Supernova and zeroheight, with reference implementations in Style Dictionary, Tokens Studio and
+Terrazzo.
+
+Adopting it would give us two things we currently lack a place for: `$description` and aliases, the
+standard home for semantic naming, and `$extensions`, the standard home for our own provenance
+fields. Not decided yet; recorded here so it is not rediscovered.
+
+## The roles
+
+Responsibilities, not stages that run independently:
+
+- [architect.md](architect.md) — the constitution
+- [desgin.md](desgin.md) — spec completeness, and verifying the product against the spec
+- [developer.md](developer.md) — implementation against BDD
+- [QA.md](QA.md) — behaviour, accessibility, coverage, security
