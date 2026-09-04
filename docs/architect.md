@@ -1,5 +1,11 @@
 # Architecture
 
+> Spec-driven stage: **constitution** — the principles every other stage obeys.
+> See [README.md](README.md) for the pipeline, [ai-solution.md](ai-solution.md) for why.
+
+## Overall
+Read Figma design, generate React code with vanilla CSS and component are host with storybook. 
+
 ## Separation of concerns
 
 Each part of the repository should have one clear responsibility and keep its documentation,
@@ -39,6 +45,3 @@ pack and release together. NX inputs for the CLI include the plugin files, and
 `.claude-plugin/plugin.json` must remain version-locked to `ai-plugin/cli/package.json`. Root
 marketplace and settings files participate in CLI verification only when they affect the dogfooded
 plugin installation.
-
-For the Storybook-first examples migration, see
-[Examples restructure plan](examples-restructure-plan.md).

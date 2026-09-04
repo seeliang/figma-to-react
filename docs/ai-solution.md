@@ -33,7 +33,7 @@ Appearance and behaviour are specified separately, and both are executable:
 
 BDD is not a separate methodology bolted on. It is the same idea — an executable specification
 that the system continuously proves it satisfies — applied to behaviour rather than appearance.
-Read [developer.md](developer.md) and [QA.md](QA.md) as the behaviour half of this document.
+Read [develop.md](develop.md) and [QA.md](QA.md) as the behaviour half of this document.
 
 ## Code is an artifact, not a source
 
@@ -80,7 +80,7 @@ This produces the second standing rule:
 chose does not fix an incomplete spec — it hides one, and it moves the source of truth out of the
 design file and into code where no designer will ever find it.
 
-See [desgin.md](desgin.md) for the audit stage in the designer's terms.
+See [design.md](design.md) for the audit stage in the designer's terms.
 
 ## Why not multi-agent
 
@@ -136,6 +136,6 @@ fields. Not decided yet; recorded here so it is not rediscovered.
 Responsibilities, not stages that run independently:
 
 - [architect.md](architect.md) — the constitution
-- [desgin.md](desgin.md) — spec completeness, and verifying the product against the spec
-- [developer.md](developer.md) — implementation against BDD
+- [design.md](design.md) — spec completeness, and verifying the product against the spec
+- [develop.md](develop.md) — implementation against BDD
 - [QA.md](QA.md) — behaviour, accessibility, coverage, security
