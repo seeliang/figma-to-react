@@ -10,11 +10,16 @@ executable specification is the source of truth, and code is a generated, verifi
 describes what this repository already does. Naming it matters: it tells us which problems are
 already solved elsewhere, and which decisions below are forced rather than chosen.
 
+[flow.md](flow.md) does that comparison in full — the lifecycle as the industry states it, which
+stages we run, and which two we remove because the design file crosses those handoffs without a
+translation step.
+
 ## Why the design file is the spec
 
 Mainstream spec-driven tooling has you *author* a specification in prose — requirements, then
-design, then tasks — which an agent turns into code. We skip that step, because the design file is
-already both machine-readable and the artefact the designer actually works in.
+design, then tasks — which an agent turns into code. Those are GitHub Spec Kit's **Specify**,
+**Plan** and **Tasks** stages, quoted in [flow.md](flow.md). We skip that step, because the design
+file is already both machine-readable and the artefact the designer actually works in.
 
 That makes our variant the stronger form. There is no second document to keep in sync with the
 first, and no prose-to-code ambiguity, because the spec is not prose.

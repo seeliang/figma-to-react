@@ -1,7 +1,8 @@
 # Docs
 
 Start with **[ai-solution.md](ai-solution.md)** — the methodology and the reasoning behind it.
-Everything else is one stage of that method.
+Then **[flow.md](flow.md)** — how to run it stage by stage, mapped against the industry-standard
+seven-stage lifecycle. Everything else is one stage of that method.
 
 ## The pipeline
 
@@ -21,6 +22,9 @@ constitution ──▶ specify ──▶ gate ──▶ generate ──▶ verif
 | **Gate**         | is the spec complete enough to generate from?           | [design.md](design.md)                 |
 | **Generate**     | spec → React, tokens, stories                           | [develop.md](develop.md)               |
 | **Verify**       | prove the artifact still matches the spec               | [QA.md](QA.md) · [design.md](design.md) |
+
+[flow.md](flow.md) walks all five in order — the command that runs each stage, what it reads and
+writes, and how the five map onto the industry-standard seven-stage lifecycle.
 
 **What each stage must prove is in [gates.md](gates.md)** — every criterion stated so it can fail,
 with the check that proves it and whether that check exists yet. The role docs say who owns a stage;
