@@ -221,3 +221,28 @@ describe('normalize: absolute positioning fallback', () => {
     })
   })
 })
+
+describe('corner radius variables', () => {
+  // The API sends corner-radius bindings as `rectangleCornerRadii`, an object
+  // keyed by RECTANGLE_TOP_LEFT_CORNER_RADIUS and friends — not as the flat
+  // `topLeftRadius` the reader originally looked for. Eleven bindings sit in
+  // this fixture and none of them reached the IR, so every radius Variable was
+  // dropped and the theme had no `--radius-*` entries at all.
+  it('reads bindings from the rectangleCornerRadii shape the API actually sends', () => {
+    const doc = irFor('design-system', '2:77')
+
+    const bound: string[] = []
+    const collect = (node: IRNode) => {
+      walk(node, (n) => {
+        for (const corner of Object.values(n.box.corners ?? {})) {
+          if (corner?.token) bound.push(corner.token.key)
+        }
+      })
+    }
+    collect(doc.root)
+    for (const component of doc.components.values()) collect(component)
+
+    expect(bound.length).toBeGreaterThan(0)
+    expect([...new Set(bound)]).toContain('VariableID:2:50')
+  })
+})

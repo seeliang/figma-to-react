@@ -11,7 +11,7 @@ import { designSystemPlugins } from './vite.js'
  *
  * The plugins are restated because **Vitest does not read `vite.config.ts`**.
  * That is the whole reason this factory exists rather than a copied config:
- * leaving Tailwind out of one of the two files does not error, it just makes
+ * leaving a plugin out of one of the two files does not error, it just makes
  * every story measure an unstyled element — which showed up once as every story
  * failing by ~57px wide, the width of a default `<input>`.
  */

@@ -37,11 +37,11 @@ Naming, in priority order:
 
 1. **Figma Styles** — `Surface/Raised` becomes `--color-surface-raised`. Style names ship in the file-nodes response on every plan, so this is the common case for design-system files.
 2. **Figma Variables** — the [Variables REST API is Enterprise-only](https://developers.figma.com/docs/rest-api/variables-endpoints), so the name is usually unavailable. The variable _id_ is still a correct grouping key, so every node bound to one variable gets one shared, synthesised name.
-3. **Frequency** — an unnamed colour used `--min-uses` times or more earns a theme entry, named from its own colour against Tailwind's ramp (`#2563eb` → `blue-600`), deterministically, so re-running produces the same names.
+3. **Frequency** — an unnamed colour used `--min-uses` times or more earns a theme entry, named from the colour itself (`#2563eb` → `blue-600`), deterministically, so re-running produces the same names.
 
 Naming uses **chroma** to decide whether something is a grey, and **CIE L\*** to place it on the ramp. Both matter: HSL saturation calls `#0f172a` a 47%-saturated blue, which would name a plain slate `blue-950` and stand it beside a genuinely blue `blue-600`; and HSL lightness is not comparable across hues, drifting green two to three steps.
 
-Spacing, radii and type sizes are deliberately **not** named by frequency. Tailwind's scale already covers them, and inventing `--spacing-7` where `p-7` exists makes the output worse.
+Spacing, radii and type sizes are deliberately **not** named by frequency. A number derived from a measurement (`--spacing-7`) carries no more meaning than the measurement, so it earns a token only when the design binds a Variable to it.
 
 ## Commands
 
@@ -77,13 +77,12 @@ Accepts a full Figma URL, a bare file key, or `<fileKey>:<nodeId>`. Node ids are
 @import './generated/tokens.css';
 ```
 
-Order matters. And if the generated directory is gitignored — most are — Tailwind v4 will not scan it, so none of the generated classes reach your bundle. The build still succeeds; the page just renders unstyled. Add an explicit source glob:
+Order matters: `fonts.css` must come first, because a CSS `@import` is only valid ahead of every
+other rule. Getting it wrong fails silently, in the fallback typeface.
 
-```css
-@source './generated/*.tsx';
-```
-
-A bare directory path (`@source './generated'`) does **not** override gitignore. It has to be a glob.
+Generated components import their own adjacent `styles.css`, so nothing needs to scan the output
+directory — but that stylesheet only resolves if `tokens.css` is imported somewhere above it. Miss
+it and the build still succeeds while every `var(--color-*)` falls back to nothing.
 
 ## What it does with a design
 
@@ -96,7 +95,7 @@ A bare directory path (`@source './generated'`) does **not** override gitignore.
 | Instances                                 | a tag importing that component, with text passed as props            |
 | Text inside a component                   | an optional prop, defaulting to the design's own copy                |
 | Layer named `Button` / `Input` / `Link`   | a real `<button>`, `<input>` or `<a>` (`--no-semantics` to disable)  |
-| Interactive elements                      | `cursor-pointer`, which Tailwind v4 Preflight otherwise removes      |
+| Interactive elements                      | an explicit `cursor: pointer`, rather than relying on a UA default   |
 | Ellipses                                  | `rounded-full` — Figma encodes roundness as node type, not a radius  |
 | Font family                               | a `--font-*` theme entry with a fallback stack                       |
 | Vectors and icon groups                   | inline SVG, converted to valid JSX                                   |
@@ -229,7 +228,7 @@ Short waits are still retried with backoff. Requests time out after 30s.
 - **Stacked paints** collapse to the topmost visible one; CSS has no clean equivalent. `inspect` shows the full node when a design depends on them.
 - **Text becomes props only up to a point.** Figma auto-names text layers after their own content, so a spec sheet with 50 labels would otherwise yield 50 props named things like `n2563Eb`. Past 12 text leaves a node is treated as a page, not a parameterised component, and its copy is emitted literally.
 - **Variants are separate components, not a prop union.** `Type=Primary` and `Type=Ghost` become `ButtonPrimary` and `ButtonGhost`. Collapsing them into one `Button` with a `type` prop is a v2 item.
-- **Synthesised colour names approximate Tailwind's ramp, they do not reproduce it.** Family and ordering are reliable; the step lands within one of the real ramp. The point is a stable, readable name, not a palette match.
+- **Synthesised colour names are derived from the colour itself.** Family and ordering are reliable and stable across runs, but a derived name only describes a colour — it cannot say what the colour is _for_. Name it in Figma to replace it.
 - **Heading levels** come from font size alone (`≥32px` → `h1`, `≥24` → `h2`, `≥18` → `h3`), because Figma carries no semantic signal. Expect to fix some by hand.
 - **Text styles become colour tokens.** A `Heading/Small` text style yields `--color-heading-small`, since the colour is the only part of it the REST API exposes per-node.
 - Gradients other than linear degrade to their nearest CSS equivalent.
@@ -251,14 +250,14 @@ Figma URL
   → emit       ai-plugin/emit-react          → TSX
 ```
 
-The **IR** (`ai-plugin/core/src/ir/types.ts`) mentions no framework, no CSS and no Tailwind. An emitter for Vue or React Native is a new package consuming those types, not a rewrite.
+The **IR** (`ai-plugin/core/src/ir/types.ts`) mentions no framework and no CSS. An emitter for Vue or React Native is a new package consuming those types, not a rewrite.
 
 Tests never touch the network. `ai-plugin/core/test/fixtures/` holds API-shaped responses; the CLI suite runs the real binary against a local fixture server.
 
 Three gates beyond the unit tests, each of which has already caught a real bug:
 
 - `tsc --noEmit` on the **generated** output, strict, `noUnusedLocals`. Caught a declared-but-unused prop on a nested component.
-- `scripts/verify-styles.mjs` checks every generated class resolves to a CSS rule in the built bundle. Caught Tailwind silently scanning nothing while the build reported success.
+- `scripts/verify-styles.mjs` checks every generated class resolves to a CSS rule in the built bundle. Caught a stylesheet that never reached the bundle while the build reported success.
 - Snapshots on the emitter, to keep class ordering and naming stable.
 
 ### An LLM pass

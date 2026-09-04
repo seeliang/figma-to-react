@@ -46,6 +46,7 @@ export function emitThemeStory(
 
   const kinds = [...new Set(manifest.tokens.map((t) => t.kind))]
   const unnamed = manifest.tokens.filter((t) => !t.named).length
+  const merged = manifest.tokens.filter((t) => designNames(t).length > 1)
 
   const imports = [`import type { Meta, StoryObj } from '@storybook/react'`]
   if (assert) imports.push(`import { expectTokensRendered } from '${helper}'`)
@@ -60,8 +61,17 @@ export function emitThemeStory(
    unnamed > 0
      ? `
  * ${unnamed} of ${manifest.tokens.length} tokens carry a name the generator derived from
- * the value rather than one a designer chose. Those are marked "derived" below.
- * The fix is a Figma Colour Style, not a different naming rule.`
+ * the value rather than one a designer chose. Those are marked "derived" below,
+ * and the design's own label for each is shown beside its custom property.`
+     : ''
+ }${
+   merged.length > 0
+     ? `
+ *
+ * ${merged.length} token(s) are MERGED: several design tokens share one value, and
+ * with no names available they collapsed into a single custom property.
+${merged.map((t) => ` *   ${t.cssVar} <- ${designNames(t).join(', ')}`).join('\n')}
+ * They cannot be given different values until the design tells them apart.`
      : ''
  }
  */`
@@ -105,6 +115,8 @@ const renderSwatchComponent = () => `type TokenRow = {
   value: string
   named: boolean
   kind: string
+  /** What the design calls this — a Style/Variable name, or the id when unnamed. */
+  design: string[]
 }
 
 function TokenGrid({ tokens = [] }: { tokens?: TokenRow[] }) {
@@ -116,18 +128,43 @@ function TokenGrid({ tokens = [] }: { tokens?: TokenRow[] }) {
             data-token={t.cssVar}
             data-token-value={t.value}
             data-token-named={String(t.named)}
+            data-token-design={t.design.join(',')}
             style={
               t.kind === 'color'
-                ? { height: 64, borderRadius: 4, border: '1px solid rgb(0 0 0 / 0.1)', background: \`var(\${t.cssVar})\` }
-                : { height: 64, borderRadius: 4, border: '1px solid rgb(0 0 0 / 0.1)', fontFamily: \`var(\${t.cssVar})\`, display: 'grid', placeItems: 'center' }
+                ? { height: 64, border: '1px solid rgb(0 0 0 / 0.1)', borderRadius: 4, background: \`var(\${t.cssVar})\` }
+                : t.kind === 'radius'
+                  ? // The swatch has to *use* the token, not merely sit beside
+                    // it, or the assertion has nothing to measure.
+                    { height: 64, border: '2px solid #334155', borderRadius: \`var(\${t.cssVar})\` }
+                  : t.kind === 'spacing'
+                    ? { height: 64, display: 'flex', alignItems: 'center' }
+                    : { height: 64, border: '1px solid rgb(0 0 0 / 0.1)', borderRadius: 4, fontFamily: \`var(\${t.cssVar})\`, display: 'grid', placeItems: 'center' }
             }
           >
-            {t.kind === 'color' ? null : 'Ag'}
+            {t.kind === 'spacing' ? (
+              <span style={{ display: 'block', height: 12, background: '#334155', width: \`var(\${t.cssVar})\` }} />
+            ) : t.kind === 'color' || t.kind === 'radius' ? null : (
+              'Ag'
+            )}
           </div>
           <figcaption style={{ fontSize: 12, lineHeight: 1.35 }}>
             <code style={{ fontFamily: 'ui-monospace, monospace' }}>{t.cssVar}</code>
+            <div style={{ color: 'rgb(0 0 0 / 0.55)' }}>
+              {t.design.length > 0 ? \`Figma: \${t.design.join(', ')}\` : 'not bound in Figma'}
+            </div>
             <div style={{ color: 'rgb(0 0 0 / 0.6)' }}>{t.value}</div>
-            {t.named ? null : <div style={{ color: '#b45309' }}>derived — no Style bound</div>}
+            {t.design.length > 1 ? (
+              <div style={{ color: '#b91c1c' }}>
+                merged — {t.design.length} design tokens share this value
+              </div>
+            ) : null}
+            {t.named ? null : (
+              <div style={{ color: '#b45309' }}>
+                {t.design.length > 0
+                  ? 'derived — bound, but the API withholds the name'
+                  : 'derived — nothing bound, named by frequency'}
+              </div>
+            )}
           </figcaption>
         </figure>
       ))}
@@ -139,7 +176,7 @@ function renderStory(kind: string, tokens: TokenManifestEntry[], assert: boolean
   const rows = tokens
     .map(
       (t) =>
-        `      { cssVar: '${t.cssVar}', name: '${t.name}', value: ${JSON.stringify(t.value)}, named: ${t.named}, kind: '${t.kind}' },`,
+        `      { cssVar: '${t.cssVar}', name: '${t.name}', value: ${JSON.stringify(t.value)}, named: ${t.named}, kind: '${t.kind}', design: ${JSON.stringify(designNames(t))} },`,
     )
     .join('\n')
 
@@ -160,6 +197,19 @@ ${rows}
     ],
   },${play}
 }`
+}
+
+/**
+ * What the design calls a token, deduplicated.
+ *
+ * More than one entry means the collapse: several Figma Styles or Variables
+ * resolved to the same value, and with no names available `collectTokens` keys
+ * by value, so they merged into one custom property. `background` and `card`
+ * both being white is not a reason to give an app one token — they have to be
+ * free to diverge, which is exactly what a second theme mode asks of them.
+ */
+export function designNames(t: TokenManifestEntry): string[] {
+  return [...new Set(t.sources.map((s) => s.name ?? s.key))]
 }
 
 const pascal = (s: string) =>

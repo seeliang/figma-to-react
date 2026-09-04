@@ -54,7 +54,12 @@ let locatedConfig: string | undefined
  */
 program.hook('preAction', async (_root, action) => {
   const opts = program.opts<{ offline?: boolean; live?: boolean }>()
-  const actionOpts = action.opts() as { config?: string; audit?: boolean; diff?: boolean; apply?: boolean }
+  const actionOpts = action.opts() as {
+    config?: string
+    audit?: boolean
+    diff?: boolean
+    apply?: boolean
+  }
   locatedConfig = await findConfig(actionOpts.config)
   await loadEnv(locatedConfig)
 
@@ -205,8 +210,13 @@ async function runGen(
       ...ownership(config),
       onProgress: progress,
     })
-    if (opts.requireBoundColours && result.design.some((finding) => finding.code === 'unbound-colours')) {
-      throw new Error('Colour refresh was not applied: bind every colour to a Figma Colour Style or Variable first.')
+    if (
+      opts.requireBoundColours &&
+      result.design.some((finding) => finding.code === 'unbound-colours')
+    ) {
+      throw new Error(
+        'Colour refresh was not applied: bind every colour to a Figma Colour Style or Variable first.',
+      )
     }
 
     const base = locatedConfig && !opts.out ? join(dirname(locatedConfig), outDirName) : outDirName
@@ -219,8 +229,7 @@ async function runGen(
     const selectedStories = new Set(
       [...result.stories.entries()]
         .filter(([file, source]) =>
-          !requestedLayer ||
-          requestedLayer === 'theme'
+          !requestedLayer || requestedLayer === 'theme'
             ? file === 'theme.stories.tsx'
             : result.components
                 .filter((component) => component.layer === requestedLayer)
@@ -247,12 +256,7 @@ async function runGen(
     if ((!requestedLayer || requestedLayer === 'theme') && result.tokenManifest) {
       planned.push(['tokens.json', `${JSON.stringify(result.tokenManifest, null, 2)}\n`])
     }
-    if (
-      result.geometry &&
-      requestedLayer &&
-      requestedLayer !== 'theme' &&
-      selectedFiles.size > 0
-    ) {
+    if (result.geometry && requestedLayer && requestedLayer !== 'theme' && selectedFiles.size > 0) {
       planned.push([
         'fidelity.ts',
         "import { expectLayoutWithin as assertWithin } from '@figma-to-react/testing/fidelity'\n" +
@@ -269,8 +273,13 @@ async function runGen(
     const nextFiles = planned.map(([name]) => name)
     try {
       const prior = JSON.parse(await readFile(ownedPath, 'utf8')) as { files?: string[] }
-      const stale = (prior.files ?? []).filter((file) => file !== outputManifest && !nextFiles.includes(file))
-      if (stale.length) console.warn(`\nStale generated files (left untouched):\n${stale.map((file) => `  - ${file}`).join('\n')}`)
+      const stale = (prior.files ?? []).filter(
+        (file) => file !== outputManifest && !nextFiles.includes(file),
+      )
+      if (stale.length)
+        console.warn(
+          `\nStale generated files (left untouched):\n${stale.map((file) => `  - ${file}`).join('\n')}`,
+        )
     } catch {
       // The first run has no ownership baseline.
     }
@@ -421,7 +430,11 @@ withCommonOptions(
     .argument('[figma-url]', 'Figma frame URL, or <fileKey> / <fileKey>:<nodeId>')
     .description('what the theme would gain, lose or change if regenerated')
     .option('-o, --out <dir>', 'directory holding the committed tokens.json')
-    .option('--config <file>', 'design-system.json to read the target and out dir from', CONFIG_FILE),
+    .option(
+      '--config <file>',
+      'design-system.json to read the target and out dir from',
+      CONFIG_FILE,
+    ),
 ).action(async (target: string | undefined, opts) => {
   await withErrorHandling(() => runThemeDiff(target, opts))
 })
@@ -498,7 +511,11 @@ withCommonOptions(
     .option('--trace-ids', 'emit data-figma-id on every element, for measuring layout fidelity')
     .option('--no-font-import', 'skip the Google Fonts @import for the typefaces in use')
     .option('--stories', 'generate Storybook stories and the geometry their fidelity check needs')
-    .option('--fidelity-threshold <px>', 'max px a node may differ from Figma before a story fails', '4')
+    .option(
+      '--fidelity-threshold <px>',
+      'max px a node may differ from Figma before a story fails',
+      '4',
+    )
     .option('--layer <name>', 'generate into a subdirectory of out: atoms | molecules | organisms')
     .option('--dry-run', 'print what would be written without touching the filesystem')
     .option('--config <file>', 'design-system.json to read layers and ownership from', CONFIG_FILE),
@@ -511,9 +528,21 @@ withCommonOptions(
   })
 })
 
-async function runThemeColor(target: string | undefined, opts: GenOptions, command: Command): Promise<void> {
-  console.log(opts.apply ? '\nApplying the complete generated output from this design snapshot.' : '\nPreview only; add --apply to write the complete generated output.')
-  await runGen(target, { ...opts, dryRun: !opts.apply, requireBoundColours: Boolean(opts.apply) }, command)
+async function runThemeColor(
+  target: string | undefined,
+  opts: GenOptions,
+  command: Command,
+): Promise<void> {
+  console.log(
+    opts.apply
+      ? '\nApplying the complete generated output from this design snapshot.'
+      : '\nPreview only; add --apply to write the complete generated output.',
+  )
+  await runGen(
+    target,
+    { ...opts, dryRun: !opts.apply, requireBoundColours: Boolean(opts.apply) },
+    command,
+  )
 }
 
 program

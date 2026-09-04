@@ -75,7 +75,7 @@ fixture app, not beside the design system.
 
 Four packages × (`vitest.config.ts`, `.storybook/vitest.setup.ts`, `tsconfig.json`, a 16-entry
 devDependency block) is four places for the same bug. This repo has already been bitten twice by
-one config silently differing from another — a missing Tailwind plugin in `vitest.config.ts` made
+one config silently differing from another — a missing Vite plugin in `vitest.config.ts` made
 every story fail by ~57px, and a misordered `@import` dropped the webfont silently.
 
 `@figma-to-react/config` exports the Vite, Vitest and Storybook presets; each package holds a three-line file
@@ -87,7 +87,7 @@ resolves addons _by name from the project root_, and its Vitest plugin injects
 package's `node_modules`, where a package that only exists in `@figma-to-react/config`'s tree is invisible.
 So `@storybook/addon-designs`, `@storybook/addon-vitest`, `@vitest/browser-playwright` and
 `playwright` have to stay declared per package. Only what the preset code _imports directly_
-(`@tailwindcss/vite`, `@vitejs/plugin-react`) actually moves. The shared config is still the win —
+(`@vitejs/plugin-react`) actually moves. The shared config is still the win —
 it is the plugin _wiring_ that has bitten this repo, not the dependency list.
 
 ### 5. Regeneration becomes assertable per package
@@ -152,8 +152,8 @@ Five things are hardcoded to the single-directory assumption:
 
 | Where                                                                             | What                                                             | Becomes                                                                                                              |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `ai-plugin/cli/src/pipeline.ts:170,177`                                               | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@figma-to-react/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
-| `ai-plugin/emit-react/src/emit.ts`                                                    | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                                |
+| `ai-plugin/cli/src/pipeline.ts:170,177`                                           | `helperPath: '../fidelity/assert.js'` / `'../theme/assert.js'`   | `@figma-to-react/testing`, threaded from config — `emitThemeStory` already takes the option, it is just never passed |
+| `ai-plugin/emit-react/src/emit.ts`                                                | cross-component imports as relative paths                        | package specifier when the target is in another layer                                                                |
 | `scripts/ds.mjs:146-151`                                                          | `--layer` writes a **subdirectory** of one `out`                 | routes to that layer's package                                                                                       |
 | `design-system.json:8`                                                            | `"out": "examples/src/design-system"`                            | a map of layer → package src dir                                                                                     |
 | `scripts/verify-styles.mjs:15`, `verify-tokens.mjs:97`, root `package.json:12,19` | hardcoded `examples/` paths and a four-times-repeated `--filter` | derived from config; `verify` becomes a loop                                                                         |
@@ -172,12 +172,12 @@ point it at `@figma-to-react/config` instead.
 
 | Path                                          | Change                                                                           |
 | --------------------------------------------- | -------------------------------------------------------------------------------- |
-| `ai-plugin/config/`                               | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
-| `ai-plugin/testing/`                              | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
+| `ai-plugin/config/`                           | new — `vite.ts`, `vitest.ts`, `storybook.ts`, `tsconfig.json` presets            |
+| `ai-plugin/testing/`                          | new — `fidelity/assert.ts` (geometry injected), `theme/assert.ts` moved verbatim |
 | `packages/{theme,atoms,molecules,organisms}/` | new — `package.json`, thin configs, generated `src/`                             |
-| `ai-plugin/emit-react/src/emit.ts`                | cross-layer imports become package specifiers                                    |
-| `ai-plugin/cli/src/pipeline.ts`                   | per-layer routing; `helperPath` from options                                     |
-| `ai-plugin/cli/src/config.ts`                     | `out` as a layer map                                                             |
+| `ai-plugin/emit-react/src/emit.ts`            | cross-layer imports become package specifiers                                    |
+| `ai-plugin/cli/src/pipeline.ts`               | per-layer routing; `helperPath` from options                                     |
+| `ai-plugin/cli/src/config.ts`                 | `out` as a layer map                                                             |
 | `scripts/ds.mjs`                              | `--layer` targets a package                                                      |
 | `scripts/verify-{styles,tokens}.mjs`          | walk the configured packages, not hardcoded dirs                                 |
 | `package.json`                                | `verify` loops over packages; `typecheck` uses a solution tsconfig               |

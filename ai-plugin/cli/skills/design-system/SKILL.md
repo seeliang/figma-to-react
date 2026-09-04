@@ -16,7 +16,7 @@ allowed-tools:
 
 # Design system
 
-`figma2react` generates Tailwind-styled React from a Figma frame over the REST API. This skill is
+`figma2react` generates plain-CSS React from a Figma frame over the REST API. This skill is
 the front door; the work happens in the sub-skills below.
 
 ## Route first
@@ -25,7 +25,8 @@ the front door; the work happens in the sub-skills below.
 | ----------------------------------------------------------------------- | ------------------ |
 | generating or regenerating components from Figma                        | `ds-generate`      |
 | "is this ready for dev?", design gaps, unbound colours, unsorted layers | `ds-design-review` |
-| colours, spacing, breakpoints, `tokens.css`, swatches, token naming     | `ds-theme`         |
+| colours specifically — a palette change, a missing or merged colour     | `ds-color`         |
+| spacing, breakpoints, typefaces, `tokens.css` as a whole, token naming  | `ds-theme`         |
 
 If the request spans several, run `ds-design-review` first: an unbound colour or an unsorted
 component shows up as noise in every other check until it is fixed.
@@ -34,7 +35,7 @@ When the request is genuinely ambiguous — "look at the design system" — ask 
 `AskUserQuestion` rather than picking. Regenerating when someone wanted a review rewrites files
 they did not ask you to touch.
 
-Repositories usually add their own skills for what happens *after* generation — the build, the
+Repositories usually add their own skills for what happens _after_ generation — the build, the
 tests, the delivery gates. Those are the repo's, not the tool's; hand off to them rather than
 guessing at commands this tool does not own.
 
@@ -67,4 +68,4 @@ asking; if it is missing, `figma2react init` writes it.
 
 - [references/cli.md](references/cli.md) — every command and flag, and what each writes
 - [references/atomic.md](references/atomic.md) — the three-layer model and its rules
-- [references/theme.md](references/theme.md) — the theme, and why Tailwind's palette is not a target
+- [references/theme.md](references/theme.md) — the theme's generated files and how they are wired

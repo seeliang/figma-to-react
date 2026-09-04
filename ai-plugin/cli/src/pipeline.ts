@@ -7,6 +7,7 @@ import {
   emitThemeCss,
   normalize,
   parseFigmaTarget,
+  readPalette,
   resolveAssets,
 } from '@figma-to-react/core'
 import type {
@@ -26,7 +27,7 @@ export interface RunOptions {
   token: string
   /** Override the API host; used by tests and by Figma Government tenants. */
   baseUrl?: string
-  /** Lift repeated values into a Tailwind `@theme` block. */
+  /** Lift repeated values into a `:root` block of CSS custom properties. */
   tokens: boolean
   /** Download vectors and images. */
   assets: boolean
@@ -113,12 +114,18 @@ export async function run(options: RunOptions): Promise<RunResult> {
     )
   }
 
+  // The file's own colour documentation, read back as names for the Variables
+  // the REST API sends as bare ids. Absent for a file that documents no
+  // palette, which is the common case and not an error.
+  const palette = readPalette(entry.document)
+
   const doc = normalize({
     fileKey,
     document: entry.document,
     components: entry.components,
     componentSets: entry.componentSets,
     styles: entry.styles,
+    ...(palette ? { variables: palette.names } : {}),
   })
 
   const design = auditDesign({
@@ -131,7 +138,10 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
   let table: TokenTable | undefined
   if (options.tokens) {
-    table = collectTokens(doc, { minUses: options.minUses ?? 3 })
+    table = collectTokens(doc, {
+      minUses: options.minUses ?? 3,
+      ...(palette ? { colorNames: palette.byValue } : {}),
+    })
     options.onProgress?.(`Collected ${table.tokens.length} design tokens`)
   }
 

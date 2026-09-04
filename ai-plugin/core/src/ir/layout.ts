@@ -1,12 +1,13 @@
 import type { AxisAlign, FigmaNode, LayoutSizing } from '../figma/types.js'
 import { length } from './style.js'
+import type { StyleContext } from './style.js'
 import type { Layout, Padding, Sizing } from './types.js'
 
 /**
  * Auto Layout maps onto flexbox almost one-to-one. The awkward parts are
  * sizing and the older files that predate `layoutSizing*`.
  */
-export function toLayout(node: FigmaNode, parent?: FigmaNode): Layout {
+export function toLayout(node: FigmaNode, ctx: StyleContext, parent?: FigmaNode): Layout {
   const mode = node.layoutMode ?? 'NONE'
   const isFlex = mode === 'HORIZONTAL' || mode === 'VERTICAL'
 
@@ -20,9 +21,9 @@ export function toLayout(node: FigmaNode, parent?: FigmaNode): Layout {
 
   if (isFlex) {
     layout.direction = mode === 'HORIZONTAL' ? 'row' : 'column'
-    if (node.itemSpacing) layout.gap = length(node.itemSpacing, node, 'itemSpacing')
+    if (node.itemSpacing) layout.gap = length(node.itemSpacing, ctx, node, 'itemSpacing')
     if (node.layoutWrap === 'WRAP' && node.counterAxisSpacing) {
-      layout.crossGap = length(node.counterAxisSpacing, node, 'counterAxisSpacing')
+      layout.crossGap = length(node.counterAxisSpacing, ctx, node, 'counterAxisSpacing')
     }
     const justify = mapPrimary(node.primaryAxisAlignItems)
     if (justify) layout.justify = justify
@@ -30,7 +31,7 @@ export function toLayout(node: FigmaNode, parent?: FigmaNode): Layout {
     if (align) layout.align = align
   }
 
-  const padding = toPadding(node)
+  const padding = toPadding(node, ctx)
   if (padding) layout.padding = padding
 
   const selfAlign = mapSelfAlign(node, parent)
@@ -48,14 +49,14 @@ export function toLayout(node: FigmaNode, parent?: FigmaNode): Layout {
   return layout
 }
 
-function toPadding(node: FigmaNode): Padding | undefined {
+function toPadding(node: FigmaNode, ctx: StyleContext): Padding | undefined {
   const { paddingTop = 0, paddingRight = 0, paddingBottom = 0, paddingLeft = 0 } = node
   if (!paddingTop && !paddingRight && !paddingBottom && !paddingLeft) return undefined
   return {
-    top: length(paddingTop, node, 'paddingTop'),
-    right: length(paddingRight, node, 'paddingRight'),
-    bottom: length(paddingBottom, node, 'paddingBottom'),
-    left: length(paddingLeft, node, 'paddingLeft'),
+    top: length(paddingTop, ctx, node, 'paddingTop'),
+    right: length(paddingRight, ctx, node, 'paddingRight'),
+    bottom: length(paddingBottom, ctx, node, 'paddingBottom'),
+    left: length(paddingLeft, ctx, node, 'paddingLeft'),
   }
 }
 

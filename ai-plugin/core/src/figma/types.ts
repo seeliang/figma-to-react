@@ -96,7 +96,16 @@ export interface VariableAlias {
   id: string
 }
 
-export type BoundVariables = Record<string, VariableAlias | VariableAlias[] | undefined>
+/**
+ * Bindings arrive in three shapes, not one. `fills` and `strokes` are arrays;
+ * `color` and `fontSize` are a bare alias; corner radii come as a *nested map*
+ * under `rectangleCornerRadii`, keyed `RECTANGLE_TOP_LEFT_CORNER_RADIUS` and so
+ * on. Only reading the first two silently dropped every radius Variable.
+ */
+export type BoundVariables = Record<
+  string,
+  VariableAlias | VariableAlias[] | Record<string, VariableAlias> | undefined
+>
 
 export type LayoutMode = 'NONE' | 'HORIZONTAL' | 'VERTICAL'
 export type AxisAlign = 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN' | 'BASELINE'

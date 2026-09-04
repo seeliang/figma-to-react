@@ -20,10 +20,10 @@ Use native platform configuration and standard web primitives first: TypeScript 
 Vite's React plugin, ordinary CSS, and CSS custom properties. Generated React components own a
 nearby `styles.css`; the shared theme package owns `fonts.css` and `tokens.css`.
 
-Tailwind and similar utility frameworks, configuration layers, presets, or design-system wrappers
-are out of scope unless a product explicitly adopts one. Popularity is not sufficient reason to add
-a dependency: introduce a tool only when it removes a demonstrated project-specific problem and
-does not obscure the native configuration it replaces.
+**This is a pure CSS project.** Utility frameworks, configuration layers, presets and
+design-system wrappers are out of scope. Popularity is not sufficient reason to add a dependency:
+introduce a tool only when it removes a demonstrated project-specific problem and does not obscure
+the native configuration it replaces.
 
 ## Distribution
 

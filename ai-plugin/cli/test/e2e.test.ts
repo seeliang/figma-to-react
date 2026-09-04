@@ -270,9 +270,10 @@ describe('figma2react tokens', () => {
 
   it('emits a fragment, not an entry point', async () => {
     const { stdout } = await cli(['tokens', 'TESTKEY:1-2', '--min-uses', '2'])
-    // A token fragment must remain plain CSS; only active CSS counts here.
+    // A fragment declares properties and pulls in nothing; an entry point would
+    // import. Comments carry the wiring instructions, so only active CSS counts.
     const active = stdout.replace(/\/\*[\s\S]*?\*\//g, '')
-    expect(active).not.toContain("@import 'tailwindcss'")
+    expect(active).not.toContain('@import')
     expect(stdout).toContain('Wire it up from your own stylesheet')
   })
 

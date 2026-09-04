@@ -12,6 +12,7 @@
  *   node scripts/verify-skills.mjs
  */
 import { execFile } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -77,7 +78,9 @@ for (const dir of await readdir(SKILLS, { withFileTypes: true })) {
     .catch(() => {})
 }
 
-const INVOCATION = /figma2react\s+([a-z][a-z-]*)((?:\s+--[a-z][a-z-]*)*)/g
+// A subcommand word may sit between the verb and its flags (`theme color
+// --apply`); without allowing for it the flags after one go unchecked.
+const INVOCATION = /figma2react\s+([a-z][a-z-]*)((?:\s+(?:[a-z][a-z-]*|--[a-z][a-z-]*))*)/g
 for (const file of files) {
   const text = await readFile(file, 'utf8')
   const where = relative(ROOT, file)
@@ -96,6 +99,37 @@ for (const file of files) {
   for (const [needle, why] of REPO_ONLY) {
     if (text.includes(needle)) {
       problems.push(`${where}: mentions "${needle.trim()}" — ${why}. It cannot ship.`)
+    }
+  }
+}
+
+// --- 3. paths the repo-local skill names still exist ----------------------
+// The shipped skills are guarded by REPO_ONLY above; the repo-local one is
+// *supposed* to name repo paths, so the only thing that can go wrong is that
+// they stop existing. That is exactly what happened when `examples/` was
+// retired and the skill kept pointing at it.
+const LOCAL = join(ROOT, '.claude/skills')
+const localFiles = []
+for (const dir of await readdir(LOCAL, { withFileTypes: true }).catch(() => [])) {
+  if (!dir.isDirectory()) continue
+  const base = join(LOCAL, dir.name)
+  localFiles.push(join(base, 'SKILL.md'))
+  await readdir(join(base, 'references'))
+    .then((names) => localFiles.push(...names.map((n) => join(base, 'references', n))))
+    .catch(() => {})
+}
+
+// Only backticked tokens that look like a repo path: a slash, and either a file
+// extension or a trailing slash. Prose is not checkable; these are.
+const PATHISH = /`([a-zA-Z0-9_.-]+(?:\/[a-zA-Z0-9_.*-]+)+\/?)`/g
+for (const file of localFiles) {
+  const text = await readFile(file, 'utf8')
+  const where = relative(ROOT, file)
+  for (const [, candidate] of text.matchAll(PATHISH)) {
+    if (candidate.includes('*')) continue // a glob, not a path
+    if (!/\.[a-z]+$|\/$/.test(candidate)) continue
+    if (!existsSync(join(ROOT, candidate))) {
+      problems.push(`${where}: names \`${candidate}\`, which does not exist.`)
     }
   }
 }

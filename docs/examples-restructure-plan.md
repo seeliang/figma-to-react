@@ -29,7 +29,7 @@ packages/                           consumer-installable design-system packages
 .storybook/                         the one interactive demo surface
   main.ts                           glob packages/*/src/**/*.stories.tsx
   preview.ts                        global annotations and stylesheet
-  styles.css                        font-first theme imports and Tailwind source globs
+  styles.css                        font-first theme imports
   vitest.setup.ts                   applies preview annotations to browser story tests
 vite.config.ts                      Vite plugins used by root Storybook
 vitest.config.ts                    one Storybook browser-test project
@@ -61,7 +61,7 @@ dependency then fails package typechecking instead of merely raising an audit wa
 
 1. Create root `.storybook/`, `vite.config.ts` and `vitest.config.ts` from the existing example
    configuration. Move the global stylesheet to `.storybook/styles.css`; it imports theme fonts
-   before Tailwind, imports theme tokens, and declares `@source` globs for package source. Declare
+   before theme tokens, since a CSS `@import` is only valid ahead of every other rule. Declare
    Storybook, React, Vite and browser-test dependencies in the root `package.json`.
 2. Update `emit-react` and its snapshots so cross-layer component references emit `@ds/*` imports.
    Do this before moving files, because it establishes the architectural boundary.

@@ -27,12 +27,12 @@ a workspace.
 The Figma REST quota is set by plan tier and is the binding limit on this kind of work — one or two
 calls can lock the API out for hours.
 
-| Command                         | Default    | Why                                                     |
-| ------------------------------- | ---------- | ------------------------------------------------------- |
-| `audit`, `theme --audit`        | **offline** | a question; a recording answers it                     |
-| `theme --diff`                  | **offline** | a question about the committed output                  |
-| `gen`, `theme`, `tokens`, `init` | **live**   | generating from a stale recording produces stale code   |
-| `inspect --raw`                 | **live**   | this is how a recording gets made                       |
+| Command                          | Default     | Why                                                   |
+| -------------------------------- | ----------- | ----------------------------------------------------- |
+| `audit`, `theme --audit`         | **offline** | a question; a recording answers it                    |
+| `theme --diff`                   | **offline** | a question about the committed output                 |
+| `gen`, `theme`, `tokens`, `init` | **live**    | generating from a stale recording produces stale code |
+| `inspect --raw`                  | **live**    | this is how a recording gets made                     |
 
 `--offline` and `--live` override either way. Offline needs `offline.fixture` in the config, pointing
 at a response recorded with `inspect --raw`; the path resolves relative to the config, not the
@@ -49,13 +49,13 @@ would be an ambush, not a convenience.
 
 ## `gen` flags worth knowing
 
-| Flag              | Why it matters                                                          |
+| Flag              | Why it matters                                                           |
 | ----------------- | ------------------------------------------------------------------------ |
 | `--trace-ids`     | emits `data-figma-id`; **the fidelity check asserts nothing without it** |
-| `--stories`       | writes `*.stories.tsx` and `figma-geometry.json`                        |
+| `--stories`       | writes `*.stories.tsx` and `figma-geometry.json`                         |
 | `--layer <name>`  | generates into a subdirectory of `out`, so one layer is reviewable alone |
-| `--dry-run`       | prints the write plan and touches nothing                               |
-| `--config <file>` | where layers and ownership come from; defaults to `design-system.json`  |
+| `--dry-run`       | prints the write plan and touches nothing                                |
+| `--config <file>` | where layers and ownership come from; defaults to `design-system.json`   |
 
 ## What `gen` writes
 
@@ -67,7 +67,7 @@ would be an ambush, not a convenience.
   theme.stories.tsx        every token as a swatch, with its own assertions
   figma-geometry.json      what the fidelity check measures against
   fonts.css                must be imported before anything else
-  tokens.css               the Tailwind @theme block
+  tokens.css               the :root block of CSS custom properties
   tokens.json              the token manifest `theme --diff` compares against
 ```
 

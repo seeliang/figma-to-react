@@ -3,8 +3,8 @@
 What must be true to pass each gate, stated so it can fail. The generator's own commands are
 documented in the `figma2react` plugin, at `ai-plugin/cli/skills/design-system/references/cli.md`.
 
-> The full user-facing version, mapping every agile stage to a command, lands as
-> `docs/delivery-gates.md` in Phase 3. This is the criteria list the skills check against now.
+> A full user-facing version, mapping every agile stage to a command, is planned for Phase 3 and
+> is not written yet. This is the criteria list the skills check against now.
 
 ## Developer Ready
 
@@ -22,8 +22,8 @@ Sorting sits at _this_ gate deliberately. Sorting after development is what caus
 ## Dev Complete
 
 - `pnpm verify` green
-- `git diff --exit-code examples/src/design-system` clean — the real assertion that the committed
-  code matches the current Figma file
+- `git diff --exit-code packages/` clean after regenerating — the real assertion that the
+  committed code matches the current Figma file
 - no orphaned files from renamed variants (`gen` does not delete)
 
 ## QA Signoff

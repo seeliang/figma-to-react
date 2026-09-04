@@ -6,6 +6,7 @@ import type {
   Paint,
   StyleMeta,
   TypeStyle,
+  VariableAlias,
 } from '../figma/types.js'
 import type {
   Border,
@@ -22,6 +23,13 @@ import type {
 /** Lookup tables carried through normalization, from the file-nodes response. */
 export interface StyleContext {
   styles: Record<string, StyleMeta>
+  /**
+   * `VariableID:… → name`, from whatever could name them — the REST API cannot.
+   * A name here is what stops two Variables sharing a value from collapsing
+   * into one token, since {@link ../tokens/collect.ts collectTokens} keys a
+   * named source by id and an unnamed one by value.
+   */
+  variables: Record<string, string>
 }
 
 // ---------------------------------------------------------------------------
@@ -66,9 +74,15 @@ export function tokenFor(
   }
   if (varField) {
     const ref = firstAlias(node.boundVariables, varField)
-    if (ref) return { source: 'variable', key: ref }
+    if (ref) return { source: 'variable', key: ref, ...named(ctx, ref) }
   }
   return undefined
+}
+
+/** A variable's name, when anything could supply one. */
+const named = (ctx: StyleContext, id: string): { name?: string } => {
+  const name = ctx.variables[id]
+  return name ? { name } : {}
 }
 
 /**
@@ -79,21 +93,39 @@ export function tokenFor(
  * for the family alone yields one typeface token per style — `--font-heading-small`
  * and `--font-body` holding the same family.
  */
-export function variableRef(node: FigmaNode, field: string): TokenRef | undefined {
+export function variableRef(
+  node: FigmaNode,
+  ctx: StyleContext,
+  field: string,
+): TokenRef | undefined {
   const id = firstAlias(node.boundVariables, field)
-  return id ? { source: 'variable', key: id } : undefined
+  return id ? { source: 'variable', key: id, ...named(ctx, id) } : undefined
 }
 
+/**
+ * `field` may address an array (`fills`), a bare alias (`color`), or one key of
+ * a nested map (`rectangleCornerRadii.RECTANGLE_TOP_LEFT_CORNER_RADIUS`, given
+ * here as `rectangleCornerRadii/RECTANGLE_...`).
+ */
 function firstAlias(bound: BoundVariables | undefined, field: string): string | undefined {
-  const entry = bound?.[field]
+  const [head, nested] = field.split('/')
+  const entry = bound?.[head!]
   if (!entry) return undefined
-  const alias = Array.isArray(entry) ? entry[0] : entry
-  return alias?.id
+  if (Array.isArray(entry)) return entry[0]?.id
+  if (nested) return (entry as Record<string, VariableAlias>)[nested]?.id
+  return (entry as VariableAlias).id
 }
 
-export function length(px: number, node?: FigmaNode, varField?: string): LengthValue {
+export function length(
+  px: number,
+  ctx: StyleContext,
+  node?: FigmaNode,
+  varField?: string,
+): LengthValue {
   const token = varField ? firstAlias(node?.boundVariables, varField) : undefined
-  return token ? { px: round(px), token: { source: 'variable', key: token } } : { px: round(px) }
+  return token
+    ? { px: round(px), token: { source: 'variable', key: token, ...named(ctx, token) } }
+    : { px: round(px) }
 }
 
 // ---------------------------------------------------------------------------
@@ -193,22 +225,30 @@ export function toBorder(node: FigmaNode, ctx: StyleContext): Border | undefined
   return border
 }
 
-export function toCorners(node: FigmaNode): Corners | undefined {
+export function toCorners(node: FigmaNode, ctx: StyleContext): Corners | undefined {
   const radii = node.rectangleCornerRadii
   if (radii && new Set(radii).size > 1) {
     const [tl, tr, br, bl] = radii
     return {
-      topLeft: length(tl, node, 'topLeftRadius'),
-      topRight: length(tr, node, 'topRightRadius'),
-      bottomRight: length(br, node, 'bottomRightRadius'),
-      bottomLeft: length(bl, node, 'bottomLeftRadius'),
+      topLeft: length(tl, ctx, node, CORNER_FIELDS.topLeft),
+      topRight: length(tr, ctx, node, CORNER_FIELDS.topRight),
+      bottomRight: length(br, ctx, node, CORNER_FIELDS.bottomRight),
+      bottomLeft: length(bl, ctx, node, CORNER_FIELDS.bottomLeft),
     }
   }
   const r = node.cornerRadius ?? radii?.[0]
   if (!r) return undefined
-  const v = length(r, node, 'topLeftRadius')
+  const v = length(r, ctx, node, CORNER_FIELDS.topLeft)
   return { topLeft: v, topRight: v, bottomRight: v, bottomLeft: v }
 }
+
+/** Where the API actually puts each corner's binding. */
+const CORNER_FIELDS = {
+  topLeft: 'rectangleCornerRadii/RECTANGLE_TOP_LEFT_CORNER_RADIUS',
+  topRight: 'rectangleCornerRadii/RECTANGLE_TOP_RIGHT_CORNER_RADIUS',
+  bottomRight: 'rectangleCornerRadii/RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS',
+  bottomLeft: 'rectangleCornerRadii/RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS',
+} as const
 
 export function toShadows(node: FigmaNode): Shadow[] {
   return (node.effects ?? [])
@@ -242,7 +282,7 @@ export function toBoxStyle(node: FigmaNode, ctx: StyleContext): BoxStyle {
   if (fill) box.fill = fill
   const border = toBorder(node, ctx)
   if (border) box.border = border
-  const corners = toCorners(node)
+  const corners = toCorners(node, ctx)
   if (corners) box.corners = corners
   if (node.opacity !== undefined && node.opacity < 1) box.opacity = round(node.opacity, 3)
   const backdrop = blurOf(node, 'BACKGROUND_BLUR')
@@ -263,10 +303,10 @@ export function toTextStyle(node: FigmaNode, ctx: StyleContext): TextStyle | und
 
   const out: TextStyle = {}
   if (s?.fontFamily) {
-    const token = variableRef(node, 'fontFamily')
+    const token = variableRef(node, ctx, 'fontFamily')
     out.fontFamily = token ? { name: s.fontFamily, token } : { name: s.fontFamily }
   }
-  if (s?.fontSize !== undefined) out.fontSize = length(s.fontSize, node, 'fontSize')
+  if (s?.fontSize !== undefined) out.fontSize = length(s.fontSize, ctx, node, 'fontSize')
   if (s?.fontWeight !== undefined) out.fontWeight = s.fontWeight
   if (s?.italic) out.italic = true
 

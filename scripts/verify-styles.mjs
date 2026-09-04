@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Guards the failure mode that a passing build does not catch: Tailwind emits
- * no rule for a generated class, so the page renders unstyled while `vite build`
- * and `tsc --noEmit` both report success.
+ * Guards the failure mode that a passing build does not catch: a generated class
+ * reaches the markup but its rule never reaches the bundle, so the page renders
+ * unstyled while `vite build` and `tsc --noEmit` both report success.
  *
  * Reads the classes the generated components actually use, then checks each one
  * appears in the built stylesheet.
@@ -14,8 +14,8 @@ import { join } from 'node:path'
 // the repository layout rather than a demo app, so deleting a demo cannot
 // silently stop this check from scanning components.
 const GENERATED = ['packages/atoms/src', 'packages/molecules/src', 'packages/organisms/src']
-// Storybook produces its own bundle from the same sources, and a Tailwind
-// plugin missing from *its* config fails exactly as silently.
+// Storybook produces its own bundle from the same sources, and a stylesheet
+// missing from *its* config fails exactly as silently.
 const distFlag = process.argv.indexOf('--dist')
 const DIST = distFlag === -1 ? 'storybook-static/assets' : process.argv[distFlag + 1]
 
@@ -53,21 +53,16 @@ if (!cssFile) {
 }
 const raw = (await Promise.all(stylesheets.map((f) => readFile(join(DIST, f), 'utf8')))).join('\n')
 
-// Tailwind escapes CSS-significant punctuation in selectors, so `border-black/10`
-// is written `.border-black\/10` and `text-[14px]` as `.text-\[14px\]`. Dropping
-// the backslashes lets a plain substring test match either. Without this the
-// check reports missing rules for classes that are present, which is worse than
-// no check: it trains you to ignore it.
-const css = raw.replaceAll('\\', '')
-
-// Compare on the part before the first bracket — enough to prove a rule was
-// generated at all.
-const missing = [...used].filter((cls) => !css.includes(cls.split('[')[0]))
+// Generated class names are `f2r-<fileKey>-<nodeId>` — no punctuation a CSS
+// selector would escape — so the whole class is compared, not a prefix of it.
+// An earlier prefix comparison existed to tolerate escaped utility syntax; it
+// silently weakened the check once that syntax stopped being emitted.
+const missing = [...used].filter((cls) => !raw.includes(cls))
 
 if (missing.length > 0) {
   console.error(`\n${missing.length} generated class(es) produced no CSS rule:`)
   for (const cls of missing) console.error(`  ${cls}`)
-  console.error('\nUsually means Tailwind is not scanning the generated directory.')
+  console.error('\nUsually means the package stylesheet never reached the bundle.')
   process.exit(1)
 }
 

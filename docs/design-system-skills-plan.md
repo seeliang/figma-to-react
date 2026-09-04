@@ -141,7 +141,7 @@ examples/src/design-system/
 
 One directory per component, so `atoms/` can later ship as the base package and each molecule as
 its own with atoms as a peer dependency — the scaling path the article lays out. Per-component
-`index.css` is not emitted: styling is Tailwind utilities plus the theme, so there is nothing to
+`index.css` is not emitted: styling is the package's own `styles.css` plus the theme, so there is nothing to
 put in it.
 
 This is the largest change in the plan. It moves every generated file, so `examples/src/styles.css`,
@@ -629,10 +629,10 @@ px deltas, axe violations and token diff.
    and confirm `ds-design-review` runs the audit and reports Figma actions; ask "regenerate the
    buttons" and confirm `ds-generate` runs offline without being told to.
 6. **The design-issue rule holds.** Introduce a contrast failure in the fixture and confirm
-   `ds-a11y` reports it as a Figma colour change, not as a Tailwind class edit. This is the
+   `ds-a11y` reports it as a Figma colour change, not as a stylesheet edit. This is the
    behaviour most likely to regress and the least likely to be caught by a test.
 7. **Atomic output holds together.** With `--layout atomic`, `pnpm verify` stays green end to end —
-   which proves Tailwind still scans the moved files, stories still resolve, and fidelity is
+   which proves the moved files still pick up their styles, stories still resolve, and fidelity is
    unchanged by the reorganisation. `git diff` on the rendered DOM should be empty: this is a file
    move, not a visual change.
 8. **`init` on a clean checkout.** Delete `design-system.json`, run `pnpm ds:init`, and confirm

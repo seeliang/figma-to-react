@@ -136,8 +136,8 @@ const ATTR_RENAMES: Record<string, string> = {
 /**
  * Figma's exported SVG is valid XML but not valid JSX: hyphenated attributes
  * (`fill-rule`), `class`, XML declarations and comments all have to go. Width
- * and height are stripped too, so the surrounding Tailwind classes control the
- * size — otherwise the export's intrinsic pixel size silently wins.
+ * and height are stripped too, so the surrounding rules control the size —
+ * otherwise the export's intrinsic pixel size silently wins.
  */
 export function svgToJsx(svg: string): string {
   let out = svg

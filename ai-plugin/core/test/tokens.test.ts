@@ -51,8 +51,8 @@ describe('nameColor', () => {
   })
 
   it('places a colour on the ramp by perceptual lightness, not HSL', () => {
-    // Naming targets a readable, stable label rather than an exact reproduction
-    // of Tailwind's palette, so assert the step lands within one of the real
+    // Naming targets a readable, stable label rather than an exact match to any
+    // published palette, so assert the step lands within one of the conventional
     // ramp — the drift HSL produced was two to three steps.
     const step = (css: string) => Number(/-(\d+)$/.exec(nameColor(css))![1])
     const RAMP = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
@@ -108,7 +108,7 @@ describe('collectTokens', () => {
     expect(table.tokens.some((t) => t.value === '#e6e8eb')).toBe(false)
   })
 
-  it('does not invent spacing names Tailwind already covers', () => {
+  it('does not invent a spacing name from a measurement nobody named', () => {
     expect(table.tokens.filter((t) => t.kind === 'spacing')).toHaveLength(0)
   })
 
@@ -208,7 +208,6 @@ describe('emitThemeCss', () => {
     const table = collectTokens(docFor('card', '1:2'), { minUses: 2 })
     const css = emitThemeCss(table)
     expect(css).toContain(':root {')
-    expect(css).not.toContain('tailwindcss')
     expect(css).toContain('--color-surface-raised: #ffffff;')
   })
 
@@ -221,10 +220,11 @@ describe('emitThemeCss', () => {
 /**
  * What the naming actually promises.
  *
- * Not "the name agrees with Tailwind" — this design system is hand-tailored and
- * Tailwind's ramp is not the target. What it does promise is that the same
- * colour always produces the same name, and that two colours never end up
- * sharing one, because a collision silently merges two design decisions.
+ * Not "the name matches some published palette" — this design system is
+ * hand-tailored and no external ramp is the target. What it does promise is
+ * that the same colour always produces the same name, and that two colours
+ * never end up sharing one, because a collision silently merges two design
+ * decisions.
  */
 describe('token naming: stable and unique', () => {
   const source = { key: 'uA3bE5ofr6BgRakJzudL4L', node: '2:77' }
@@ -248,13 +248,14 @@ describe('token naming: stable and unique', () => {
   })
 
   it('counts each kind, so a generated test can assert the number', () => {
-    expect(manifest().counts).toEqual({ color: 7, fontFamily: 1 })
+    expect(manifest().counts).toEqual({ color: 9, fontFamily: 1, radius: 1 })
   })
 
   it('marks a token as named only when a Figma Style supplied the name', () => {
-    // Every colour in this file is unbound, so every name is derived. That is
-    // the design issue the theme flow exists to surface, asserted rather than
-    // assumed.
+    // Every colour in this file *is* bound — to Figma Variables, whose names
+    // `/v1/files/:key/nodes` withholds, so only the id arrives and every name
+    // is derived. That is the gap the theme flow exists to surface, asserted
+    // rather than assumed.
     expect(manifest().tokens.every((t) => !t.named)).toBe(true)
   })
 

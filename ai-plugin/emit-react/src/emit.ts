@@ -136,7 +136,12 @@ export function emit(doc: IRDocument, options: EmitOptions = {}): EmitResult {
   const rootFile = toFileName(rootName)
   state.files.set(rootFile, renderFile(rootName, doc.root, state, { isComponentRoot: true }))
 
-  return { files: state.files, rootComponent: rootName, components: state.manifest, css: state.css.css() }
+  return {
+    files: state.files,
+    rootComponent: rootName,
+    components: state.manifest,
+    css: state.css.css(),
+  }
 }
 
 /** The set name is the unit a designer sorts, so that is what the map is keyed by. */
@@ -318,10 +323,14 @@ function renderNode(
       // the parent has to go on a wrapper. Without this a component dropped
       // into an absolutely positioned parent lands at the flow position and
       // silently overlaps whatever is already there.
-      const placement = state.css.classFor(node, {
-        resolver: state.resolver,
-        parent: parent?.layout,
-      }, true)
+      const placement = state.css.classFor(
+        node,
+        {
+          resolver: state.resolver,
+          parent: parent?.layout,
+        },
+        true,
+      )
       const trace = traceAttr(node, state)
       return placement || trace
         ? `${pad}<div${placement ? ` className=${quote(placement)}` : ''}${trace}>\n${pad}  ${tag}\n${pad}</div>`

@@ -10,6 +10,12 @@ export interface Token {
   value: string
   /** Every Figma style/variable that resolves to this token. */
   sources: TokenRef[]
+  /**
+   * The name the design documented for this colour, where no Style or Variable
+   * carried one. A token with a label is named by the design as surely as one
+   * with a named source — the name simply arrived from the palette instead.
+   */
+  label?: string
   uses: number
 }
 
@@ -33,6 +39,11 @@ export interface CollectOptions {
    * entries nobody will ever reuse.
    */
   minUses?: number
+  /**
+   * `#rrggbb → name`, from the file's own colour documentation. Names a colour
+   * that no Style or Variable carries — the palette still says what it is for.
+   */
+  colorNames?: Record<string, string>
 }
 
 interface Candidate {
@@ -41,6 +52,8 @@ interface Candidate {
   numeric?: number
   /** Named source, if any — the only kind that earns its own token. */
   named?: TokenRef
+  /** A name from the file's colour documentation, where no source carries one. */
+  label?: string
   /** Every source seen for this candidate, named or not. */
   sources: TokenRef[]
   uses: number
@@ -59,8 +72,9 @@ interface Candidate {
  *      times is load-bearing whatever it is called.
  *
  * Spacing, radius, font size and shadow are deliberately *not* named by
- * frequency: Tailwind's built-in scale already covers them, and inventing
- * `--spacing-7` where `p-7` exists makes the output worse, not better.
+ * frequency: a name derived from a measurement (`--spacing-7`) carries no more
+ * meaning than the measurement itself, so it is worth a token only when the
+ * design binds a Variable and supplies a real name.
  */
 export function collectTokens(doc: IRDocument, options: CollectOptions = {}): TokenTable {
   const minUses = options.minUses ?? 3
@@ -109,6 +123,16 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     ),
   }))
 
+  foldUnnamedIntoNamed(candidates)
+
+  // A colour nothing binds can still be documented. Applied after folding so a
+  // documented value that already has a named token keeps that token's name.
+  for (const c of candidates.values()) {
+    if (c.kind !== 'color' || c.named) continue
+    const documented = options.colorNames?.[c.value.toLowerCase()]
+    if (documented) c.label = documented
+  }
+
   const tokens: Token[] = []
   const used = new Set<string>()
 
@@ -124,10 +148,51 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     const exempt = c.sources.length > 0 || c.kind === 'fontFamily'
     if (!exempt && (c.kind !== 'color' || c.uses < minUses)) continue
     used.add(`${c.kind}:${name}`)
-    tokens.push({ kind: c.kind, name, value: c.value, sources: c.sources, uses: c.uses })
+    tokens.push({
+      kind: c.kind,
+      name,
+      value: c.value,
+      sources: c.sources,
+      ...(c.label ? { label: c.label } : {}),
+      uses: c.uses,
+    })
   }
 
   return { tokens, resolver: makeResolver(tokens), fonts }
+}
+
+/**
+ * Folds unbound usages of a colour into the named token for that same value.
+ *
+ * Binding is applied unevenly in practice: a colour is bound on some nodes and
+ * left as a raw hex on others. Those raw usages carry no source, so they form a
+ * second candidate keyed by value — and the design's one colour would emit two
+ * properties, a named one and a derived twin holding the identical value. That
+ * breaks the copy in the opposite direction from a merge, and is harder to spot
+ * because both names look reasonable.
+ *
+ * Only folds when **exactly one** named candidate holds the value. Where two
+ * do, nothing can say which of them an unbound usage meant, so it is left
+ * derived rather than attached to a guess.
+ */
+function foldUnnamedIntoNamed(candidates: Map<string, Candidate>): void {
+  const namedByValue = new Map<string, Candidate[]>()
+  for (const c of candidates.values()) {
+    if (!c.named) continue
+    const key = `${c.kind}:${c.value}`
+    if (!namedByValue.has(key)) namedByValue.set(key, [])
+    namedByValue.get(key)!.push(c)
+  }
+
+  for (const [key, c] of [...candidates.entries()]) {
+    if (c.named) continue
+    const owners = namedByValue.get(`${c.kind}:${c.value}`)
+    if (owners?.length !== 1) continue
+    const owner = owners[0]!
+    owner.uses += c.uses
+    owner.sources.push(...c.sources)
+    candidates.delete(key)
+  }
 }
 
 /**
@@ -185,7 +250,7 @@ const byPriority = (a: Candidate, b: Candidate): number => {
 }
 
 function nameFor(c: Candidate, used: Set<string>): string | undefined {
-  const base = c.named ? slugify(c.named.name!) : synthesize(c)
+  const base = c.named ? slugify(c.named.name!) : c.label ? slugify(c.label) : synthesize(c)
   if (!base) return undefined
 
   let name = base
@@ -246,8 +311,8 @@ function familyFor(rgb: { r: number; g: number; b: number }, h: number, l: numbe
   // judge it on a much lower bar or every tint flattens to `gray-50`.
   const threshold = l > 0.85 ? 0.04 : GREY_CHROMA
   if (chroma < threshold) {
-    // Tailwind's own grey ramps are tinted; match the tint rather than
-    // flattening every muted colour to `neutral`.
+    // Conventional grey ramps are tinted rather than pure; match the tint
+    // rather than flattening every muted colour to `neutral`.
     if (h >= 180 && h < 260) return 'slate'
     if (h >= 20 && h < 70) return 'stone'
     return 'gray'
@@ -255,13 +320,14 @@ function familyFor(rgb: { r: number; g: number; b: number }, h: number, l: numbe
   return hueFamily(h)
 }
 
-/** Below this channel spread a colour reads as grey. Tailwind's slate-500
- *  (#64748b) sits at 0.15, and a muted brand colour rarely drops this low. */
+/** Below this channel spread a colour reads as grey. A representative mid
+ *  slate (#64748b) sits at 0.15, and a muted brand colour rarely drops this
+ *  low. */
 const GREY_CHROMA = 0.2
 
 /**
- * CIE L* of each step on Tailwind's ramp, averaged across the slate, blue,
- * green, red and amber scales.
+ * CIE L* of each step on a conventional 50–950 ramp, averaged across slate,
+ * blue, green, red and amber scales.
  *
  * HSL lightness is not comparable across hues — green-500 and blue-500 differ
  * by 0.15 in HSL-L, enough to name #22c55e as `green-700`. L* is perceptually

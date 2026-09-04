@@ -22,13 +22,15 @@ export interface TokenManifestEntry {
   value: string
   uses: number
   /**
-   * Whether a human named this, or the generator derived it from the value.
+   * Whether the design named this, or the generator derived it from the value.
    *
    * A derived name describes a colour; it cannot say what the colour is for.
    * This flag is what makes that visible in the story and in the audit rather
    * than only in somebody's memory.
    */
   named: boolean
+  /** The name the design documented, where no Style or Variable carried one. */
+  label?: string
   sources: { source: 'style' | 'variable'; key: string; name?: string }[]
 }
 
@@ -63,10 +65,12 @@ const entry = (t: Token): TokenManifestEntry => ({
   cssVar: `${NAMESPACE[t.kind]}-${t.name}`,
   value: t.value,
   uses: t.uses,
-  // Variables usually arrive without a name — the endpoint that carries them is
-  // Enterprise-gated — so a bound Variable still counts as unnamed here. That is
-  // the honest reading: the generator has no name from it either.
-  named: t.sources.some((s) => Boolean(s.name)),
+  // A Variable usually arrives without a name — the endpoint carrying them is
+  // Enterprise-gated — so a bound Variable alone still counts as unnamed. It
+  // counts as named once something *else* supplied one: a Colour Style, or the
+  // file's own palette documentation.
+  named: t.sources.some((s) => Boolean(s.name)) || Boolean(t.label),
+  ...(t.label ? { label: t.label } : {}),
   sources: t.sources.map((s) => ({
     source: s.source,
     key: s.key,

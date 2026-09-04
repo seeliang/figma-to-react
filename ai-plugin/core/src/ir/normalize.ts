@@ -10,6 +10,13 @@ export interface NormalizeInput {
   components?: Record<string, ComponentMeta>
   componentSets?: Record<string, ComponentMeta>
   styles?: Record<string, StyleMeta>
+  /**
+   * `VariableID:… → name`. The REST API sends bound Variables as bare ids, so
+   * without this every Variable-bound token is named from its value — and two
+   * Variables sharing a value collapse into one token. See
+   * {@link ../tokens/palette.ts readPalette} for where the names come from.
+   */
+  variables?: Record<string, string>
 }
 
 /**
@@ -27,7 +34,7 @@ const VECTOR_TYPES: ReadonlySet<NodeType> = new Set<NodeType>([
 ])
 
 export function normalize(input: NormalizeInput): IRDocument {
-  const ctx: StyleContext = { styles: input.styles ?? {} }
+  const ctx: StyleContext = { styles: input.styles ?? {}, variables: input.variables ?? {} }
   const components = new Map<string, IRNode>()
   const componentNames = { ...(input.components ?? {}), ...(input.componentSets ?? {}) }
 
@@ -127,7 +134,7 @@ function visit(
     id: node.id,
     name: node.name,
     kind,
-    layout: toLayout(node, parent),
+    layout: toLayout(node, ctx, parent),
     box: toBoxStyle(node, ctx),
     children: [],
   }

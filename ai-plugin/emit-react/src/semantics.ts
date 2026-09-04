@@ -19,8 +19,8 @@ export interface Semantic {
   attrs: string[]
   /**
    * Classes the element needs to behave like the control it is, independent of
-   * anything the design says. Tailwind v4's Preflight sets `cursor: default` on
-   * buttons, so a generated button shows an arrow rather than a hand unless
+   * anything the design says. A button carries `cursor: default` in most UA
+   * stylesheets, so a generated button shows an arrow rather than a hand unless
    * this puts it back.
    */
   classes?: string[]

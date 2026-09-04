@@ -1,9 +1,9 @@
 /**
  * The intermediate representation.
  *
- * Deliberately framework-independent: nothing here mentions React, JSX, CSS or
- * Tailwind. An emitter for another framework is a new package consuming these
- * types, not a rewrite of the normalizer.
+ * Deliberately framework-independent: nothing here mentions React, JSX or CSS.
+ * An emitter for another framework is a new package consuming these types, not
+ * a rewrite of the normalizer.
  *
  * Every style value that could plausibly be a design token is wrapped so it
  * carries both a literal and an optional {@link TokenRef}. That dual form is
