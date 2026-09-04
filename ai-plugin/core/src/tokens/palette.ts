@@ -56,6 +56,8 @@ export interface PaletteAmbiguity {
 }
 
 export interface Palette {
+  /** The documentation frame's own name — what the design calls this palette. */
+  title?: string
   /** Every swatch found, in document order. */
   swatches: PaletteSwatch[]
   /** `VariableID:… → name`, only where the join is certain. */
@@ -120,9 +122,20 @@ function readCell(
   }
 }
 
-/** The name to ship for a swatch: the layer's own name, else what it displays. */
+/**
+ * The name to ship for a swatch: **what it displays**, else its layer name.
+ *
+ * The displayed label is the name the design presents — the one a designer
+ * reads, points at and refers to. A layer name is metadata nobody is looking
+ * at, so reaching for it would ship a name the design does not show.
+ *
+ * When the displayed label is poor — `Neutral-0f` says no more than the derived
+ * name it replaces — that is a **design issue**, reported so it can be fixed in
+ * Figma. Silently substituting a better name found elsewhere in the file would
+ * hide it.
+ */
 export function nameOf(swatch: PaletteSwatch): string {
-  return swatch.layerName || swatch.label || ''
+  return swatch.label || swatch.layerName || ''
 }
 
 /**
@@ -152,7 +165,10 @@ export function readPalette(document: FigmaNode): Palette | undefined {
   }
   if (!best || best.swatches.length < 2) return undefined
 
-  return resolve(best.swatches, best.groups, document)
+  return {
+    ...(best.frame.name ? { title: best.frame.name } : {}),
+    ...resolve(best.swatches, best.groups, document),
+  }
 }
 
 /** Walks one frame's direct children, tracking headings as it goes. */
@@ -243,43 +259,48 @@ function resolve(
     const name = nameOf(swatch)
     if (!name) continue
 
-    // 1. Bound: exact, by id. Nothing can make this wrong.
+    // 1. The swatch is bound: the join is by id and cannot be wrong.
     if (swatch.variable) {
       names[swatch.variable] = name
       continue
     }
 
-    const cells = cellsPerValue.get(swatch.value) ?? []
-    const vars = [...(varsByValue.get(swatch.value) ?? [])]
+    // 2. Unbound: the palette still names the **value**, which is a different
+    //    claim from naming a *variable*. That a second Variable also renders
+    //    this hex does not make the design's own label for the colour wrong —
+    //    it makes that Variable undocumented, which is reported separately.
+    //    Refusing here is what produced `--color-blue-600` for a colour the
+    //    file plainly calls Primary.
+    byValue[swatch.value] = byValue[swatch.value] ?? name
 
-    // 2. Unbound: the value may still identify it, but only unambiguously.
-    if (cells.length > 1) {
-      if (!ambiguous.some((a) => a.value === swatch.value)) {
-        ambiguous.push({
-          value: swatch.value,
-          names: cells.map(nameOf),
-          variables: vars,
-          reason: `${cells.length} swatches document this value, so it cannot say which is which`,
-        })
-      }
-      continue
-    }
-    if (vars.length > 1) {
+    const vars = [...(varsByValue.get(swatch.value) ?? [])]
+    // Once per value, not once per swatch that happens to carry it.
+    if (vars.length > 1 && !ambiguous.some((a) => a.value === swatch.value)) {
       ambiguous.push({
         value: swatch.value,
         names: [name],
         variables: vars,
-        reason: `${vars.length} variables render this value, so the label cannot say which one it names`,
+        reason:
+          `${vars.length} variables render this value, so they share one token — ` +
+          'bind each swatch to the Variable it documents to separate them',
       })
-      continue
     }
-    if (vars.length === 1) {
-      names[vars[0]!] = name
-      continue
-    }
-    // No variable holds it anywhere: the colour still earns a name if it earns
-    // a token, which it does by frequency.
-    byValue[swatch.value] = name
+  }
+
+  // Several swatches may document one value — `Primary Foreground` and
+  // `Background` are both white, and are two design decisions rather than one.
+  // They are kept apart, so each becomes its own custom property; only the
+  // Variables behind them are indistinguishable, and that is reported.
+  for (const [value, cells] of cellsPerValue) {
+    if (cells.length < 2) continue
+    ambiguous.push({
+      value,
+      names: cells.map(nameOf),
+      variables: [...(varsByValue.get(value) ?? [])],
+      reason:
+        `${cells.length} swatches document this value; each becomes its own token, but a raw ` +
+        'use of the value cannot say which one it meant',
+    })
   }
 
   return { swatches, names, byValue, ambiguous, groups }

@@ -10,6 +10,10 @@ export interface Token {
   value: string
   /** Every Figma style/variable that resolves to this token. */
   sources: TokenRef[]
+  /** The heading the design files this under — `PRIMARY`, `SEMANTIC`. */
+  group?: string
+  /** Position in the design's own order, so it can be presented as designed. */
+  order?: number
   /**
    * The name the design documented for this colour, where no Style or Variable
    * carried one. A token with a label is named by the design as surely as one
@@ -44,6 +48,18 @@ export interface CollectOptions {
    * that no Style or Variable carries — the palette still says what it is for.
    */
   colorNames?: Record<string, string>
+  /**
+   * Swatches the design documents, in its own order. Several may carry the same
+   * value — `Primary Foreground` and `Background` are both white — and those are
+   * two design decisions, not one. Each becomes its own custom property.
+   */
+  colorSwatches?: { name: string; value: string; group?: string; order: number }[]
+  /**
+   * `#rrggbb → where the design puts it`. The palette's grouping and order are
+   * design decisions as much as the names are; without this the theme is
+   * re-sorted by usage and the design's own structure is lost.
+   */
+  colorPlacement?: Record<string, { group?: string; order: number }>
 }
 
 interface Candidate {
@@ -54,6 +70,10 @@ interface Candidate {
   named?: TokenRef
   /** A name from the file's colour documentation, where no source carries one. */
   label?: string
+  /** The heading the design files this under. */
+  group?: string
+  /** Position in the design's own order. */
+  order?: number
   /** Every source seen for this candidate, named or not. */
   sources: TokenRef[]
   uses: number
@@ -123,12 +143,50 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     ),
   }))
 
+  // The palette is a **declaration**: every colour the design documents earns a
+  // token, whatever the file happens to do with it. Without this, a colour is
+  // lost whenever its swatch cannot become a candidate on its own — the Error
+  // swatch is a flattened vector, exported as SVG, so its fill never reaches the
+  // IR at all, and its one real use is an unbound border below `minUses`.
+  //
+  // The first swatch for a value adopts the candidate already carrying it, so a
+  // documented colour and its uses stay one token. Later swatches get their own,
+  // because `Primary Foreground` and `Background` are two decisions that happen
+  // to share a value today.
+  const seen = new Set<string>()
+  for (const swatch of options.colorSwatches ?? []) {
+    const first = !seen.has(swatch.value)
+    seen.add(swatch.value)
+    const existing = first
+      ? [...candidates.values()].find((c) => c.kind === 'color' && c.value === swatch.value)
+      : undefined
+    if (existing) {
+      existing.label ??= swatch.name
+      existing.group ??= swatch.group
+      existing.order ??= swatch.order
+      continue
+    }
+    candidates.set(`color:swatch:${swatch.order}`, {
+      kind: 'color',
+      value: swatch.value,
+      label: swatch.name,
+      ...(swatch.group ? { group: swatch.group } : {}),
+      order: swatch.order,
+      sources: [],
+      uses: 0,
+    })
+  }
+
   foldUnnamedIntoNamed(candidates)
 
   // A colour nothing binds can still be documented. Applied after folding so a
   // documented value that already has a named token keeps that token's name.
   for (const c of candidates.values()) {
     if (c.kind !== 'color' || c.named) continue
+    // A candidate seeded from a specific swatch already carries that swatch's
+    // own name. Overwriting it with the value's first name is what turned
+    // `Neutral-ff` into a second `Primary Foreground`.
+    if (c.label) continue
     const documented = options.colorNames?.[c.value.toLowerCase()]
     if (documented) c.label = documented
   }
@@ -145,15 +203,23 @@ export function collectTokens(doc: IRDocument, options: CollectOptions = {}): To
     // have to earn their place by frequency.
     // A typeface is never incidental: one use still has to be spelled out
     // somewhere, and a `--font-*` entry is the readable place for it.
-    const exempt = c.sources.length > 0 || c.kind === 'fontFamily'
+    // A colour the design documents earns a token however little the file uses
+    // it: the palette is a declaration, not an accident of frequency.
+    const exempt = c.sources.length > 0 || c.kind === 'fontFamily' || Boolean(c.label)
     if (!exempt && (c.kind !== 'color' || c.uses < minUses)) continue
     used.add(`${c.kind}:${name}`)
+    const placement =
+      c.kind === 'color' ? options.colorPlacement?.[c.value.toLowerCase()] : undefined
+    const group = c.group ?? placement?.group
+    const order = c.order ?? placement?.order
     tokens.push({
       kind: c.kind,
       name,
       value: c.value,
       sources: c.sources,
       ...(c.label ? { label: c.label } : {}),
+      ...(group ? { group } : {}),
+      ...(order !== undefined ? { order } : {}),
       uses: c.uses,
     })
   }

@@ -196,7 +196,7 @@ the file:
 Design file — 6 thing(s) to fix in Figma, not in code:
 
   !! 75 colours bound to no Style or Variable, so token names are synthesised
-     (--color-blue-600 rather than --color-primary)
+    (--color-primary not --color-blue-600)
      fix: select the swatch and create a Colour Style, or bind a Variable.
 
    ! 1 interactive component with no hover, pressed or disabled variant, so the

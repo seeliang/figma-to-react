@@ -6,12 +6,17 @@ import {
   emitFontCss,
   emitThemeCss,
   normalize,
+  collectFigmaTokens,
+  emitFigmaTokenDoc,
+  nameOf,
   parseFigmaTarget,
   readPalette,
   resolveAssets,
 } from '@figma-to-react/core'
 import type {
   DesignFinding,
+  FigmaTokens,
+  Palette,
   IRDocument,
   Layer,
   TokenManifest,
@@ -82,6 +87,13 @@ export interface RunResult {
    * that each token reached the bundle, and the diff between two generations.
    */
   tokenManifest?: TokenManifest
+  /**
+   * The design's own token vocabulary, as markdown. Records the Figma file, not
+   * the generated output — see {@link emitFigmaTokenDoc}.
+   */
+  figmaTokenDoc?: string
+  /** The same design vocabulary as data, for tests to assert the theme against. */
+  figmaTokens?: FigmaTokens
 }
 
 /**
@@ -90,6 +102,26 @@ export interface RunResult {
  * Kept separate from the command definitions so `gen` and `tokens` share one
  * code path, and so it can be driven from a script without the CLI.
  */
+/**
+ * Where the design puts each colour, keyed by value.
+ *
+ * The palette's grouping and order are design decisions in exactly the way the
+ * names are. Passing only the names — which is all this did — let the theme be
+ * re-sorted by usage, so the output no longer resembled the palette it came
+ * from. First swatch wins on a repeated value: the design showed it there.
+ */
+function placementOf(palette: Palette): Record<string, { group?: string; order: number }> {
+  const out: Record<string, { group?: string; order: number }> = {}
+  for (const swatch of palette.swatches) {
+    if (out[swatch.value]) continue
+    out[swatch.value] = {
+      ...(swatch.group ? { group: swatch.group } : {}),
+      order: swatch.index,
+    }
+  }
+  return out
+}
+
 export async function run(options: RunOptions): Promise<RunResult> {
   const { fileKey, nodeId } = parseFigmaTarget(options.target)
   const client = new FigmaClient({ token: options.token, baseUrl: options.baseUrl })
@@ -140,7 +172,18 @@ export async function run(options: RunOptions): Promise<RunResult> {
   if (options.tokens) {
     table = collectTokens(doc, {
       minUses: options.minUses ?? 3,
-      ...(palette ? { colorNames: palette.byValue } : {}),
+      ...(palette
+        ? {
+            colorNames: palette.byValue,
+            colorPlacement: placementOf(palette),
+            colorSwatches: palette.swatches.map((sw) => ({
+              name: nameOf(sw),
+              value: sw.value,
+              ...(sw.group ? { group: sw.group } : {}),
+              order: sw.index,
+            })),
+          }
+        : {}),
     })
     options.onProgress?.(`Collected ${table.tokens.length} design tokens`)
   }
@@ -155,6 +198,12 @@ export async function run(options: RunOptions): Promise<RunResult> {
     )
   }
 
+  const figmaSource = {
+    key: fileKey,
+    ...(nodeId ? { node: nodeId } : {}),
+    ...(lastModified ? { lastModified } : {}),
+  }
+
   const emitted = emit(doc, {
     resolver: table?.resolver,
     repeatThreshold: options.repeatThreshold ?? 3,
@@ -165,11 +214,20 @@ export async function run(options: RunOptions): Promise<RunResult> {
   })
 
   const tokenManifest = table
-    ? buildTokenManifest(table, {
-        key: fileKey,
-        ...(nodeId ? { node: nodeId } : {}),
-        ...(lastModified ? { lastModified } : {}),
-      })
+    ? buildTokenManifest(
+        table,
+        {
+          key: fileKey,
+          ...(nodeId ? { node: nodeId } : {}),
+          ...(lastModified ? { lastModified } : {}),
+        },
+        palette
+          ? {
+              ...(palette.title ? { title: palette.title } : {}),
+              groups: palette.groups.map((g) => g.name).filter((n): n is string => Boolean(n)),
+            }
+          : undefined,
+      )
     : undefined
 
   const stories = new Map<string, string>()
@@ -212,6 +270,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
     css: emitted.css,
     assets: assetResult.files,
     themeCss: table ? emitThemeCss(table) : undefined,
+    figmaTokenDoc: emitFigmaTokenDoc(entry.document, palette, figmaSource),
+    figmaTokens: collectFigmaTokens(entry.document, palette, figmaSource),
     fontCss:
       table && options.fontImport !== false && table.fonts.length > 0
         ? emitFontCss(table.fonts)

@@ -25,6 +25,9 @@ design-system wrappers are out of scope. Popularity is not sufficient reason to 
 introduce a tool only when it removes a demonstrated project-specific problem and does not obscure
 the native configuration it replaces.
 
+## Package versioning
+the plugin script run will remove code source code and storybook, and regenerate those code. 
+
 ## Distribution
 
 NX and CI manage semantic versioning and releases. The workspace dependency graph must reflect the

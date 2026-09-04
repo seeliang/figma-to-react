@@ -1,0 +1,1330 @@
+{
+  "2:77": {
+    "name": "📐 Design System",
+    "type": "SECTION",
+    "x": 0,
+    "y": 0,
+    "w": 1546,
+    "h": 1850
+  },
+  "2:65": {
+    "name": "Input Field",
+    "type": "COMPONENT_SET",
+    "x": 40,
+    "y": 80,
+    "w": 609,
+    "h": 92
+  },
+  "2:59": {
+    "name": "State=Default",
+    "type": "COMPONENT",
+    "x": 64,
+    "y": 104,
+    "w": 138,
+    "h": 44
+  },
+  "2:60": {
+    "name": "Placeholder text",
+    "type": "TEXT",
+    "x": 79,
+    "y": 117,
+    "w": 108,
+    "h": 18
+  },
+  "16:3": {
+    "name": "State=Hover",
+    "type": "COMPONENT",
+    "x": 226,
+    "y": 104,
+    "w": 138,
+    "h": 44
+  },
+  "16:4": {
+    "name": "Placeholder text",
+    "type": "TEXT",
+    "x": 241,
+    "y": 117,
+    "w": 108,
+    "h": 18
+  },
+  "2:61": {
+    "name": "State=Focused",
+    "type": "COMPONENT",
+    "x": 388,
+    "y": 104,
+    "w": 103,
+    "h": 44
+  },
+  "2:62": {
+    "name": "Input value",
+    "type": "TEXT",
+    "x": 403,
+    "y": 117,
+    "w": 73,
+    "h": 18
+  },
+  "2:63": {
+    "name": "State=Error",
+    "type": "COMPONENT",
+    "x": 515,
+    "y": 104,
+    "w": 110,
+    "h": 44
+  },
+  "2:64": {
+    "name": "Invalid input",
+    "type": "TEXT",
+    "x": 530,
+    "y": 117,
+    "w": 80,
+    "h": 18
+  },
+  "2:72": {
+    "name": "Button",
+    "type": "COMPONENT_SET",
+    "x": 40,
+    "y": 261,
+    "w": 800,
+    "h": 234
+  },
+  "2:66": {
+    "name": "Type=Primary, State=Default",
+    "type": "COMPONENT",
+    "x": 64,
+    "y": 285,
+    "w": 360,
+    "h": 46
+  },
+  "2:67": {
+    "name": "Button Label",
+    "type": "TEXT",
+    "x": 201,
+    "y": 299.5,
+    "w": 86,
+    "h": 17
+  },
+  "16:5": {
+    "name": "Type=Primary, State=Hover",
+    "type": "COMPONENT",
+    "x": 448,
+    "y": 285,
+    "w": 360,
+    "h": 46
+  },
+  "16:6": {
+    "name": "Button Label",
+    "type": "TEXT",
+    "x": 585,
+    "y": 299.5,
+    "w": 86,
+    "h": 17
+  },
+  "2:68": {
+    "name": "Type=Secondary, State=Default",
+    "type": "COMPONENT",
+    "x": 64,
+    "y": 355,
+    "w": 360,
+    "h": 46
+  },
+  "2:69": {
+    "name": "Button Label",
+    "type": "TEXT",
+    "x": 201,
+    "y": 369.5,
+    "w": 86,
+    "h": 17
+  },
+  "16:7": {
+    "name": "Type=Secondary, State=Hover",
+    "type": "COMPONENT",
+    "x": 448,
+    "y": 355,
+    "w": 360,
+    "h": 46
+  },
+  "16:8": {
+    "name": "Button Label",
+    "type": "TEXT",
+    "x": 585,
+    "y": 369.5,
+    "w": 86,
+    "h": 17
+  },
+  "2:70": {
+    "name": "Type=Ghost, State=Default",
+    "type": "COMPONENT",
+    "x": 64,
+    "y": 425,
+    "w": 360,
+    "h": 46
+  },
+  "2:71": {
+    "name": "Button Label",
+    "type": "TEXT",
+    "x": 202,
+    "y": 439.5,
+    "w": 84,
+    "h": 17
+  },
+  "16:9": {
+    "name": "Type=Ghost, State=Hover",
+    "type": "COMPONENT",
+    "x": 448,
+    "y": 425,
+    "w": 360,
+    "h": 46
+  },
+  "16:10": {
+    "name": "Button Label",
+    "type": "TEXT",
+    "x": 586,
+    "y": 439.5,
+    "w": 84,
+    "h": 17
+  },
+  "2:73": {
+    "name": "Form Field",
+    "type": "COMPONENT",
+    "x": 40,
+    "y": 584,
+    "w": 360,
+    "h": 66
+  },
+  "2:74": {
+    "name": "Label",
+    "type": "TEXT",
+    "x": 40,
+    "y": 584,
+    "w": 360,
+    "h": 16
+  },
+  "2:75": {
+    "name": "Input Field",
+    "type": "INSTANCE",
+    "x": 40,
+    "y": 606,
+    "w": 138,
+    "h": 44
+  },
+  "I2:75;2:60": {
+    "name": "Placeholder text",
+    "type": "TEXT",
+    "x": 55,
+    "y": 619,
+    "w": 108,
+    "h": 18
+  },
+  "4:3": {
+    "name": "Color Palette",
+    "type": "FRAME",
+    "x": 40,
+    "y": 1200,
+    "w": 445,
+    "h": 451
+  },
+  "4:4": {
+    "name": "Color Palette",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1224,
+    "w": 101,
+    "h": 19
+  },
+  "4:5": {
+    "name": "PRIMARY",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1259,
+    "w": 57,
+    "h": 15
+  },
+  "4:6": {
+    "name": "Primary Row",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1290,
+    "w": 161,
+    "h": 81
+  },
+  "4:7": {
+    "name": "Primary",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1290,
+    "w": 44,
+    "h": 81
+  },
+  "4:8": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 64,
+    "y": 1290,
+    "w": 40,
+    "h": 40
+  },
+  "4:9": {
+    "name": "Primary",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1338,
+    "w": 41,
+    "h": 13
+  },
+  "4:10": {
+    "name": "#2563EB",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1359,
+    "w": 44,
+    "h": 12
+  },
+  "4:11": {
+    "name": "Primary Foreground",
+    "type": "FRAME",
+    "x": 120,
+    "y": 1290,
+    "w": 105,
+    "h": 81
+  },
+  "4:12": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 120,
+    "y": 1290,
+    "w": 40,
+    "h": 40
+  },
+  "4:13": {
+    "name": "Primary Foreground",
+    "type": "TEXT",
+    "x": 120,
+    "y": 1338,
+    "w": 105,
+    "h": 13
+  },
+  "4:14": {
+    "name": "#FFFFFF",
+    "type": "TEXT",
+    "x": 120,
+    "y": 1359,
+    "w": 42,
+    "h": 12
+  },
+  "4:15": {
+    "name": "NEUTRALS",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1387,
+    "w": 67,
+    "h": 15
+  },
+  "4:16": {
+    "name": "Neutrals Row",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1418,
+    "w": 397,
+    "h": 81
+  },
+  "4:17": {
+    "name": "Foreground",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1418,
+    "w": 55,
+    "h": 81
+  },
+  "4:18": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 64,
+    "y": 1418,
+    "w": 40,
+    "h": 40
+  },
+  "4:19": {
+    "name": "Neutral-0f",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1466,
+    "w": 55,
+    "h": 13
+  },
+  "4:20": {
+    "name": "#0F172A",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1487,
+    "w": 42,
+    "h": 12
+  },
+  "4:21": {
+    "name": "Muted",
+    "type": "FRAME",
+    "x": 131,
+    "y": 1418,
+    "w": 58,
+    "h": 81
+  },
+  "4:22": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 131,
+    "y": 1418,
+    "w": 40,
+    "h": 40
+  },
+  "4:23": {
+    "name": "Neutral-64",
+    "type": "TEXT",
+    "x": 131,
+    "y": 1466,
+    "w": 58,
+    "h": 13
+  },
+  "4:24": {
+    "name": "#64748B",
+    "type": "TEXT",
+    "x": 131,
+    "y": 1487,
+    "w": 44,
+    "h": 12
+  },
+  "4:25": {
+    "name": "Placeholder",
+    "type": "FRAME",
+    "x": 201,
+    "y": 1418,
+    "w": 58,
+    "h": 81
+  },
+  "4:26": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 201,
+    "y": 1418,
+    "w": 40,
+    "h": 40
+  },
+  "4:27": {
+    "name": "Neutral-94",
+    "type": "TEXT",
+    "x": 201,
+    "y": 1466,
+    "w": 58,
+    "h": 13
+  },
+  "4:28": {
+    "name": "#94A3B8",
+    "type": "TEXT",
+    "x": 201,
+    "y": 1487,
+    "w": 45,
+    "h": 12
+  },
+  "4:29": {
+    "name": "Border",
+    "type": "FRAME",
+    "x": 271,
+    "y": 1418,
+    "w": 57,
+    "h": 81
+  },
+  "4:30": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 271,
+    "y": 1418,
+    "w": 40,
+    "h": 40
+  },
+  "4:31": {
+    "name": "Neutral-e2",
+    "type": "TEXT",
+    "x": 271,
+    "y": 1466,
+    "w": 57,
+    "h": 13
+  },
+  "4:32": {
+    "name": "#E2E8F0",
+    "type": "TEXT",
+    "x": 271,
+    "y": 1487,
+    "w": 43,
+    "h": 12
+  },
+  "4:33": {
+    "name": "Surface",
+    "type": "FRAME",
+    "x": 340,
+    "y": 1418,
+    "w": 57,
+    "h": 81
+  },
+  "4:34": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 340,
+    "y": 1418,
+    "w": 40,
+    "h": 40
+  },
+  "4:35": {
+    "name": "Neutral-F8",
+    "type": "TEXT",
+    "x": 340,
+    "y": 1466,
+    "w": 57,
+    "h": 13
+  },
+  "4:36": {
+    "name": "#F8FAFC",
+    "type": "TEXT",
+    "x": 340,
+    "y": 1487,
+    "w": 44,
+    "h": 12
+  },
+  "4:37": {
+    "name": "Background",
+    "type": "FRAME",
+    "x": 409,
+    "y": 1418,
+    "w": 52,
+    "h": 81
+  },
+  "4:38": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 409,
+    "y": 1418,
+    "w": 40,
+    "h": 40
+  },
+  "4:39": {
+    "name": "Neutral-ff",
+    "type": "TEXT",
+    "x": 409,
+    "y": 1466,
+    "w": 52,
+    "h": 13
+  },
+  "4:40": {
+    "name": "#FFFFFF",
+    "type": "TEXT",
+    "x": 409,
+    "y": 1487,
+    "w": 42,
+    "h": 12
+  },
+  "4:41": {
+    "name": "SEMANTIC",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1515,
+    "w": 67,
+    "h": 15
+  },
+  "4:42": {
+    "name": "Semantic Row",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1546,
+    "w": 157,
+    "h": 81
+  },
+  "4:43": {
+    "name": "Error",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1546,
+    "w": 44,
+    "h": 81
+  },
+  "4:44": {
+    "name": "Ellipse",
+    "type": "VECTOR",
+    "x": 64,
+    "y": 1546,
+    "w": 40,
+    "h": 40
+  },
+  "4:45": {
+    "name": "Error",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1594,
+    "w": 26,
+    "h": 13
+  },
+  "4:46": {
+    "name": "#EF4444",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1615,
+    "w": 44,
+    "h": 12
+  },
+  "4:47": {
+    "name": "Success",
+    "type": "FRAME",
+    "x": 120,
+    "y": 1546,
+    "w": 45,
+    "h": 81
+  },
+  "4:48": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 120,
+    "y": 1546,
+    "w": 40,
+    "h": 40
+  },
+  "4:49": {
+    "name": "Success",
+    "type": "TEXT",
+    "x": 120,
+    "y": 1594,
+    "w": 45,
+    "h": 13
+  },
+  "4:50": {
+    "name": "#22C55E",
+    "type": "TEXT",
+    "x": 120,
+    "y": 1615,
+    "w": 44,
+    "h": 12
+  },
+  "4:51": {
+    "name": "Warning",
+    "type": "FRAME",
+    "x": 177,
+    "y": 1546,
+    "w": 44,
+    "h": 81
+  },
+  "4:52": {
+    "name": "Ellipse",
+    "type": "ELLIPSE",
+    "x": 177,
+    "y": 1546,
+    "w": 40,
+    "h": 40
+  },
+  "4:53": {
+    "name": "Warning",
+    "type": "TEXT",
+    "x": 177,
+    "y": 1594,
+    "w": 44,
+    "h": 13
+  },
+  "4:54": {
+    "name": "#F59E0B",
+    "type": "TEXT",
+    "x": 177,
+    "y": 1615,
+    "w": 44,
+    "h": 12
+  },
+  "4:55": {
+    "name": "Typography Scale",
+    "type": "FRAME",
+    "x": 40,
+    "y": 747,
+    "w": 520,
+    "h": 356
+  },
+  "4:56": {
+    "name": "Typography Scale",
+    "type": "TEXT",
+    "x": 64,
+    "y": 771,
+    "w": 140,
+    "h": 19
+  },
+  "4:57": {
+    "name": "Title",
+    "type": "FRAME",
+    "x": 64,
+    "y": 810,
+    "w": 359,
+    "h": 34
+  },
+  "4:58": {
+    "name": "meta",
+    "type": "FRAME",
+    "x": 64,
+    "y": 813.5,
+    "w": 120,
+    "h": 27
+  },
+  "4:59": {
+    "name": "Title",
+    "type": "TEXT",
+    "x": 64,
+    "y": 813.5,
+    "w": 24,
+    "h": 13
+  },
+  "4:60": {
+    "name": "Inter Bold / 28px / 34px",
+    "type": "TEXT",
+    "x": 64,
+    "y": 828.5,
+    "w": 112,
+    "h": 12
+  },
+  "4:61": {
+    "name": "Create Account",
+    "type": "TEXT",
+    "x": 208,
+    "y": 810,
+    "w": 215,
+    "h": 34
+  },
+  "4:62": {
+    "name": "Subtitle",
+    "type": "FRAME",
+    "x": 64,
+    "y": 864,
+    "w": 382,
+    "h": 27
+  },
+  "4:63": {
+    "name": "meta",
+    "type": "FRAME",
+    "x": 64,
+    "y": 864,
+    "w": 120,
+    "h": 27
+  },
+  "4:64": {
+    "name": "Subtitle",
+    "type": "TEXT",
+    "x": 64,
+    "y": 864,
+    "w": 41,
+    "h": 13
+  },
+  "4:65": {
+    "name": "Inter Regular / 14px / 20px",
+    "type": "TEXT",
+    "x": 64,
+    "y": 879,
+    "w": 125,
+    "h": 12
+  },
+  "4:66": {
+    "name": "Sign up in seconds to start building.",
+    "type": "TEXT",
+    "x": 208,
+    "y": 867.5,
+    "w": 238,
+    "h": 20
+  },
+  "4:67": {
+    "name": "Label",
+    "type": "FRAME",
+    "x": 64,
+    "y": 911,
+    "w": 206,
+    "h": 27
+  },
+  "4:68": {
+    "name": "meta",
+    "type": "FRAME",
+    "x": 64,
+    "y": 911,
+    "w": 120,
+    "h": 27
+  },
+  "4:69": {
+    "name": "Label",
+    "type": "TEXT",
+    "x": 64,
+    "y": 911,
+    "w": 29,
+    "h": 13
+  },
+  "4:70": {
+    "name": "Inter Medium / 13px / 16px",
+    "type": "TEXT",
+    "x": 64,
+    "y": 926,
+    "w": 126,
+    "h": 12
+  },
+  "4:71": {
+    "name": "Full Name",
+    "type": "TEXT",
+    "x": 208,
+    "y": 916.5,
+    "w": 62,
+    "h": 16
+  },
+  "4:72": {
+    "name": "Input Text",
+    "type": "FRAME",
+    "x": 64,
+    "y": 958,
+    "w": 269,
+    "h": 27
+  },
+  "4:73": {
+    "name": "meta",
+    "type": "FRAME",
+    "x": 64,
+    "y": 958,
+    "w": 120,
+    "h": 27
+  },
+  "4:74": {
+    "name": "Input Text",
+    "type": "TEXT",
+    "x": 64,
+    "y": 958,
+    "w": 53,
+    "h": 13
+  },
+  "4:75": {
+    "name": "Inter Regular / 14px / 17px",
+    "type": "TEXT",
+    "x": 64,
+    "y": 973,
+    "w": 123,
+    "h": 12
+  },
+  "4:76": {
+    "name": "you@example.com",
+    "type": "TEXT",
+    "x": 208,
+    "y": 963,
+    "w": 125,
+    "h": 17
+  },
+  "4:77": {
+    "name": "Button",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1005,
+    "w": 197,
+    "h": 27
+  },
+  "4:78": {
+    "name": "meta",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1005,
+    "w": 120,
+    "h": 27
+  },
+  "4:79": {
+    "name": "Button",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1005,
+    "w": 36,
+    "h": 13
+  },
+  "4:80": {
+    "name": "Inter Semi Bold / 14px / 17px",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1020,
+    "w": 134,
+    "h": 12
+  },
+  "4:81": {
+    "name": "Sign Up",
+    "type": "TEXT",
+    "x": 208,
+    "y": 1010,
+    "w": 53,
+    "h": 17
+  },
+  "4:82": {
+    "name": "Link",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1052,
+    "w": 359,
+    "h": 27
+  },
+  "4:83": {
+    "name": "meta",
+    "type": "FRAME",
+    "x": 64,
+    "y": 1052,
+    "w": 120,
+    "h": 27
+  },
+  "4:84": {
+    "name": "Link",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1052,
+    "w": 22,
+    "h": 13
+  },
+  "4:85": {
+    "name": "Inter Regular / 14px / 17px",
+    "type": "TEXT",
+    "x": 64,
+    "y": 1067,
+    "w": 123,
+    "h": 12
+  },
+  "4:86": {
+    "name": "Already have an account? Log in",
+    "type": "TEXT",
+    "x": 208,
+    "y": 1057,
+    "w": 215,
+    "h": 17
+  },
+  "62:12": {
+    "name": "Radius",
+    "type": "FRAME",
+    "x": 698,
+    "y": 747,
+    "w": 445,
+    "h": 164
+  },
+  "62:13": {
+    "name": "Title",
+    "type": "TEXT",
+    "x": 722,
+    "y": 771,
+    "w": 53,
+    "h": 19
+  },
+  "62:65": {
+    "name": "Radius scale",
+    "type": "FRAME",
+    "x": 722,
+    "y": 806,
+    "w": 397,
+    "h": 81
+  },
+  "62:66": {
+    "name": "Radius token",
+    "type": "FRAME",
+    "x": 722,
+    "y": 806,
+    "w": 56,
+    "h": 81
+  },
+  "62:67": {
+    "name": "Radius preview",
+    "type": "RECTANGLE",
+    "x": 722,
+    "y": 806,
+    "w": 40,
+    "h": 40
+  },
+  "62:68": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 722,
+    "y": 854,
+    "w": 28,
+    "h": 13
+  },
+  "62:69": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 722,
+    "y": 875,
+    "w": 18,
+    "h": 12
+  },
+  "62:70": {
+    "name": "Radius token",
+    "type": "FRAME",
+    "x": 786,
+    "y": 806,
+    "w": 56,
+    "h": 81
+  },
+  "62:71": {
+    "name": "Radius preview",
+    "type": "RECTANGLE",
+    "x": 786,
+    "y": 806,
+    "w": 40,
+    "h": 40
+  },
+  "62:72": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 786,
+    "y": 854,
+    "w": 29,
+    "h": 13
+  },
+  "62:73": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 786,
+    "y": 875,
+    "w": 18,
+    "h": 12
+  },
+  "62:74": {
+    "name": "Radius token",
+    "type": "FRAME",
+    "x": 850,
+    "y": 806,
+    "w": 56,
+    "h": 81
+  },
+  "62:75": {
+    "name": "Radius preview",
+    "type": "RECTANGLE",
+    "x": 850,
+    "y": 806,
+    "w": 40,
+    "h": 40
+  },
+  "62:76": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 850,
+    "y": 854,
+    "w": 43,
+    "h": 13
+  },
+  "62:77": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 850,
+    "y": 875,
+    "w": 18,
+    "h": 12
+  },
+  "62:78": {
+    "name": "Radius token",
+    "type": "FRAME",
+    "x": 914,
+    "y": 806,
+    "w": 56,
+    "h": 81
+  },
+  "62:79": {
+    "name": "Radius preview",
+    "type": "RECTANGLE",
+    "x": 914,
+    "y": 806,
+    "w": 40,
+    "h": 40
+  },
+  "62:80": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 914,
+    "y": 854,
+    "w": 30,
+    "h": 13
+  },
+  "62:81": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 914,
+    "y": 875,
+    "w": 22,
+    "h": 12
+  },
+  "62:82": {
+    "name": "Radius token",
+    "type": "FRAME",
+    "x": 978,
+    "y": 806,
+    "w": 56,
+    "h": 81
+  },
+  "62:83": {
+    "name": "Radius preview",
+    "type": "RECTANGLE",
+    "x": 978,
+    "y": 806,
+    "w": 40,
+    "h": 40
+  },
+  "62:84": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 978,
+    "y": 854,
+    "w": 42,
+    "h": 13
+  },
+  "62:85": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 978,
+    "y": 875,
+    "w": 23,
+    "h": 12
+  },
+  "62:86": {
+    "name": "Radius token",
+    "type": "FRAME",
+    "x": 1042,
+    "y": 806,
+    "w": 56,
+    "h": 81
+  },
+  "62:87": {
+    "name": "Radius preview",
+    "type": "RECTANGLE",
+    "x": 1042,
+    "y": 806,
+    "w": 40,
+    "h": 40
+  },
+  "62:88": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 1042,
+    "y": 854,
+    "w": 19,
+    "h": 13
+  },
+  "62:89": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 1042,
+    "y": 875,
+    "w": 30,
+    "h": 12
+  },
+  "65:12": {
+    "name": "Spacing",
+    "type": "FRAME",
+    "x": 698,
+    "y": 995,
+    "w": 445,
+    "h": 164
+  },
+  "65:13": {
+    "name": "Title",
+    "type": "TEXT",
+    "x": 722,
+    "y": 1019,
+    "w": 63,
+    "h": 19
+  },
+  "65:14": {
+    "name": "Spacing scale",
+    "type": "FRAME",
+    "x": 722,
+    "y": 1054,
+    "w": 397,
+    "h": 81
+  },
+  "65:20": {
+    "name": "Spacing token",
+    "type": "FRAME",
+    "x": 722,
+    "y": 1054,
+    "w": 56,
+    "h": 81
+  },
+  "65:21": {
+    "name": "Spacing preview",
+    "type": "FRAME",
+    "x": 722,
+    "y": 1054,
+    "w": 40,
+    "h": 40
+  },
+  "65:22": {
+    "name": "Space measure",
+    "type": "RECTANGLE",
+    "x": 738,
+    "y": 1073,
+    "w": 8,
+    "h": 2
+  },
+  "65:23": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 722,
+    "y": 1102,
+    "w": 6,
+    "h": 13
+  },
+  "65:24": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 722,
+    "y": 1123,
+    "w": 18,
+    "h": 12
+  },
+  "65:25": {
+    "name": "Spacing token",
+    "type": "FRAME",
+    "x": 786,
+    "y": 1054,
+    "w": 56,
+    "h": 81
+  },
+  "65:26": {
+    "name": "Spacing preview",
+    "type": "FRAME",
+    "x": 786,
+    "y": 1054,
+    "w": 40,
+    "h": 40
+  },
+  "65:27": {
+    "name": "Space measure",
+    "type": "RECTANGLE",
+    "x": 798,
+    "y": 1073,
+    "w": 16,
+    "h": 2
+  },
+  "65:28": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 786,
+    "y": 1102,
+    "w": 7,
+    "h": 13
+  },
+  "65:29": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 786,
+    "y": 1123,
+    "w": 18,
+    "h": 12
+  },
+  "65:30": {
+    "name": "Spacing token",
+    "type": "FRAME",
+    "x": 850,
+    "y": 1054,
+    "w": 56,
+    "h": 81
+  },
+  "65:31": {
+    "name": "Spacing preview",
+    "type": "FRAME",
+    "x": 850,
+    "y": 1054,
+    "w": 40,
+    "h": 40
+  },
+  "65:32": {
+    "name": "Space measure",
+    "type": "RECTANGLE",
+    "x": 858,
+    "y": 1073,
+    "w": 24,
+    "h": 2
+  },
+  "65:33": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 850,
+    "y": 1102,
+    "w": 8,
+    "h": 13
+  },
+  "65:34": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 850,
+    "y": 1123,
+    "w": 22,
+    "h": 12
+  },
+  "65:35": {
+    "name": "Spacing token",
+    "type": "FRAME",
+    "x": 914,
+    "y": 1054,
+    "w": 56,
+    "h": 81
+  },
+  "65:36": {
+    "name": "Spacing preview",
+    "type": "FRAME",
+    "x": 914,
+    "y": 1054,
+    "w": 40,
+    "h": 40
+  },
+  "65:37": {
+    "name": "Space measure",
+    "type": "RECTANGLE",
+    "x": 918,
+    "y": 1073,
+    "w": 32,
+    "h": 2
+  },
+  "65:38": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 914,
+    "y": 1102,
+    "w": 8,
+    "h": 13
+  },
+  "65:39": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 914,
+    "y": 1123,
+    "w": 23,
+    "h": 12
+  },
+  "65:40": {
+    "name": "Spacing token",
+    "type": "FRAME",
+    "x": 978,
+    "y": 1054,
+    "w": 56,
+    "h": 81
+  },
+  "65:41": {
+    "name": "Spacing preview",
+    "type": "FRAME",
+    "x": 978,
+    "y": 1054,
+    "w": 40,
+    "h": 40
+  },
+  "65:42": {
+    "name": "Space measure",
+    "type": "RECTANGLE",
+    "x": 974,
+    "y": 1073,
+    "w": 48,
+    "h": 2
+  },
+  "65:43": {
+    "name": "Name",
+    "type": "TEXT",
+    "x": 978,
+    "y": 1102,
+    "w": 7,
+    "h": 13
+  },
+  "65:44": {
+    "name": "Value",
+    "type": "TEXT",
+    "x": 978,
+    "y": 1123,
+    "w": 24,
+    "h": 12
+  }
+}

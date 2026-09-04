@@ -40,7 +40,9 @@ export function emitThemeStory(
   manifest: TokenManifest,
   options: ThemeStoryOptions = {},
 ): ThemeStoryFile {
+  // The design names its own palette; use that rather than a generic heading.
   const title = options.title ?? 'Design System/Theme'
+  const paletteTitle = manifest.palette?.title
   const helper = options.helperPath ?? '../theme/assert.js'
   const assert = options.assert !== false
 
@@ -97,6 +99,9 @@ type Story = StoryObj<typeof meta>`,
         kind,
         manifest.tokens.filter((t) => t.kind === kind),
         assert,
+        // The design names its own palette. Use that for the colour story
+        // rather than this tool's generic heading.
+        kind === 'color' ? paletteTitle : undefined,
       ),
     ),
   ]
@@ -117,12 +122,32 @@ const renderSwatchComponent = () => `type TokenRow = {
   kind: string
   /** What the design calls this — a Style/Variable name, or the id when unnamed. */
   design: string[]
+  /** The heading the design files this under. Absent when the design says none. */
+  group?: string
 }
 
 function TokenGrid({ tokens = [] }: { tokens?: TokenRow[] }) {
+  // Section per heading, in the order the tokens arrive — which is the order the
+  // design puts them in. Tokens the design does not place fall into one
+  // unlabelled section at the end rather than being reshuffled among the rest.
+  const sections: { name?: string; tokens: TokenRow[] }[] = []
+  for (const t of tokens) {
+    const last = sections[sections.length - 1]
+    if (last && last.name === t.group) last.tokens.push(t)
+    else sections.push({ name: t.group, tokens: [t] })
+  }
+
   return (
-    <div style={{ padding: 32, display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
-      {tokens.map((t) => (
+    <div style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {sections.map((section, i) => (
+        <section key={section.name ?? i} data-token-group={section.name ?? ''}>
+          {section.name ? (
+            <h2 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgb(0 0 0 / 0.55)' }}>
+              {section.name}
+            </h2>
+          ) : null}
+          <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
+      {section.tokens.map((t) => (
         <figure key={t.cssVar} style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div
             data-token={t.cssVar}
@@ -168,15 +193,23 @@ function TokenGrid({ tokens = [] }: { tokens?: TokenRow[] }) {
           </figcaption>
         </figure>
       ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }`
 
-function renderStory(kind: string, tokens: TokenManifestEntry[], assert: boolean): string {
+function renderStory(
+  kind: string,
+  tokens: TokenManifestEntry[],
+  assert: boolean,
+  designName?: string,
+): string {
   const rows = tokens
     .map(
       (t) =>
-        `      { cssVar: '${t.cssVar}', name: '${t.name}', value: ${JSON.stringify(t.value)}, named: ${t.named}, kind: '${t.kind}', design: ${JSON.stringify(designNames(t))} },`,
+        `      { cssVar: '${t.cssVar}', name: '${t.name}', value: ${JSON.stringify(t.value)}, named: ${t.named}, kind: '${t.kind}', design: ${JSON.stringify(designNames(t))}${t.group ? `, group: ${JSON.stringify(t.group)}` : ''} },`,
     )
     .join('\n')
 
@@ -190,7 +223,7 @@ function renderStory(kind: string, tokens: TokenManifestEntry[], assert: boolean
     : ''
 
   return `
-export const ${pascal(KIND_LABEL[kind] ?? kind)}: Story = {
+export const ${pascal(designName ?? KIND_LABEL[kind] ?? kind)}: Story = {
   args: {
     tokens: [
 ${rows}

@@ -72,12 +72,15 @@ describe('figma2react gen', () => {
     const out = await mkdtemp(join(tmpdir(), 'f2r-'))
     const { stdout } = await cli(['gen', 'TESTKEY:1-2', '--out', out])
 
-    // tokens.json is the same theme as data: the CSS is for browsers, this is
-    // for the generated theme story and the drift check.
+    // Three views of one theme: `tokens.css` for browsers, `tokens.json` for the
+    // generated story and the drift check, and `figma-tokens.md` for a person —
+    // the last describing the design rather than what was generated from it.
     expect((await readdir(out)).sort()).toEqual([
       '.figma-to-react-output.json',
       'button-primary.tsx',
       'card.tsx',
+      'figma-tokens.json',
+      'figma-tokens.md',
       'fonts.css',
       'styles.css',
       'tokens.css',

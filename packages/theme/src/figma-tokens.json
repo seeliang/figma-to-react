@@ -1,0 +1,227 @@
+{
+  "figma": {
+    "key": "uA3bE5ofr6BgRakJzudL4L",
+    "node": "2:77",
+    "lastModified": "2026-09-04T04:57:45Z"
+  },
+  "palette": {
+    "title": "Color Palette",
+    "groups": [
+      "PRIMARY",
+      "NEUTRALS",
+      "SEMANTIC"
+    ]
+  },
+  "colours": [
+    {
+      "name": "Primary",
+      "value": "#2563eb",
+      "group": "PRIMARY",
+      "order": 0,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:38",
+        "VariableID:2:32"
+      ]
+    },
+    {
+      "name": "Primary Foreground",
+      "value": "#ffffff",
+      "group": "PRIMARY",
+      "order": 1,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:39",
+        "VariableID:2:33"
+      ]
+    },
+    {
+      "name": "Neutral-0f",
+      "value": "#0f172a",
+      "group": "NEUTRALS",
+      "order": 2,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:34"
+      ]
+    },
+    {
+      "name": "Neutral-64",
+      "value": "#64748b",
+      "group": "NEUTRALS",
+      "order": 3,
+      "flattened": false,
+      "variables": []
+    },
+    {
+      "name": "Neutral-94",
+      "value": "#94a3b8",
+      "group": "NEUTRALS",
+      "order": 4,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:36"
+      ]
+    },
+    {
+      "name": "Neutral-e2",
+      "value": "#e2e8f0",
+      "group": "NEUTRALS",
+      "order": 5,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:37"
+      ]
+    },
+    {
+      "name": "Neutral-F8",
+      "value": "#f8fafc",
+      "group": "NEUTRALS",
+      "order": 6,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:40"
+      ]
+    },
+    {
+      "name": "Neutral-ff",
+      "value": "#ffffff",
+      "group": "NEUTRALS",
+      "order": 7,
+      "flattened": false,
+      "variables": [
+        "VariableID:2:39",
+        "VariableID:2:33"
+      ]
+    },
+    {
+      "name": "Error",
+      "value": "#ef4444",
+      "group": "SEMANTIC",
+      "order": 8,
+      "variable": "VariableID:61:16",
+      "flattened": true,
+      "variables": [
+        "VariableID:61:16"
+      ]
+    },
+    {
+      "name": "Success",
+      "value": "#22c55e",
+      "group": "SEMANTIC",
+      "order": 9,
+      "variable": "VariableID:61:12",
+      "flattened": false,
+      "variables": [
+        "VariableID:61:12"
+      ]
+    },
+    {
+      "name": "Warning",
+      "value": "#f59e0b",
+      "group": "SEMANTIC",
+      "order": 10,
+      "variable": "VariableID:61:14",
+      "flattened": false,
+      "variables": [
+        "VariableID:61:14"
+      ]
+    }
+  ],
+  "radius": [
+    {
+      "variable": "VariableID:2:50",
+      "boundOn": 44
+    }
+  ],
+  "spacing": {
+    "bound": [],
+    "autoLayoutFrames": 62
+  },
+  "typography": [
+    {
+      "family": "Inter",
+      "weight": 400,
+      "size": 10,
+      "lineHeight": 12,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 400,
+      "size": 14,
+      "lineHeight": 17,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 400,
+      "size": 14,
+      "lineHeight": 20,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 400,
+      "size": 14,
+      "lineHeight": 17,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 500,
+      "size": 11,
+      "lineHeight": 13,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 500,
+      "size": 12,
+      "lineHeight": 15,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 500,
+      "size": 13,
+      "lineHeight": 16,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 500,
+      "size": 13,
+      "lineHeight": 16,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 600,
+      "size": 14,
+      "lineHeight": 17,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 600,
+      "size": 14,
+      "lineHeight": 17,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 600,
+      "size": 16,
+      "lineHeight": 19,
+      "sizeBound": false
+    },
+    {
+      "family": "Inter",
+      "weight": 700,
+      "size": 28,
+      "lineHeight": 34,
+      "sizeBound": false
+    }
+  ]
+}

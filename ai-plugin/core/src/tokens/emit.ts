@@ -28,13 +28,27 @@ export function emitThemeCss(table: TokenTable): string {
   for (const kind of ORDER) {
     const tokens = grouped.get(kind)
     if (!tokens?.length) continue
-    blocks.push(
-      `  /* ${LABEL[kind]} */\n` +
-        [...tokens]
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((t) => `  ${NAMESPACE[kind]}-${t.name}: ${cssValue(kind, t.value)};`)
-          .join('\n'),
+    // Follow the design's own order wherever it states one, and fall back to
+    // the name only for tokens it does not place. Sorting alphabetically
+    // throughout — as this did — puts `--color-neutral-0f` above
+    // `--color-primary`, an order the design never chose, in the one generated
+    // file people actually read.
+    const ordered = [...tokens].sort(
+      (a, b) =>
+        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+        a.name.localeCompare(b.name),
     )
+
+    const lines: string[] = [`  /* ${LABEL[kind]} */`]
+    let group: string | undefined
+    for (const token of ordered) {
+      // The palette's headings are design decisions too; carrying them through
+      // is what makes this file recognisable as the palette it came from.
+      if (token.group && token.group !== group) lines.push(`  /* ${token.group} */`)
+      group = token.group
+      lines.push(`  ${NAMESPACE[kind]}-${token.name}: ${cssValue(kind, token.value)};`)
+    }
+    blocks.push(lines.join('\n'))
   }
 
   const header = `${WIRING}\n`

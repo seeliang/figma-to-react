@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "files": [
+    ".figma-to-react-output.json",
+    "figma-geometry.json",
+    "figma-tokens.json",
+    "figma-tokens.md",
+    "fonts.css",
+    "theme.stories.tsx",
+    "tokens.css",
+    "tokens.json"
+  ]
+}

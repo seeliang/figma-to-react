@@ -31,11 +31,17 @@ export interface TokenManifestEntry {
   named: boolean
   /** The name the design documented, where no Style or Variable carried one. */
   label?: string
+  /** The heading the design files this under — `PRIMARY`, `SEMANTIC`. */
+  group?: string
+  /** Position in the design's own order. Absent when the design does not say. */
+  order?: number
   sources: { source: 'style' | 'variable'; key: string; name?: string }[]
 }
 
 export interface TokenManifest {
   figma: { key: string; node?: string; lastModified?: string }
+  /** What the design calls its palette, and the headings it uses, in order. */
+  palette?: { title?: string; groups: string[] }
   /** Per kind, so a generated test can assert the count before the values. */
   counts: Partial<Record<TokenKind, number>>
   fonts: { family: string; styles: { weight: number; italic: boolean }[] }[]
@@ -48,15 +54,28 @@ export interface ManifestSource {
   lastModified?: string
 }
 
-export function buildTokenManifest(table: TokenTable, figma: ManifestSource): TokenManifest {
+export function buildTokenManifest(
+  table: TokenTable,
+  figma: ManifestSource,
+  palette?: { title?: string; groups: string[] },
+): TokenManifest {
+  // Within a kind, follow the design's own order wherever it states one, and
+  // fall back to the name only for tokens the design does not place. Sorting
+  // alphabetically throughout — as this did — silently replaced the palette's
+  // structure with one the design never chose.
   const tokens = [...table.tokens]
-    .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name))
+    .sort(
+      (a, b) =>
+        a.kind.localeCompare(b.kind) ||
+        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+        a.name.localeCompare(b.name),
+    )
     .map(entry)
 
   const counts: Partial<Record<TokenKind, number>> = {}
   for (const t of tokens) counts[t.kind] = (counts[t.kind] ?? 0) + 1
 
-  return { figma, counts, fonts: table.fonts, tokens }
+  return { figma, ...(palette ? { palette } : {}), counts, fonts: table.fonts, tokens }
 }
 
 const entry = (t: Token): TokenManifestEntry => ({
@@ -71,6 +90,8 @@ const entry = (t: Token): TokenManifestEntry => ({
   // file's own palette documentation.
   named: t.sources.some((s) => Boolean(s.name)) || Boolean(t.label),
   ...(t.label ? { label: t.label } : {}),
+  ...(t.group ? { group: t.group } : {}),
+  ...(t.order !== undefined ? { order: t.order } : {}),
   sources: t.sources.map((s) => ({
     source: s.source,
     key: s.key,

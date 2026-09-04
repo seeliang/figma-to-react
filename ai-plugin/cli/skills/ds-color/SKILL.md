@@ -111,19 +111,22 @@ names one of them confidently and wrongly — and a wrong name on the public API
 obviously derived one. A brand colour and the focus ring that happens to match it today are the
 usual pair. When either half fails, ask; do not pick.
 
-### Read the layer name, not just the visible label
+### The name is what the swatch displays
 
-A palette cell carries two names: the **text it displays** and the **name of the cell layer
-itself**. They are often not the same, and the layer name is usually the better one — a cell
-labelled `Neutral-64` may sit on a layer called `Muted`, and `Muted` is the name worth shipping.
+A palette cell carries two names: the **text it displays** and the **name of the cell layer**. They
+are often not the same. **Ship what it displays.** That is the name a designer reads, points at and
+refers to; a layer name is metadata nobody is looking at.
 
-Prefer the layer name; fall back to the displayed text. Check both before reporting that a palette
-has no real names in it — the roles are frequently already there, one level up.
+This matters most when the displayed label is the _worse_ of the two — a cell labelled `Neutral-64`
+sitting on a layer called `Muted`. Reaching past the label to ship `Muted` looks like an
+improvement and is not: it silently repairs the design's naming, so nobody ever learns the palette
+needs fixing, and the token stops matching what the file shows.
 
-A derived name describes a colour; it cannot say what the colour is _for_. A label derived from the
-hex — `neutral-0f`, `gray-64` — reads like a name but carries exactly as much meaning as the
-derived name it was meant to replace. The name has to say the role: `primary`, `border-focus`,
-`surface`, `muted-foreground`.
+Report it instead. A label derived from the hex — `neutral-0f`, `gray-64` — reads like a name but
+carries exactly as much meaning as the derived name it was meant to replace. A name has to say the
+role: `primary`, `border-focus`, `surface`, `muted-foreground`. When it does not, that is a
+**design issue**, and the fix is to rename the label in Figma — often to the role its own layer is
+already called.
 
 ### Naming and un-merging are different problems
 

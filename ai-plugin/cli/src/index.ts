@@ -256,6 +256,15 @@ async function runGen(
     if ((!requestedLayer || requestedLayer === 'theme') && result.tokenManifest) {
       planned.push(['tokens.json', `${JSON.stringify(result.tokenManifest, null, 2)}\n`])
     }
+    // The design's own vocabulary, beside the output generated from it. Written
+    // every run so it cannot drift from the file it describes.
+    if ((!requestedLayer || requestedLayer === 'theme') && result.figmaTokenDoc) {
+      planned.push(['figma-tokens.md', result.figmaTokenDoc])
+    }
+    // The same record as data, so a test can assert the theme covers the design.
+    if ((!requestedLayer || requestedLayer === 'theme') && result.figmaTokens) {
+      planned.push(['figma-tokens.json', `${JSON.stringify(result.figmaTokens, null, 2)}\n`])
+    }
     if (result.geometry && requestedLayer && requestedLayer !== 'theme' && selectedFiles.size > 0) {
       planned.push([
         'fidelity.ts',
