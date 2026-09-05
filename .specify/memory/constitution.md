@@ -77,8 +77,13 @@ compiles.
 
 ### P4 — Every path declares its kind
 
-**Rule.** **Nothing under `packages/` is authored.** Every path there is a **projection** or an
-**artifact**, and which one must be readable from the name alone.
+**Rule.** **Nothing under `packages/*/src/` is authored.** Every path there is a **projection** or
+an **artifact**, and which one must be readable from the name alone.
+
+A package's own **boundary files** — `package.json`, `tsconfig.json` and the like — are authored,
+and are the exception that makes the rule workable: a package cannot exist without a manifest, and
+no generator can invent one before the package it describes exists. They sit *beside* `src/`, never
+inside it, which is what keeps the boundary readable from the path.
 
 The only authored specification is `specs/###-feature/spec.md`. `*.feature` files are **generated**
 from its Acceptance Scenarios — they are artifacts, not specs, and editing one is the same mistake
@@ -90,6 +95,9 @@ specs/###-feature/
   plan.md  tasks.md  research.md       DERIVED    regenerating overwrites
 
 docs/                                  decisions — why, not how
+
+packages/theme/
+  package.json  tsconfig.json          AUTHORED   boundary files — beside src/, never in it
 
 packages/theme/src/
   color.feature                        ARTIFACT   generated from spec.md
@@ -107,8 +115,9 @@ packages/<component>/src/
 is unclear invites someone to edit output that the next run deletes. Behaviour is specified once, in
 `spec.md`, so there is no second Gherkin source to drift from it.
 
-**Check.** Nothing asserts that no file under `packages/` is hand-edited — **NOT BUILT**, and
-greppable. The `spec.md` → `*.feature` generator does not exist yet — **NOT BUILT**.
+**Check.** Nothing asserts that no file under `packages/*/src/` is hand-edited — **NOT BUILT**, and
+greppable. Nothing asserts that only boundary files sit beside `src/` — **NOT BUILT**, and it is a
+one-line check. The `spec.md` → `*.feature` generator does not exist yet — **NOT BUILT**.
 
 ### P5 — Skills ship and version with the CLI
 
@@ -189,7 +198,16 @@ how it would fail.
 run on every change. [gates.md](../../docs/gates.md) is where each principle's check is tracked, and its
 standing criteria cite the principle they enforce.
 
-**Version:** 3.0.0 | **Ratified:** 2026-09-05 | **Last amended:** 2026-09-05
+**Version:** 4.0.0 | **Ratified:** 2026-09-05 | **Last amended:** 2026-09-05
+
+*4.0.0 — MAJOR. P4 corrected. "Nothing under `packages/` is authored" was too broad to be true: a
+package cannot exist without a manifest, and no generator can produce one before the package it
+describes exists. The prohibition now reads on `packages/*/src/`, and boundary files beside `src/`
+— `package.json`, `tsconfig.json` — are named as authored. MAJOR by the precedent of 3.0.0 and
+2.0.0, which both scored a P4 redefinition that way, and because it changes what the principle
+forbids rather than how it is worded. Found by the Constitution Check gate on feature
+`001-nx-pnpm-workspace`, which could not deliver a publishable package without violating P4 as
+written.*
 
 *3.0.0 — MAJOR. P4 redefined again on adopting GitHub Spec Kit: `*.feature` files change from
 authored specs to artifacts generated from `spec.md`'s Acceptance Scenarios, so nothing under
